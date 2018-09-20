@@ -71,7 +71,7 @@ def plot_episode_stats(stats, stats_opt, num_episodes, smoothing_window=10, nosh
 
     return fig1
 
-def plot_algorithm_comparison(stats_alg1, stats_alg2, stats_opt, num_episodes, smoothing_window=10, noshow=False):
+def plot_algorithm_comparison(stats_alg1, stats_alg2, stats_opt, num_episodes, smoothing_window=10, noshow=False, discount_factor=0.8):
     # Plot the episode length over time
     # fig1 = plt.figure(figsize=(10,5))
     # plt.plot(range(num_episodes), stats.episode_lengths, linewidth=3)
@@ -94,7 +94,8 @@ def plot_algorithm_comparison(stats_alg1, stats_alg2, stats_opt, num_episodes, s
     plt.plot(range(num_episodes), rewards_smoothed_alg2, 'green', linewidth=1.5, label='REINFORCE with baseline')
     plt.xlabel("Episode")
     plt.ylabel("Episode Reward (Smoothed)")
-    plt.title("Episode Reward over Time (Smoothed over window size {})".format(smoothing_window))
+    title = "Episode Reward over Time (Smoothed over window size {}) gamma = " + str(discount_factor)
+    plt.title(title.format(smoothing_window))
     plt.legend()
     if noshow:
         plt.close(fig1)
