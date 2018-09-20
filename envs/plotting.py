@@ -70,3 +70,35 @@ def plot_episode_stats(stats, stats_opt, num_episodes, smoothing_window=10, nosh
         plt.show(fig1)
 
     return fig1
+
+def plot_algorithm_comparison(stats_alg1, stats_alg2, stats_opt, num_episodes, smoothing_window=10, noshow=False):
+    # Plot the episode length over time
+    # fig1 = plt.figure(figsize=(10,5))
+    # plt.plot(range(num_episodes), stats.episode_lengths, linewidth=3)
+    # plt.plot(range(num_episodes), stats_opt.episode_lengths, 'red', linewidth=1)
+    # plt.xlabel("Episode")
+    # plt.ylabel("Episode Length")
+    # plt.title("Episode Length over Time")
+    # if noshow:
+        # plt.close(fig1)
+    # else:
+        # plt.show(fig1)
+
+    # Plot the episode reward over time
+    fig1 = plt.figure(figsize=(10,5))
+    rewards_smoothed_alg1 = pd.Series(stats_alg1.episode_rewards).rolling(smoothing_window, min_periods=smoothing_window).mean()
+    rewards_smoothed_opt = pd.Series(stats_opt.episode_rewards).rolling(smoothing_window, min_periods=smoothing_window).mean()
+    rewards_smoothed_alg2 = pd.Series(stats_alg2.episode_rewards).rolling(smoothing_window, min_periods=smoothing_window).mean()
+    plt.plot(range(num_episodes), rewards_smoothed_alg1, linewidth=3, label='REINFORCE')
+    plt.plot(range(num_episodes), rewards_smoothed_opt, 'red', linewidth=0.5, label='Optimal policy')
+    plt.plot(range(num_episodes), rewards_smoothed_alg2, 'green', linewidth=1.5, label='REINFORCE with baseline')
+    plt.xlabel("Episode")
+    plt.ylabel("Episode Reward (Smoothed)")
+    plt.title("Episode Reward over Time (Smoothed over window size {})".format(smoothing_window))
+    plt.legend()
+    if noshow:
+        plt.close(fig1)
+    else:
+        plt.show(fig1)
+
+    return fig1
