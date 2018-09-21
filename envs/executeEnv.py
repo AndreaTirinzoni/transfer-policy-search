@@ -6,8 +6,11 @@ import sys
 import plotting as plot
 env = gym.make('LQG1D-v0')
 eps = 10**-16
+episode_length = 100
+mean_initial_param = 0
+variance_initial_param = 0.1
 
-def reinforce(env, num_episodes, batch_size, discount_factor=1.0):
+def reinforce(env, num_episodes, batch_size, discount_factor):
     """
     REINFORCE (Monte Carlo Policy Gradient) Algorithm. Optimizes the policy
     function approximator using policy gradient.
@@ -19,62 +22,63 @@ def reinforce(env, num_episodes, batch_size, discount_factor=1.0):
         discount_factor: Time-discount factor
 
     Returns:
-        An EpisodeStats object with two numpy arrays for episode_lengths and episode_rewards.
+        An EpisodeStats object with two numpy arrays for episode_disc_reward and episode_rewards.
     """
-    param = np.zeros(np.shape(env.state))
-    # Keeps track of useful statistics#
-    stats = plot.EpisodeStats(
-        episode_lengths=np.zeros(num_episodes),
-        episode_rewards=np.zeros(num_episodes))
-
-    Transition = collections.namedtuple("Transition", ["state", "action", "reward", "next_state", "done"])
-    Episode_values = collections.namedtuple("Episode_values", ["gradient_estimate", "total_reward"])
+    param = np.random.normal(mean_initial_param, variance_initial_param)
 
     # Iterate for all batch
     num_batch = num_episodes//batch_size
+    # Keeps track of useful statistics#
+    stats = plot.EpisodeStats(
+        episode_total_rewards=np.zeros(num_batch),
+        episode_disc_rewards=np.zeros(num_batch))
+
     for i_batch in range(num_batch):
 
         # Iterate for every episode in batch
         for i_episode in range(batch_size):
             # Reset the environment and pick the first action
             state = env.reset()
-            episode_informations = []
-            episode = []
+            episode_informations = np.zeros((num_episodes, 3))
+            episode = np.zeros((episode_length, 4))
             total_return = 0
+            discounted_return = 0
             gradient_est = 0
 
             # One step in the environment
-            for t in range(100):
+            for t in range(episode_length):
                 #env.render()
                 # Take a step
-                mean = param*state
-                variance = 1
-                action = np.random.normal(mean, variance)
+                mean_action = param*state
+                variance_action = 0.1
+                action = np.random.normal(mean_action, variance_action)
                 next_state, reward, done, _ = env.step(action)
                 # Keep track of the transition
-                episode.append(Transition(state=state, action=action, reward=reward, next_state=next_state, done=done))
 
-                # Update statistics
-                stats.episode_rewards[i_episode] += reward
-                stats.episode_lengths[i_episode] = t
+                #print(state, action, reward, param)
+                episode[t,:] = [state, action, reward, next_state]
 
                 if done:
                     break
 
                 state = next_state
 
+
             # Go through the episode and compute estimators
-            for t, transition in enumerate(episode):
+            for t in range(episode.shape[0]):
                 # The return after this timestep
-                total_return += discount_factor**t * transition.reward
-                gradient_est += (transition.action - param * transition.state) * transition.state / variance
-            episode_informations.append(Episode_values(gradient_estimate = gradient_est, total_reward = total_return))
+                total_return += episode[t, 2]
+                discounted_return += discount_factor**t * episode[t, 2]
+                gradient_est += (episode[t, 1] - param * episode[t, 0]) * episode[t, 0] / variance_action
+            episode_informations[t,:] = [gradient_est, total_return, discounted_return]
 
-        par_old = param
-        param = param + 0.01 * 1/batch_size * sum(episode.total_reward * episode.gradient_estimate for t, episode in enumerate(episode_informations))
-        if abs(par_old-param) <= eps:
-            break
-
+        param = param + 0.001 * 1/batch_size * np.dot(episode_informations[:,0], episode_informations[:,1])
+        tot_reward_batch = np.mean(episode_informations[:,1])
+        discounted_reward_batch = np.mean(episode_informations[:,2])
+        # Update statistics
+        stats.episode_total_rewards[i_batch] += tot_reward_batch
+        stats.episode_disc_rewards[i_batch] += discounted_reward_batch
+        #print(state, action, reward, param)
     return stats
 
 
@@ -90,65 +94,65 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor):
         discount_factor: Time-discount factor
 
     Returns:
-        An EpisodeStats object with two numpy arrays for episode_lengths and episode_rewards.
+        An EpisodeStats object with two numpy arrays for episode_disc_reward and episode_rewards.
     """
-    param = np.zeros(np.shape(env.state))
-    # Keeps track of useful statistics#
-    stats = plot.EpisodeStats(
-        episode_lengths=np.zeros(num_episodes),
-        episode_rewards=np.zeros(num_episodes))
-
-    Transition = collections.namedtuple("Transition", ["state", "action", "reward", "next_state", "done"])
-    Episode_values = collections.namedtuple("Episode_values", ["gradient_estimate", "total_reward"])
+    param = np.random.normal(mean_initial_param, variance_initial_param)
 
     # Iterate for all batch
     num_batch = num_episodes//batch_size
+    # Keeps track of useful statistics#
+    stats = plot.EpisodeStats(
+        episode_total_rewards=np.zeros(num_batch),
+        episode_disc_rewards=np.zeros(num_batch))
+
     for i_batch in range(num_batch):
 
         # Iterate for every episode in batch
         for i_episode in range(batch_size):
             # Reset the environment and pick the first action
             state = env.reset()
-            episode_informations = []
-            episode = []
+            episode_informations = np.zeros((num_episodes, 3))
+            episode = np.zeros((episode_length, 4))
             total_return = 0
+            discounted_return = 0
             gradient_est = 0
 
             # One step in the environment
-            for t in range(100):
+            for t in range(episode_length):
                 #env.render()
                 # Take a step
-                mean = param*state
-                variance = 1
-                action = np.random.normal(mean, variance)
+                mean_action = param*state
+                variance_action = 0.1
+                action = np.random.normal(mean_action, variance_action)
                 next_state, reward, done, _ = env.step(action)
                 # Keep track of the transition
-                episode.append(Transition(state=state, action=action, reward=reward, next_state=next_state, done=done))
 
-                # Update statistics
-                stats.episode_rewards[i_episode] += reward
-                stats.episode_lengths[i_episode] = t
+                #print(state, action, reward, param)
+                episode[t,:] = [state, action, reward, next_state]
 
                 if done:
                     break
 
                 state = next_state
 
-            # Go through the episode and make policy updates
-            for t, transition in enumerate(episode):
-                # The return after this timestep
-                total_return += discount_factor**t * transition.reward
-                gradient_est += (transition.action - param * transition.state) * transition.state / variance
-            episode_informations.append(Episode_values(gradient_estimate = gradient_est, total_reward = total_return))
-        # Compute baseline
-        baseline = sum(episode.gradient_estimate**2 * episode.total_reward for t, episode in enumerate(episode_informations))/sum(episode.gradient_estimate**2 for t, episode in enumerate(episode_informations))
-        # Update parameters
-        par_old = param
-        param = param + 0.01 * 1/batch_size * sum(episode.total_reward * episode.gradient_estimate - baseline for t, episode in enumerate(episode_informations))
-        if abs(par_old-param) <= eps:
-            break
 
-    return stats
+            # Go through the episode and compute estimators
+            for t in range(episode.shape[0]):
+                # The return after this timestep
+                total_return += episode[t, 2]
+                discounted_return += discount_factor**t * episode[t, 2]
+                gradient_est += (episode[t, 1] - param * episode[t, 0]) * episode[t, 0] / variance_action
+            episode_informations[t,:] = [gradient_est, total_return, discounted_return]
+        baseline = np.dot(episode_informations[:,0]**2, episode_informations[:,1])/sum(episode_informations[:,0]**2)
+        # Update parameters
+        param = param + 0.001 * 1/batch_size * np.dot(episode_informations[:,0], episode_informations[:,1]-baseline)
+        tot_reward_batch = np.mean(episode_informations[:,1])
+        discounted_reward_batch = np.mean(episode_informations[:,2])
+        # Update statistics
+        stats.episode_total_rewards[i_batch] += tot_reward_batch
+        stats.episode_disc_rewards[i_batch] += discounted_reward_batch
+        #print(state, action, reward, param)
+        return stats
 
 
 def gmdp(env, num_episodes, batch_size, discount_factor=1.0):
@@ -163,13 +167,13 @@ def gmdp(env, num_episodes, batch_size, discount_factor=1.0):
         discount_factor: Time-discount factor
 
     Returns:
-        An EpisodeStats object with two numpy arrays for episode_lengths and episode_rewards.
+        An EpisodeStats object with two numpy arrays for episode_disc_reward and episode_rewards.
     """
     """
-    param = np.zeros(np.shape(env.state))
+    param = np.random.normal(mean_initial_param, variance_initial_param)
     # Keeps track of useful statistics#
     stats = plot.EpisodeStats(
-        episode_lengths=np.zeros(num_episodes),
+        episode_disc_reward=np.zeros(num_episodes),
         episode_rewards=np.zeros(num_episodes))
 
     Transition = collections.namedtuple("Transition", ["state", "action", "reward", "next_state", "done"])
@@ -178,30 +182,30 @@ def gmdp(env, num_episodes, batch_size, discount_factor=1.0):
     # Iterate for all batch
     num_batch = num_episodes//batch_size
     for i_batch in range(num_batch):
+        batch_informations = []
 
         # Iterate for every episode in batch
         for i_episode in range(batch_size):
             # Reset the environment and pick the first action
             state = env.reset()
-            episode_informations = []
             episode = []
             total_return = 0
             gradient_est = 0
 
             # One step in the environment
-            for t in range(100):
+            for t in range(episode_length):
                 #env.render()
                 # Take a step
-                mean = param*state
-                variance = 1
-                action = np.random.normal(mean, variance)
+                mean_action = param*state
+                variance_action = 1
+                action = np.random.normal(mean_action, variance_action)
                 next_state, reward, done, _ = env.step(action)
                 # Keep track of the transition
                 episode.append(Transition(state=state, action=action, reward=reward, next_state=next_state, done=done))
 
                 # Update statistics
                 stats.episode_rewards[i_episode] += reward
-                stats.episode_lengths[i_episode] = t
+                stats.episode_disc_reward[i_episode] = t
 
                 if done:
                     break
@@ -212,20 +216,24 @@ def gmdp(env, num_episodes, batch_size, discount_factor=1.0):
             for t, transition in enumerate(episode):
                 # The return after this timestep
                 total_return += discount_factor**t * transition.reward
-                gradient_est += sum((transition.action - param * transition.state) * transition.state / variance for t, transition in enumerate(episode[:t]))
+                gradient_est += sum((transition.action - param * transition.state) * transition.state / variance_action for t, transition in enumerate(episode[:t]))
                 baseline = 0
-                episode_informations.append(Episode_values(gradient_estimate = gradient_est, total_reward = total_return, baseline=baseline)
+                batch_informations.append(Episode_values(gradient_estimate = gradient_est, total_reward = total_return, baseline=baseline)
 
+        #estimate = 0
 
-        par_old = param
-        param = param + 0.01 * sum(episode.total_reward * episode.gradient_estimate for t, episode in enumerate(episode_informations))
+        for t, episode in enumerate(batch_informations):
+            estimate = estimate + episode.total_reward * episode.gradient_estimate - baseline
+
+        param = param + 0.01 * update
+
         if abs(par_old-param) <= eps:
             break
 
     return stats
 """
 
-def optimalPolicy(env, num_episodes, batch_size):
+def optimalPolicy(env, num_episodes, batch_size, discount_factor):
     """
     Optimal policy (uses Riccati equation)
 
@@ -234,42 +242,66 @@ def optimalPolicy(env, num_episodes, batch_size):
         num_episodes: Number of episodes to run for
 
     Returns:
-        An EpisodeStats object with two numpy arrays for episode_lengths and episode_rewards.
+        An EpisodeStats object with two numpy arrays for episode_disc_reward and episode_rewards.
     """
-    # Keeps track of useful statistics#
-    stats_opt = plot.EpisodeStats(
-        episode_lengths=np.zeros(num_episodes),
-        episode_rewards=np.zeros(num_episodes))
     # Iterate for all batch
     num_batch = num_episodes//batch_size
+    # Keeps track of useful statistics#
+    stats = plot.EpisodeStats(
+        episode_total_rewards=np.zeros(num_batch),
+        episode_disc_rewards=np.zeros(num_batch))
     K = env.computeOptimalK()
     for i_batch in range(num_batch):
 
         # Iterate for every episode in batch
         for i_episode in range(batch_size):
             state = env.reset()
-            for t in range(100):
+            episode_informations = np.zeros((num_episodes, 3))
+            episode = np.zeros((episode_length, 4))
+            total_return = 0
+            discounted_return = 0
+            gradient_est = 0
+
+            for t in range(episode_length):
                 #env.render()
                 # Take a step
                 action = K * state
                 next_state, reward, done, _ = env.step(action)
-
-                # Update statistics
-                stats_opt.episode_rewards[i_episode] += reward
-                stats_opt.episode_lengths[i_episode] = t
+                episode[t,:] = [state, action, reward, next_state]
 
                 if done:
                     break
 
                 state = next_state
 
-    return stats_opt
+            for t in range(episode.shape[0]):
+                # The return after this timestep
+                total_return += episode[t, 2]
+                discounted_return += discount_factor**t * episode[t, 2]
+            episode_informations[t,:] = [gradient_est, total_return, discounted_return]
+
+        tot_reward_batch = np.mean(episode_informations[:,1])
+        discounted_reward_batch = np.mean(episode_informations[:,2])
+        # Update statistics
+        stats.episode_total_rewards[i_batch] += tot_reward_batch
+        stats.episode_disc_rewards[i_batch] += discounted_reward_batch
+
+        #print(state, action, reward, param)
+    return stats
 
 
-stats = reinforce(env, 100, 1, discount_factor=0.4)
-stats_baseline = reinforceBaseline(env, 100, 1, discount_factor=0.4)
-stats_opt = optimalPolicy(env, 100, 1)
+num_episodes=1000
+batch_size=100
+num_batch = num_episodes//batch_size
+discount_factor = 0.9
+stats = reinforce(env, num_episodes, batch_size, discount_factor)
+stats_baseline = reinforceBaseline(env, num_episodes, batch_size, discount_factor)
+stats_opt = optimalPolicy(env, num_episodes, batch_size, discount_factor)
+print(stats)
+print(stats_baseline)
+print(stats_opt)
 #plot the statistics of the algorithm
-plot.plot_algorithm_comparison(stats, stats_baseline, stats_opt, 100, smoothing_window=1, discount_factor=0.8)
+plot.plot_algorithm_comparison_total(stats, stats_baseline, stats_opt, num_batch, discount_factor)
+#plot.plot_algorithm_comparison_discounted(stats, stats_baseline, stats_opt, num_batch, discount_factor)
 
 # Reducing disc_factor baseline improves, after 1 update do I converge to optimal policy?

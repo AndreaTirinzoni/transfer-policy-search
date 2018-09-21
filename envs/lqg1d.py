@@ -101,8 +101,8 @@ class LQG1D(gym.Env):
                 self.viewer = None
             return
 
-        screen_width = 600
-        screen_height = 400
+        screen_width = 6000
+        screen_height = 4000
 
         world_width = (self.max_pos * 2) * 2
         scale = screen_width / world_width

@@ -5,7 +5,7 @@ from collections import namedtuple
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-EpisodeStats = namedtuple("Stats",["episode_lengths", "episode_rewards"])
+EpisodeStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards"])
 
 # def plot_value_function(V, title="Value Function"):
     # """
@@ -71,7 +71,7 @@ def plot_episode_stats(stats, stats_opt, num_episodes, smoothing_window=10, nosh
 
     return fig1
 
-def plot_algorithm_comparison(stats_alg1, stats_alg2, stats_opt, num_episodes, smoothing_window=10, noshow=False, discount_factor=0.8):
+def plot_algorithm_comparison_total(stats_alg1, stats_alg2, stats_opt, num_episodes, discount_factor, noshow=False, smoothing_window=10):
     # Plot the episode length over time
     # fig1 = plt.figure(figsize=(10,5))
     # plt.plot(range(num_episodes), stats.episode_lengths, linewidth=3)
@@ -86,20 +86,35 @@ def plot_algorithm_comparison(stats_alg1, stats_alg2, stats_opt, num_episodes, s
 
     # Plot the episode reward over time
     fig1 = plt.figure(figsize=(10,5))
-    rewards_smoothed_alg1 = pd.Series(stats_alg1.episode_rewards).rolling(smoothing_window, min_periods=smoothing_window).mean()
-    rewards_smoothed_opt = pd.Series(stats_opt.episode_rewards).rolling(smoothing_window, min_periods=smoothing_window).mean()
-    rewards_smoothed_alg2 = pd.Series(stats_alg2.episode_rewards).rolling(smoothing_window, min_periods=smoothing_window).mean()
-    plt.plot(range(num_episodes), rewards_smoothed_alg1, linewidth=3, label='REINFORCE')
-    plt.plot(range(num_episodes), rewards_smoothed_opt, 'red', linewidth=0.5, label='Optimal policy')
-    plt.plot(range(num_episodes), rewards_smoothed_alg2, 'green', linewidth=1.5, label='REINFORCE with baseline')
-    plt.xlabel("Episode")
-    plt.ylabel("Episode Reward (Smoothed)")
-    title = "Episode Reward over Time (Smoothed over window size {}) gamma = " + str(discount_factor)
+    plt.plot(range(num_episodes), stats_alg1.episode_total_rewards, linewidth=3, label='REINFORCE')
+    plt.plot(range(num_episodes), stats_opt.episode_total_rewards, 'red', linewidth=0.5, label='Optimal policy')
+    plt.plot(range(num_episodes), stats_alg2.episode_total_rewards, 'green', linewidth=1.5, label='REINFORCE with baseline')
+    plt.xlabel("Batch")
+    plt.ylabel("Average total reward")
+    title = "Total reward of batch over Time gamma = " + str(discount_factor)
     plt.title(title.format(smoothing_window))
     plt.legend()
+
     if noshow:
         plt.close(fig1)
     else:
         plt.show(fig1)
+    return fig1
 
+
+def plot_algorithm_comparison_discounted(stats_alg1, stats_alg2, stats_opt, num_episodes, discount_factor, noshow=False, smoothing_window=10):
+    fig2 = plt.figure(figsize=(10,5))
+    plt.plot(range(num_episodes), stats_alg1.episode_disc_reward, linewidth=3, label='REINFORCE')
+    plt.plot(range(num_episodes), stats_opt.episode_disc_reward, 'red', linewidth=0.5, label='Optimal policy')
+    plt.plot(range(num_episodes), stats_alg2.episode_disc_reward, 'green', linewidth=1.5, label='REINFORCE with baseline')
+    plt.xlabel("Batch")
+    plt.ylabel("Average discounted reward")
+    title = "Discounted reward of batch over Time gamma = " + str(discount_factor)
+    plt.title(title.format(smoothing_window))
+    plt.legend()
+
+    if noshow:
+        plt.close(fig1)
+    else:
+        plt.show(fig1)
     return fig1
