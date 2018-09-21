@@ -88,7 +88,7 @@ def plot_algorithm_comparison_total(stats_alg1, stats_alg2, stats_opt, num_episo
     fig1 = plt.figure(figsize=(10,5))
     plt.plot(range(num_episodes), stats_alg1.episode_total_rewards, linewidth=3, label='REINFORCE')
     plt.plot(range(num_episodes), stats_opt.episode_total_rewards, 'red', linewidth=0.5, label='Optimal policy')
-    plt.plot(range(num_episodes), stats_alg2.episode_total_rewards, 'green', linewidth=1.5, label='REINFORCE with baseline')
+    #plt.plot(range(num_episodes), stats_alg2.episode_total_rewards, 'green', linewidth=1.5, label='REINFORCE with baseline')
     plt.xlabel("Batch")
     plt.ylabel("Average total reward")
     title = "Total reward of batch over Time gamma = " + str(discount_factor)

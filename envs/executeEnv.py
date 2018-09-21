@@ -34,12 +34,11 @@ def reinforce(env, num_episodes, batch_size, discount_factor):
         episode_disc_rewards=np.zeros(num_batch))
 
     for i_batch in range(num_batch):
-
+        episode_informations = np.zeros((batch_size, 3))
         # Iterate for every episode in batch
         for i_episode in range(batch_size):
             # Reset the environment and pick the first action
             state = env.reset()
-            episode_informations = np.zeros((num_episodes, 3))
             episode = np.zeros((episode_length, 4))
             total_return = 0
             discounted_return = 0
@@ -68,11 +67,11 @@ def reinforce(env, num_episodes, batch_size, discount_factor):
             for t in range(episode.shape[0]):
                 # The return after this timestep
                 total_return += episode[t, 2]
-                discounted_return += discount_factor**t * episode[t, 2]
+                discounted_return += discount_factor ** t * episode[t, 2]
                 gradient_est += (episode[t, 1] - param * episode[t, 0]) * episode[t, 0] / variance_action
             episode_informations[t,:] = [gradient_est, total_return, discounted_return]
 
-        param = param + 0.001 * 1/batch_size * np.dot(episode_informations[:,0], episode_informations[:,1])
+        param = param + 0.001 * 1/batch_size * np.dot(episode_informations[:,0], episode_informations[:,2])
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
         # Update statistics
@@ -106,12 +105,11 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor):
         episode_disc_rewards=np.zeros(num_batch))
 
     for i_batch in range(num_batch):
-
+        episode_informations = np.zeros((batch_size, 3))
         # Iterate for every episode in batch
         for i_episode in range(batch_size):
             # Reset the environment and pick the first action
             state = env.reset()
-            episode_informations = np.zeros((num_episodes, 3))
             episode = np.zeros((episode_length, 4))
             total_return = 0
             discounted_return = 0
@@ -140,12 +138,12 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor):
             for t in range(episode.shape[0]):
                 # The return after this timestep
                 total_return += episode[t, 2]
-                discounted_return += discount_factor**t * episode[t, 2]
+                discounted_return += discount_factor ** t * episode[t, 2]
                 gradient_est += (episode[t, 1] - param * episode[t, 0]) * episode[t, 0] / variance_action
             episode_informations[t,:] = [gradient_est, total_return, discounted_return]
-        baseline = np.dot(episode_informations[:,0]**2, episode_informations[:,1])/sum(episode_informations[:,0]**2)
+        baseline = np.dot(episode_informations[:,0]**2, episode_informations[:,2])/sum(episode_informations[:,0]**2)
         # Update parameters
-        param = param + 0.001 * 1/batch_size * np.dot(episode_informations[:,0], episode_informations[:,1]-baseline)
+        param = param + 0.001 * 1/batch_size * np.dot(episode_informations[:,0], episode_informations[:,2]-baseline)
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
         # Update statistics
@@ -252,11 +250,10 @@ def optimalPolicy(env, num_episodes, batch_size, discount_factor):
         episode_disc_rewards=np.zeros(num_batch))
     K = env.computeOptimalK()
     for i_batch in range(num_batch):
-
+        episode_informations = np.zeros((batch_size, 3))
         # Iterate for every episode in batch
         for i_episode in range(batch_size):
             state = env.reset()
-            episode_informations = np.zeros((num_episodes, 3))
             episode = np.zeros((episode_length, 4))
             total_return = 0
             discounted_return = 0
@@ -277,7 +274,7 @@ def optimalPolicy(env, num_episodes, batch_size, discount_factor):
             for t in range(episode.shape[0]):
                 # The return after this timestep
                 total_return += episode[t, 2]
-                discounted_return += discount_factor**t * episode[t, 2]
+                discounted_return += discount_factor ** t * episode[t, 2]
             episode_informations[t,:] = [gradient_est, total_return, discounted_return]
 
         tot_reward_batch = np.mean(episode_informations[:,1])
