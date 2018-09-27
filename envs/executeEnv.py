@@ -10,6 +10,7 @@ episode_length = 100
 mean_initial_param = 0
 variance_initial_param = 0.01
 variance_action = 0.01
+np.random.seed(12)
 
 def createEpisode(episode_length, param, state, episode):
     for t in range(episode_length):
@@ -164,6 +165,7 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor):
             episode_informations[i_episode,:] = [gradient_est, total_return, discounted_return]
 
         baseline = np.dot(episode_informations[:,0]**2, episode_informations[:,2])/np.dot(episode_informations[:,0], episode_informations[:,0])
+        # baseline = 0
         # Update parameters
         gradient = 1/batch_size * np.dot(episode_informations[:,0], episode_informations[:,2]-baseline)
         param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
