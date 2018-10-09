@@ -4,15 +4,9 @@ import collections
 import numpy as np
 import sys
 import plotting as plot
-env = gym.make('LQG1D-v0')
-eps = 10**-16
-episode_length = 100
-mean_initial_param = 0
-variance_initial_param = 0.01
-variance_action = 0.01
-np.random.seed(12)
 
-def createEpisode(episode_length, param, state, episode):
+def createEpisode(episode_length, param, init_state, episode):
+    state = init_state
     for t in range(episode_length):
         #env.render()
         # Take a step
@@ -24,8 +18,8 @@ def createEpisode(episode_length, param, state, episode):
         #print(state, action, reward, param)
         episode[t,:] = [state, action, reward, next_state]
 
-        if done:
-            break
+        # if done:
+            # break
 
         state = next_state
     return episode
@@ -66,7 +60,7 @@ def reinforce(env, num_episodes, batch_size, discount_factor):
         discount_factor: Time-discount factor
 
     Returns:
-        An EpisodeStats object with two numpy arrays for episode_disc_reward and episode_rewards.
+        An EpisodeStats object with two numpy arrays for episode_disc_reward and episode_rewards related to the batch.
     """
     param = np.random.normal(mean_initial_param, variance_initial_param)
     # Adam initial params
@@ -91,8 +85,7 @@ def reinforce(env, num_episodes, batch_size, discount_factor):
             total_return = 0
             discounted_return = 0
             gradient_est = 0
-
-            episode = createEpisode(episode_length, param, state, episode)
+            episode = createEpisode(episode_length, param, state, episode) # [state, action, reward, next_state]
 
             # Go through the episode and compute estimators
             for t in range(episode.shape[0]):
@@ -152,8 +145,7 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor):
             discounted_return = 0
             gradient_est = 0
 
-            # One episode in the environment
-            episode = createEpisode(episode_length, param, state, episode)
+            episode = createEpisode(episode_length, param, state, episode) # [state, action, reward, next_state]
 
             # Go through the episode and compute estimators
             for t in range(episode.shape[0]):
@@ -161,11 +153,11 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor):
                 total_return += episode[t, 2]
                 discounted_return += discount_factor ** t * episode[t, 2]
                 gradient_est += (episode[t, 1] - param * episode[t, 0]) * episode[t, 0] / variance_action
-            #print(discounted_return)
             episode_informations[i_episode,:] = [gradient_est, total_return, discounted_return]
 
-        baseline = np.dot(episode_informations[:,0]**2, episode_informations[:,2])/np.dot(episode_informations[:,0], episode_informations[:,0])
-        # baseline = 0
+
+        baseline = np.dot(episode_informations[:,0]**2, episode_informations[:,2])/np.sum(episode_informations[:,0]**2)
+        # baseline = 0
         # Update parameters
         gradient = 1/batch_size * np.dot(episode_informations[:,0], episode_informations[:,2]-baseline)
         param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
@@ -178,7 +170,7 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor):
     return stats
 
 
-def gpomdp(env, num_episodes, batch_size, discount_factor=1.0):
+def gpomdp(env, num_episodes, batch_size, discount_factor):
     """
     G(PO)MDP (Policy Gradient) Algorithm. Optimizes the policy
     function approximator using policy gradient.
@@ -304,15 +296,25 @@ def optimalPolicy(env, num_episodes, batch_size, discount_factor):
         #print(state, action, reward, param)
     return stats
 
+# Inizialize environment and parameters
 
-num_episodes=2000
-batch_size=50
+env = gym.make('LQG1D-v0')
+eps = 10**-16
+episode_length = 100
+mean_initial_param = 0
+variance_initial_param = 0.01
+variance_action = 0.001
+np.random.seed(2000)
+num_episodes=800
+batch_size=40
 num_batch = num_episodes//batch_size
-discount_factor = 0.9
-stats = reinforce(env, num_episodes, batch_size, discount_factor)
-stats_baseline = reinforceBaseline(env, num_episodes, batch_size, discount_factor)
-stats_opt = optimalPolicy(env, num_episodes, batch_size, discount_factor)
-stats_gpomdp = gpomdp(env, num_episodes, batch_size, discount_factor)
+discount_factor = 0.99
+
+# Apply different algorithms to learn optimal policy
+stats = reinforce(env, num_episodes, batch_size, discount_factor) # apply REINFORCE for estimating gradient
+stats_baseline = reinforceBaseline(env, num_episodes, batch_size, discount_factor) # apply REINFORCE with baseline for estimating gradient
+stats_gpomdp = gpomdp(env, num_episodes, batch_size, discount_factor) # apply G(PO)MDP for estimating gradient
+stats_opt = optimalPolicy(env, num_episodes, batch_size, discount_factor) # Optimal policy
 # print("REINFORCE")
 # print(stats)
 # print("REINFORCE baseline")
@@ -322,6 +324,5 @@ stats_gpomdp = gpomdp(env, num_episodes, batch_size, discount_factor)
 # print("G(PO)MDP")
 # print(stats_gpomdp)
 
-#plot the statistics of the algorithm
+# Compare the statistics of the different algorithms
 plot.plot_algorithm_comparison_total(stats, stats_baseline, stats_gpomdp, stats_opt, num_batch, discount_factor)
-#plot.plot_algorithm_comparison_discounted(stats, stats_baseline, stats_opt, num_batch, discount_factor)
