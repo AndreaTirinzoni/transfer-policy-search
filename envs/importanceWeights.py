@@ -29,6 +29,9 @@ def adam(params, grad, t, m_t, v_t, alpha=0.001, beta_1=0.9, beta_2=0.999, eps=1
     return params - alpha * m_t_hat / (np.sqrt(v_t_hat) + eps), t, m_t, v_t
 
 def createEpisode(env, episode_length, param, state, episode):
+    """
+    The function creates a new episode
+    """
     for t in range(episode_length):
         #env.render()
         # Take a step
@@ -148,10 +151,15 @@ def reinforceAndSourceTask(env, num_episodes, batch_size, discount_factor, sourc
                 total_return += episode[t, 2]
                 discounted_return += discount_factor ** t * episode[t, 2]
                 gradient_est += (episode[t, 1] - param * episode[t, 0]) * episode[t, 0] / variance_action
+
+                #I populate the source task
                 source_task[i_task, t*3] = episode[t, 0]
                 source_task[i_task, t*3+1] = episode[t, 1]
                 source_task[i_task, t*3+2] = episode[t, 2]
+
             episode_informations[i_episode,:] = [gradient_est, total_return, discounted_return]
+
+            #I populate the source parameters
             source_param[i_task, 0] = discounted_return
             source_param[i_task, 1] = param
             i_task += 1
@@ -176,14 +184,12 @@ def computeGradients(param, source_task, num_episodes, variance_action):
     return gradient_off_policy
 
 def computeImportanceWeights(param, source_param, num_episodes, variance_action, source_task, episode_length):
-    weights = np.zeros((num_episodes, 1))
-    p_src = 1
-    p_tgt = 1
-    for i_episode in range(num_episodes):
+    weights = np.ones((num_episodes, 1))
+    for i_episode in range(weights.shape[0]):
         for t in range(episode_length):
-            p_src = p_src * 1/m.sqrt(2*m.pi*variance_action) * m.exp(-(source_task[i_episode, t*3] - param*source_task[i_episode, t*3+1])**2/(2*variance_action**2))
-            p_tgt = p_tgt * 1/m.sqrt(2*m.pi*variance_action) * m.exp(-(source_task[i_episode, t*3] - source_param[i_episode, 1]*source_task[i_episode, t*3+1])**2/(2*variance_action))
-        weights[i_episode] = p_src/p_tgt
+            p_src = 1/m.sqrt(2*m.pi*variance_action) * m.exp(-(source_task[i_episode, t*3+1] - param*source_task[i_episode, t*3])**2/(2*variance_action))
+            p_tgt = 1/m.sqrt(2*m.pi*variance_action) * m.exp(-(source_task[i_episode, t*3+1] - source_param[i_episode, 1]*source_task[i_episode, t*3])**2/(2*variance_action))
+            weights[i_episode] = weights[i_episode] * p_src/p_tgt
     return weights
 
 def offPolicyImportanceSampling(env, num_episodes, batch_size, discount_factor, source_task, source_param, variance_action):
@@ -199,8 +205,19 @@ def offPolicyImportanceSampling(env, num_episodes, batch_size, discount_factor, 
         episode_total_rewards=np.zeros(num_batch),
         episode_disc_rewards=np.zeros(num_batch))
 
+
+    #Compute gradients of the source task
+    gradient_off_policy = computeGradients(param, source_task, num_episodes, variance_action)
+    #Compute importance weights of source task
+    weights = computeImportanceWeights(param, source_param, num_episodes, variance_action, source_task, episode_length)
+
     for i_batch in range(num_batch):
+
         episode_informations = np.zeros((batch_size, 3))
+        # Create new parameters and new tasks associated to episodes, used tu update the source_param and source_task later
+        source_param_new = np.ones((batch_size, 2)))
+        source_task_new = np.ones((batch_size, episode_length*3)))
+
         # Iterate for every episode in batch
         for i_episode in range(batch_size):
             # Reset the environment and pick the first action
@@ -217,18 +234,26 @@ def offPolicyImportanceSampling(env, num_episodes, batch_size, discount_factor, 
                 total_return += episode[t, 2]
                 discounted_return += discount_factor ** t * episode[t, 2]
                 gradient_est += (episode[t, 1] - param * episode[t, 0]) * episode[t, 0] / variance_action
+                source_task_new[i_episode, t*3] = episode[t, 0]
+                source_task_new[i_episode, t*3+1] = episode[t, 1]
+                source_task_new[i_episode, t*3+2] = episode[t, 2]
             episode_informations[i_episode,:] = [gradient_est, total_return, discounted_return]
-
-        #Compute gradients of the source task
-        gradient_off_policy = computeGradients(param, source_task, num_episodes, variance_action)
-        #Compute importance weights
-        weights = computeImportanceWeights(param, source_param, num_episodes, variance_action, source_task, episode_length)
+            source_param_new[i_episode, 0] = discounted_return
+            source_param_new[i_episode, 1] = param
 
         gradient_source = np.dot(weights * gradient_off_policy, source_task[:,1])
         gradient = 1/batch_size * (np.dot(episode_informations[:,0], episode_informations[:,2]) + gradient_source)
         param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
+
+        # Update weights gradients and source tasks with new episodes
+        gradient_off_policy_new = computeGradients(param, source_task_new, num_batch, variance_action)
+        weights_new = computeImportanceWeights(param, source_param_new, num_batch, variance_action, source_task_new, episode_length)
+        np.append(source_param, source_param_new)
+        np.append(source_task, source_task_new)
+        np.append(weights, weights_new)
+        np.append(gradient_off_policy, gradient_off_policy_new)
         # Update statistics
         stats.episode_total_rewards[i_batch] = tot_reward_batch
         stats.episode_disc_rewards[i_batch] = discounted_reward_batch
@@ -236,11 +261,11 @@ def offPolicyImportanceSampling(env, num_episodes, batch_size, discount_factor, 
     return stats
 
 
-np.set_printoptions(precision=2)
+np.set_printoptions(precision=9)
 env1 = gym.make('LQG1D-v0')
 env2 = gym.make('LQG1D-v0')
 eps = 10**-16
-episode_length = 100
+episode_length = 30
 mean_initial_param = 0
 variance_initial_param = 0.01
 variance_action = 0.001
