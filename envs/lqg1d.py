@@ -63,6 +63,12 @@ class LQG1D(gym.Env):
         self.seed()
         self.reset()
 
+    def setA(self, A):
+        self.A = A
+
+    def setB(self, B):
+        self.B = B
+
     def step(self, action, render=False):
         u = np.clip(action, -self.max_action, self.max_action)
         noise = self.np_random.randn() * self.sigma_noise
