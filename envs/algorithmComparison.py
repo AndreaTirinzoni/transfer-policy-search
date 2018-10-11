@@ -325,4 +325,4 @@ stats_opt = optimalPolicy(env, num_episodes, batch_size, discount_factor) # Opti
 # print(stats_gpomdp)
 
 # Compare the statistics of the different algorithms
-plot.plot_algorithm_comparison_total(stats, stats_baseline, stats_gpomdp, stats_opt, num_batch, discount_factor)
+plot.plot_algorithm_comparison_total_three(stats, stats_baseline, stats_gpomdp, stats_opt, num_batch, discount_factor, num_alg)
