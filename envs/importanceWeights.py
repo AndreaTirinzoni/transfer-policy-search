@@ -100,7 +100,6 @@ def optimalPolicy(env, num_episodes, batch_size, discount_factor):
         # Update statistics
         stats.episode_total_rewards[i_batch] += tot_reward_batch
         stats.episode_disc_rewards[i_batch] += discounted_reward_batch
-
         #print(state, action, reward, param)
     return stats
 
@@ -121,7 +120,7 @@ def reinforceAndSourceTaskCreation(env, num_episodes, batch_size, discount_facto
         An EpisodeStats object with two numpy arrays for episode_disc_reward and episode_rewards related to the batch.
     """
     #param = np.random.normal(mean_initial_param, variance_initial_param)
-    param = -2
+    param = 0
     # Adam initial params
     m_t = 0
     v_t = 0
@@ -157,7 +156,7 @@ def reinforceAndSourceTaskCreation(env, num_episodes, batch_size, discount_facto
                 source_task[i_task, t*3] = episode[t, 0]
                 source_task[i_task, t*3+1] = episode[t, 1]
                 source_task[i_task, t*3+2] = episode[t, 2]
-            source_task[i_task, t*3+3] = episode[t, 0]
+            source_task[i_task, t*3+3] = episode[t, 3]
 
             episode_informations[i_episode,:] = [gradient_est, total_return, discounted_return]
 
@@ -199,20 +198,27 @@ def computeImportanceWeightsSourceTarget(env, param, source_param, num_episodes,
             state_t1 = source_task[i_episode, t*3+3] # state t+1
             action_t = source_task[i_episode, t*3+1] # action t
             variance_env = source_param[i_episode, 4] # variance of the model transition
-            A = source_param[i_episode, 2] # environment parameter A
-            B = source_param[i_episode, 3] # environment parameter B
+            A = source_param[i_episode, 2] # environment parameter A of src
+            B = source_param[i_episode, 3] # environment parameter B of src
             policy_src = 1/m.sqrt(2*m.pi*variance_action) * m.exp(-(action_t - param*state_t)**2/(2*variance_action))
             policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * m.exp(-(action_t - param_policy*state_t)**2/(2*variance_action))
             model_src = 1/m.sqrt(2*m.pi*variance_env) * m.exp(-(state_t1 - env.A * state_t - env.B * action_t)**2/(2*variance_env))
             model_tgt = 1/m.sqrt(2*m.pi*variance_env) * m.exp(-(state_t1 - A * state_t - B * action_t)**2/(2*variance_env))
+            if model_src==0 or model_tgt==0:
+                print(model_src, model_tgt, param_policy, t)
+            # model_src = 1
+            # model_tgt = 1
+
             weights[i_episode] = weights[i_episode] * policy_src/policy_tgt * model_src/model_tgt
+
+        #print(weights[i_episode], i_episode)
 
     return weights
 
 def offPolicyImportanceSampling(env, num_episodes, batch_size, discount_factor, source_task, source_param, variance_action):
 
     #param = np.random.normal(mean_initial_param, variance_initial_param)
-    param = -2
+    param = 0
     # Adam initial params
     m_t = 0
     v_t = 0
@@ -255,7 +261,7 @@ def offPolicyImportanceSampling(env, num_episodes, batch_size, discount_factor, 
                 source_task_new[i_episode, t*3] = episode[t, 0]
                 source_task_new[i_episode, t*3+1] = episode[t, 1]
                 source_task_new[i_episode, t*3+2] = episode[t, 2]
-            source_task_new[i_episode, t*3+3] = episode[t, 0]
+            source_task_new[i_episode, t*3+3] = episode[t, 3]
 
             episode_informations[i_episode,:] = [gradient_est, total_return, discounted_return]
             source_param_new[i_episode, 0] = discounted_return
@@ -275,7 +281,7 @@ def offPolicyImportanceSampling(env, num_episodes, batch_size, discount_factor, 
 
         #Compute EFFECTIVE SAMPLE SIZE
         ess = np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2
-        print(ess, N)
+        #print(ess, N)
 
         #Compute rewards of batch
         tot_reward_batch = np.mean(episode_informations[:,1])
