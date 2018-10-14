@@ -70,7 +70,7 @@ def plot_episode_stats(stats, stats_opt, num_episodes, smoothing_window=10, nosh
 
     return fig1
 
-def plot_algorithm_comparison_total_three(stats_alg1, stats_alg2, stats_alg3, stats_opt, num_episodes, discount_factor, noshow=False, smoothing_window=10):
+def plot_algorithm_comparison_disc_three(stats_alg1, stats_alg2, stats_alg3, stats_opt, num_episodes, discount_factor, noshow=False, smoothing_window=10):
     # Plot the episode length over time
     # fig1 = plt.figure(figsize=(10,5))
     # plt.plot(range(num_episodes), stats.episode_lengths, linewidth=3)
@@ -85,10 +85,10 @@ def plot_algorithm_comparison_total_three(stats_alg1, stats_alg2, stats_alg3, st
 
     # Plot the episode reward over time
     fig1 = plt.figure(figsize=(10,5))
-    plt.plot(range(num_episodes), stats_alg1.episode_total_rewards, linewidth=3, label='REINFORCE')
-    plt.plot(range(num_episodes), stats_alg2.episode_total_rewards, 'green', linewidth=1.5, label='REINFORCE with baseline')
-    plt.plot(range(num_episodes), stats_alg3.episode_total_rewards, 'blue', linewidth=1.5, label='G(PO)MDP')
-    plt.plot(range(num_episodes), stats_opt.episode_total_rewards, 'red', linewidth=0.5, label='Optimal policy')
+    plt.plot(range(num_episodes), stats_alg1.episode_disc_rewards, linewidth=3, label='REINFORCE')
+    plt.plot(range(num_episodes), stats_alg2.episode_disc_rewards, 'green', linewidth=1.5, label='REINFORCE with baseline')
+    plt.plot(range(num_episodes), stats_alg3.episode_disc_rewards, 'blue', linewidth=1.5, label='G(PO)MDP')
+    plt.plot(range(num_episodes), stats_opt.episode_disc_rewards, 'red', linewidth=0.5, label='Optimal policy')
     plt.xlabel("Batch")
     plt.ylabel("Average total reward")
     title = "Total reward of batch over Time gamma = " + str(discount_factor)
@@ -101,7 +101,7 @@ def plot_algorithm_comparison_total_three(stats_alg1, stats_alg2, stats_alg3, st
         plt.show(fig1)
     return fig1
 
-def plot_algorithm_comparison_total_two(stats_alg1, stats_alg2, stats_opt, num_episodes, discount_factor, noshow=False, smoothing_window=10):
+def plot_algorithm_comparison_disc_two(stats_alg1, stats_alg2, stats_opt, num_episodes, discount_factor, noshow=False, smoothing_window=10):
     fig1 = plt.figure(figsize=(10,5))
     plt.plot(range(num_episodes), stats_alg1.episode_disc_rewards, linewidth=3, label='REINFORCE')
     plt.plot(range(num_episodes), stats_opt.episode_disc_rewards, 'red', linewidth=0.5, label='Optimal policy')

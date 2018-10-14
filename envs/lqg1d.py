@@ -65,9 +65,11 @@ class LQG1D(gym.Env):
 
     def setA(self, A):
         self.A = A
+        return A
 
     def setB(self, B):
         self.B = B
+        return A
 
     def step(self, action, render=False):
         u = np.clip(action, -self.max_action, self.max_action)
