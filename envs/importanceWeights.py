@@ -170,13 +170,12 @@ def sourceTaskCreationWithReinforce(env, num_episodes, batch_size, discount_fact
         #print(state, action, reward, param)
     return stats, source_task, source_param
 
-def sourceTaskCreation(env, num_episodes, num_batch, discount_factor):
+def sourceTaskCreation(env, num_batch, discount_factor):
     """
     Creates the source dataset for IS
 
     Args:
         env: OpenAI environment.
-        num_episodes: Number of episodes to run for
         batch_size: Number of episodes for each batch
         discount_factor: Time-discount factor
         source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
@@ -192,7 +191,7 @@ def sourceTaskCreation(env, num_episodes, num_batch, discount_factor):
     episode_per_param = num_batch
     length_source_task = policy_param.shape[0]*env_param.shape[0]*episode_per_param
     source_task = np.zeros((length_source_task, episode_length*3+1)) # every line a task, every task has all [state, action, reward]
-    # Every line is a task, every task has [discounted_return, policy_parameter, A, B, variance] where A and B are the evironment params
+    # Every line is a task, every task has [discounted_return, policy_parameter, A, B, variance, parameter_configuration id] where A and B are the evironment params
     source_param = np.zeros((length_source_task, 5))
     for i_policy_param in range(policy_param.shape[0]):
         for i_env_param in range(env_param.shape[0]):
@@ -228,29 +227,29 @@ def sourceTaskCreation(env, num_episodes, num_batch, discount_factor):
                 source_param[i_task, 4] = env.sigma_noise**2
                 i_task += 1
 
+
     return source_task, source_param, episode_per_param
 
-def computeGradientsSourceTarget(param, source_task, num_episodes, variance_action):
+def computeGradientsSourceTarget(param, source_task, variance_action):
     """
         Compute the gradients estimation of the source targets with current policy
 
         Args:
             params: policy parameters
             source_task: source tasks
-            num_episodes: number of episodes
             variance_action: variance of the action's distribution
 
         Returns:
             A vector containing all the gradients
     """
-    gradient_off_policy = np.zeros(num_episodes)
+    gradient_off_policy = np.zeros(source_task.shape[0])
 
-    for i_episode in range(gradient_off_policy.shape[0]):
+    for i_episode in range(source_task.shape[0]):
         gradient_off_policy[i_episode] = sum(source_task[i_episode, 2::3] - param * source_task[i_episode, 1::3] * source_task[i_episode, 1::3] / variance_action)
 
     return gradient_off_policy
 
-def computeImportanceWeightsSourceTarget(env, param, source_param, num_episodes, variance_action, source_task, episode_length):
+def computeImportanceWeightsSourceTarget(env, param, source_param, variance_action, source_task, episode_length):
     """
         Compute the importance weights considering policy and transition model_src
 
@@ -258,7 +257,6 @@ def computeImportanceWeightsSourceTarget(env, param, source_param, num_episodes,
             env: OpenAI environment
             param: current policy parameter
             source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
-            num_episodes: number of episodes
             variance_action: variance of the action's distribution
             source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
             episode_length: length of the episodes
@@ -266,9 +264,9 @@ def computeImportanceWeightsSourceTarget(env, param, source_param, num_episodes,
         Returns:
             Returns the weights of the importance sampling
     """
-    weights = np.ones(num_episodes)
+    weights = np.ones(source_task.shape[0])
 
-    for i_episode in range(weights.shape[0]):
+    for i_episode in range(source_task.shape[0]):
         for t in range(episode_length):
             param_policy = source_param[i_episode, 1] #policy parameter of source
             state_t = source_task[i_episode, t*3] # state t
@@ -292,17 +290,23 @@ def computeImportanceWeightsSourceTarget(env, param, source_param, num_episodes,
 
     return weights
 
-def computeESS():
-    ess = np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2
-    return ess
+def computeESSPerConfiguration(weights):
+    current_episode_per_param = 40
+    i_weights = 0
+    ess = np.zeros(weights.shape[0]//episode_per_param)
+    ideal_sample_size = np.ones(weights.shape[0]//episode_per_param) * current_episode_per_param
+    for t in range(weights.shape[0]//episode_per_param):
+        weights_configuration_t = weights[i_weights:i_weights+current_episode_per_param]
+        ess[t] = np.linalg.norm(weights_configuration_t, 1)**2 / np.linalg.norm(weights_configuration_t, 2)**2
+        i_weights += current_episode_per_param
+    return ess, ideal_sample_size
 
-def offPolicyImportanceSampling(env, num_episodes, batch_size, discount_factor, source_task, source_param, variance_action, episode_length, mean_initial_param, episode_per_param):
+def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, variance_action, episode_length, mean_initial_param, episode_per_param):
     """
         Perform transfer from source tasks, using REINFORCE with IS
 
         Args:
             env: OpenAI environment
-            num_episodes: number of episodes
             batch_size: size of the batch
             discount_factor: the discout factor
             source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
@@ -329,10 +333,9 @@ def offPolicyImportanceSampling(env, num_episodes, batch_size, discount_factor, 
 
 
     #Compute gradients of the source task
-    gradient_off_policy = computeGradientsSourceTarget(param, source_task, num_episodes, variance_action)
+    gradient_off_policy = computeGradientsSourceTarget(param, source_task, variance_action)
     #Compute importance weights_source_target of source task
-    weights_source_target = computeImportanceWeightsSourceTarget(env, param, source_param, num_episodes, variance_action, source_task, episode_length)
-
+    weights_source_target = computeImportanceWeightsSourceTarget(env, param, source_param, variance_action, source_task, episode_length)
     for i_batch in range(num_batch):
 
         episode_informations = np.zeros((batch_size, 3))
@@ -374,26 +377,25 @@ def offPolicyImportanceSampling(env, num_episodes, batch_size, discount_factor, 
         gradient_off_policy_update = np.concatenate([gradient_off_policy, episode_informations[:,0]], axis=0)
         discounted_rewards_all = np.concatenate([source_task[:,1], episode_informations[:,2]], axis=0)
         gradient = 1/N * np.dot(np.multiply(weights_source_target_update, gradient_off_policy_update), discounted_rewards_all)
-        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+        param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
 
         #Compute EFFECTIVE SAMPLE SIZE
-        ess = computeESS()
-        ess = np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2
-        #print(ess, N)
+        [ess, ideal_sample_size] = computeESSPerConfiguration(weights_source_target)
+        print(ess, ideal_sample_size)
 
         #Compute rewards of batch
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
 
         # Update weights_source_target, the gradients and source tasks and parameters with new episodes
-        gradient_off_policy_new = computeGradientsSourceTarget(param, source_task_new, batch_size, variance_action)
-        weights_source_target_new = computeImportanceWeightsSourceTarget(env, param, source_param_new, batch_size, variance_action, source_task_new, episode_length)
+        gradient_off_policy_new = computeGradientsSourceTarget(param, source_task_new, variance_action)
+        weights_source_target_new = computeImportanceWeightsSourceTarget(env, param, source_param_new, variance_action, source_task_new, episode_length)
 
         # Concatenate new episodes to source tasks
-        source_param = np.concatenate([source_param, source_param_new], axis=0)
-        source_task = np.concatenate([source_task, source_task_new], axis=0)
-        weights_source_target = np.concatenate([weights_source_target, weights_source_target_new], axis=0)
-        gradient_off_policy = np.concatenate([gradient_off_policy, gradient_off_policy_new], axis=0)
+        source_param = np.concatenate((source_param, source_param_new), axis=0)
+        source_task = np.concatenate((source_task, source_task_new), axis=0)
+        weights_source_target = np.concatenate((weights_source_target, weights_source_target_new), axis=0)
+        gradient_off_policy = np.concatenate((gradient_off_policy, gradient_off_policy_new), axis=0)
 
         # Update statistics
         stats.episode_total_rewards[i_batch] = tot_reward_batch
@@ -402,8 +404,8 @@ def offPolicyImportanceSampling(env, num_episodes, batch_size, discount_factor, 
     return stats
 
 np.set_printoptions(precision=4)
-env1 = gym.make('LQG1D-v0')
-env2 = gym.make('LQG1D-v0')
+env = gym.make('LQG1D-v0')
+#env = gym.make('LQG1D-v1')
 eps = 10**-16
 episode_length = 50
 mean_initial_param = 0
@@ -415,12 +417,12 @@ batch_size=40
 num_batch = num_episodes//batch_size
 discount_factor = 0.99
 
-#[stats, source_task, source_param] = sourceTaskCreationWithReinforce(env1, num_episodes, batch_size, discount_factor)
+#[stats, source_task, source_param] = sourceTaskCreationWithReinforce(env, num_episodes, batch_size, discount_factor)
 
-[source_task, source_param, episode_per_param] = sourceTaskCreation(env1, num_episodes, num_batch, discount_factor)
-stats_off_policy = offPolicyImportanceSampling(env2, num_episodes, batch_size, discount_factor, source_task, source_param, variance_action, episode_length, mean_initial_param, episode_per_param)
-stats_opt = optimalPolicy(env2, num_episodes, batch_size, discount_factor) # Optimal policy
-stats = alg.reinforce(env2, num_episodes, batch_size, discount_factor, episode_length, mean_initial_param, variance_initial_param) #reinforce without transfer
+[source_task, source_param, episode_per_param] = sourceTaskCreation(env, num_batch, discount_factor)
+stats_off_policy = offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, variance_action, episode_length, mean_initial_param, episode_per_param)
+stats_opt = optimalPolicy(env, num_episodes, batch_size, discount_factor) # Optimal policy
+stats = alg.reinforce(env, num_episodes, batch_size, discount_factor, episode_length, mean_initial_param, variance_initial_param) #reinforce without transfer
 
 # Compare the statistics on_policy off_policy
 plot.plot_algorithm_comparison_disc_two(stats, stats_off_policy, stats_opt, num_batch, discount_factor)
