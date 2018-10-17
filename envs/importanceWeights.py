@@ -6,6 +6,8 @@ import numpy as np
 import sys
 import plotting as plot
 import algorithmPolicySearch as alg
+import plotly.plotly as py
+import plotly.graph_objs as go
 
 def optimalPolicy(env, num_episodes, batch_size, discount_factor):
     """
@@ -295,11 +297,12 @@ def computeESSPerConfiguration(weights):
     i_weights = 0
     ess = np.zeros(weights.shape[0]//episode_per_param)
     ideal_sample_size = np.ones(weights.shape[0]//episode_per_param) * current_episode_per_param
+    weights_per_configuration = np.ones((weights.shape[0]//episode_per_param, current_episode_per_param))
     for t in range(weights.shape[0]//episode_per_param):
-        weights_configuration_t = weights[i_weights:i_weights+current_episode_per_param]
-        ess[t] = np.linalg.norm(weights_configuration_t, 1)**2 / np.linalg.norm(weights_configuration_t, 2)**2
+        weights_per_configuration[t,:] = weights[i_weights:i_weights+current_episode_per_param].T
+        ess[t] = np.linalg.norm(weights_per_configuration[t], 1)**2 / np.linalg.norm(weights_per_configuration[t], 2)**2
         i_weights += current_episode_per_param
-    return ess, ideal_sample_size
+    return ess, ideal_sample_size, weights_per_configuration
 
 def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, variance_action, episode_length, mean_initial_param, episode_per_param):
     """
@@ -380,8 +383,17 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, s
         param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
 
         #Compute EFFECTIVE SAMPLE SIZE
-        [ess, ideal_sample_size] = computeESSPerConfiguration(weights_source_target)
-        print(ess, ideal_sample_size)
+        weights_per_configuration = np.ones((weights_source_target_update.shape[0]//40, 40))
+        [ess, ideal_sample_size, weights_per_configuration] = computeESSPerConfiguration(weights_source_target)
+        print(ess, ideal_sample_size, weights_per_configuration)
+
+        # Compute heatmap
+        policy_param = np.linspace(-1, 0, 20)
+        env_param = np.linspace(-2, 2, 80)
+        heatmap_value = np.reshape(ess, (policy_param.shaape[0], env_param.shape[0]))
+        trace = go.Heatmap(z = heatmap_value, x = policy_param, y = env_param)
+        data=[trace]
+        py.iplot(data, filename='ESS per configuration')
 
         #Compute rewards of batch
         tot_reward_batch = np.mean(episode_informations[:,1])
