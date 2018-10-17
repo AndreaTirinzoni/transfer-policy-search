@@ -6,8 +6,8 @@ import numpy as np
 import sys
 import plotting as plot
 import algorithmPolicySearch as alg
-import plotly.plotly as py
-import plotly.graph_objs as go
+import pandas as pd
+import seaborn as sns
 
 def optimalPolicy(env, num_episodes, batch_size, discount_factor):
     """
@@ -190,6 +190,8 @@ def sourceTaskCreation(env, num_batch, discount_factor):
     policy_param = np.linspace(-1, 0, 20)
     env_param = np.linspace(-2, 2, 80)
     i_task = 0
+    episodes_per_configuration = np.zeros(policy_param.shape[0]*env_param.shape[0])
+    i_configuration = 0
     episode_per_param = num_batch
     length_source_task = policy_param.shape[0]*env_param.shape[0]*episode_per_param
     source_task = np.zeros((length_source_task, episode_length*3+1)) # every line a task, every task has all [state, action, reward]
@@ -208,7 +210,6 @@ def sourceTaskCreation(env, num_batch, discount_factor):
                 discounted_return = 0
                 gradient_est = 0
                 episode = createEpisode(env, episode_length, policy_param[i_policy_param], state) # [state, action, reward, next_state]
-
                 # Go through the episode and compute estimators
                 for t in range(episode.shape[0]):
                     # The return after this timestep
@@ -229,8 +230,11 @@ def sourceTaskCreation(env, num_batch, discount_factor):
                 source_param[i_task, 4] = env.sigma_noise**2
                 i_task += 1
 
+            episodes_per_configuration[i_configuration] = episode_per_param
+            i_configuration += 1
 
-    return source_task, source_param, episode_per_param
+
+    return source_task, source_param, episodes_per_configuration.astype(int)
 
 def computeGradientsSourceTarget(param, source_task, variance_action):
     """
@@ -292,19 +296,20 @@ def computeImportanceWeightsSourceTarget(env, param, source_param, variance_acti
 
     return weights
 
-def computeESSPerConfiguration(weights):
-    current_episode_per_param = 40
+def computeESSPerConfiguration(weights, episode_per_config):
     i_weights = 0
-    ess = np.zeros(weights.shape[0]//episode_per_param)
-    ideal_sample_size = np.ones(weights.shape[0]//episode_per_param) * current_episode_per_param
-    weights_per_configuration = np.ones((weights.shape[0]//episode_per_param, current_episode_per_param))
-    for t in range(weights.shape[0]//episode_per_param):
-        weights_per_configuration[t,:] = weights[i_weights:i_weights+current_episode_per_param].T
-        ess[t] = np.linalg.norm(weights_per_configuration[t], 1)**2 / np.linalg.norm(weights_per_configuration[t], 2)**2
-        i_weights += current_episode_per_param
-    return ess, ideal_sample_size, weights_per_configuration
+    ess = np.zeros(episode_per_config.shape[0])
+    ess_ratio = np.zeros(episode_per_config.shape[0]) # ESS/N for every configuration
+    for t in range(ess.shape[0]):
+        current_episodes_per_config = episode_per_config[t]
+        weights_per_configuration = weights[i_weights:i_weights+current_episodes_per_config]
+        ess[t] = np.linalg.norm(weights_per_configuration, 1)**2 / np.linalg.norm(weights_per_configuration, 2)**2
+        print(weights[i_weights:i_weights+episode_per_config[t]], ess[t], episode_per_config[t])
+        i_weights += episode_per_config[t]
+        ess_ratio[t] = ess[t]/episode_per_config[t]
+    return ess, ess_ratio
 
-def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, variance_action, episode_length, mean_initial_param, episode_per_param):
+def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, variance_action, episode_length, mean_initial_param, episode_per_config, num_batch):
     """
         Perform transfer from source tasks, using REINFORCE with IS
 
@@ -317,6 +322,7 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, s
             variance_action: variance of the action's distribution
             episode_length: length of the episodes
             mean_initial_param: mean initial policy parameter
+            num_batch: number of batch for REINFORCE
 
         Returns:
             An EpisodeStats object with two numpy arrays for episode_disc_reward and episode_rewards.
@@ -383,17 +389,14 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, s
         param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
 
         #Compute EFFECTIVE SAMPLE SIZE
-        weights_per_configuration = np.ones((weights_source_target_update.shape[0]//40, 40))
-        [ess, ideal_sample_size, weights_per_configuration] = computeESSPerConfiguration(weights_source_target)
-        print(ess, ideal_sample_size, weights_per_configuration)
+        [ess, ess_ratio] = computeESSPerConfiguration(weights_source_target, episode_per_config)
 
         # Compute heatmap
         policy_param = np.linspace(-1, 0, 20)
         env_param = np.linspace(-2, 2, 80)
-        heatmap_value = np.reshape(ess, (policy_param.shaape[0], env_param.shape[0]))
-        trace = go.Heatmap(z = heatmap_value, x = policy_param, y = env_param)
-        data=[trace]
-        py.iplot(data, filename='ESS per configuration')
+        heatmap_value = np.reshape(ess, (policy_param.shape[0], env_param.shape[0]))
+        data = pd.DataFrame(heatmap_value, index=env_param, column=policy_param)
+        ax = sns.heatmap(data, cmap="YlGnBu")
 
         #Compute rewards of batch
         tot_reward_batch = np.mean(episode_informations[:,1])
@@ -416,6 +419,7 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, s
     return stats
 
 np.set_printoptions(precision=4)
+sns.set()
 env = gym.make('LQG1D-v0')
 #env = gym.make('LQG1D-v1')
 eps = 10**-16
@@ -431,8 +435,8 @@ discount_factor = 0.99
 
 #[stats, source_task, source_param] = sourceTaskCreationWithReinforce(env, num_episodes, batch_size, discount_factor)
 
-[source_task, source_param, episode_per_param] = sourceTaskCreation(env, num_batch, discount_factor)
-stats_off_policy = offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, variance_action, episode_length, mean_initial_param, episode_per_param)
+[source_task, source_param, episodes_per_config] = sourceTaskCreation(env, num_batch, discount_factor)
+stats_off_policy = offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, variance_action, episode_length, mean_initial_param, episodes_per_config, num_batch)
 stats_opt = optimalPolicy(env, num_episodes, batch_size, discount_factor) # Optimal policy
 stats = alg.reinforce(env, num_episodes, batch_size, discount_factor, episode_length, mean_initial_param, variance_initial_param) #reinforce without transfer
 
