@@ -1,11 +1,8 @@
-import gym
-import itertools
-import collections
 import numpy as np
-import sys
-import plotting as plot
+from collections import namedtuple
 
 variance_action = 0.001
+EpisodeStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards"])
 
 def createEpisode(env, episode_length, param, state):
     """
@@ -59,7 +56,7 @@ def adam(params, grad, t, m_t, v_t, alpha=0.001, beta_1=0.9, beta_2=0.999, eps=1
     return params - alpha * m_t_hat / (np.sqrt(v_t_hat) + eps), t, m_t, v_t
 
 
-def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, mean_initial_param, variance_initial_param):
+def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, initial_param):
     """
     REINFORCE (Monte Carlo Policy Gradient) Algorithm. Optimizes the policy
     function approximator using policy gradient.
@@ -75,7 +72,7 @@ def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, me
     Returns:
         An EpisodeStats object with two numpy arrays for episode_disc_reward and episode_rewards related to the batch.
     """
-    param = np.random.normal(mean_initial_param, variance_initial_param)
+    param = initial_param
     # Adam initial params
     m_t = 0
     v_t = 0
@@ -84,7 +81,7 @@ def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, me
     # Iterate for all batch
     num_batch = num_episodes//batch_size
     # Keeps track of useful statistics#
-    stats = plot.EpisodeStats(
+    stats = EpisodeStats(
         episode_total_rewards=np.zeros(num_batch),
         episode_disc_rewards=np.zeros(num_batch))
 
@@ -120,7 +117,7 @@ def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, me
     return stats
 
 
-def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_length, mean_initial_param, variance_initial_param):
+def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_length, initial_param):
     """
     REINFORCE with baseline (Monte Carlo Policy Gradient) Algorithm. Optimizes the policy
     function approximator using policy gradient.
@@ -136,7 +133,7 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_le
     Returns:
         An EpisodeStats object with two numpy arrays for episode_disc_reward and episode_rewards.
     """
-    param = np.random.normal(mean_initial_param, variance_initial_param)
+    param = initial_param
     # Adam initial params
     m_t = 0
     v_t = 0
@@ -145,7 +142,7 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_le
     # Iterate for all batch
     num_batch = num_episodes//batch_size
     # Keeps track of useful statistics#
-    stats = plot.EpisodeStats(
+    stats = EpisodeStats(
         episode_total_rewards=np.zeros(num_batch),
         episode_disc_rewards=np.zeros(num_batch))
 
@@ -185,7 +182,7 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_le
     return stats
 
 
-def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, mean_initial_param, variance_initial_param):
+def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initial_param):
     """
     G(PO)MDP (Policy Gradient) Algorithm. Optimizes the policy
     function approximator using policy gradient.
@@ -201,7 +198,7 @@ def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, mean_
     Returns:
         An EpisodeStats object with two numpy arrays for episode_disc_reward and episode_rewards.
     """
-    param = np.random.normal(mean_initial_param, variance_initial_param)
+    param = initial_param
     # Adam initial params
     m_t = 0
     v_t = 0
@@ -210,7 +207,7 @@ def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, mean_
     # Iterate for all batch
     num_batch = num_episodes//batch_size
     # Keeps track of useful statistics#
-    stats = plot.EpisodeStats(
+    stats = EpisodeStats(
         episode_total_rewards=np.zeros(num_batch),
         episode_disc_rewards=np.zeros(num_batch))
 

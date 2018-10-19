@@ -1,8 +1,6 @@
 import gym
-import itertools
-import collections
+from collections import namedtuple
 import numpy as np
-import sys
 import plotting as plot
 import algorithmPolicySearch as alg
 
@@ -20,7 +18,7 @@ def optimalPolicy(env, num_episodes, batch_size, discount_factor):
     # Iterate for all batch
     num_batch = num_episodes//batch_size
     # Keeps track of useful statistics#
-    stats = plot.EpisodeStats(
+    stats = EpisodeStats(
         episode_total_rewards=np.zeros(num_batch),
         episode_disc_rewards=np.zeros(num_batch))
     K = env.computeOptimalK()
@@ -61,12 +59,14 @@ def optimalPolicy(env, num_episodes, batch_size, discount_factor):
         #print(state, action, reward, param)
     return stats
 
+EpisodeStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards"])
 # Inizialize environment and parameters
 env = gym.make('LQG1D-v0')
 eps = 10**-16
 episode_length = 100
 mean_initial_param = 0
 variance_initial_param = 0.01
+initial_param = np.random.normal(mean_initial_param, variance_initial_param)
 #variance_action = 0.001
 np.random.seed(2000)
 num_episodes=800
@@ -76,9 +76,9 @@ discount_factor = 0.99
 num_alg = 3
 
 # Apply different algorithms to learn optimal policy
-stats = alg.reinforce(env, num_episodes, batch_size, discount_factor, episode_length, mean_initial_param, variance_initial_param) # apply REINFORCE for estimating gradient
-stats_baseline = alg.reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_length, mean_initial_param, variance_initial_param) # apply REINFORCE with baseline for estimating gradient
-stats_gpomdp = alg.gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, mean_initial_param, variance_initial_param) # apply G(PO)MDP for estimating gradient
+stats = alg.reinforce(env, num_episodes, batch_size, discount_factor, episode_length, initial_param) # apply REINFORCE for estimating gradient
+stats_baseline = alg.reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_length, initial_param) # apply REINFORCE with baseline for estimating gradient
+stats_gpomdp = alg.gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initial_param) # apply G(PO)MDP for estimating gradient
 stats_opt = optimalPolicy(env, num_episodes, batch_size, discount_factor) # Optimal policy
 # print("REINFORCE")
 # print(stats)
