@@ -256,3 +256,4 @@ ess = essPerTarget(env, variance_action, env_param_min, env_param_max, policy_pa
 np.savetxt("source_task.csv", source_task, delimiter=",")
 np.savetxt("source_param.csv", source_param, delimiter=",")
 np.savetxt("episodes_per_config.csv", episodes_per_config, delimiter=",")
+np.savetxt("ess_source_tasks.csv", ess, delimiter=",")

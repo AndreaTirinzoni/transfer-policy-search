@@ -87,6 +87,8 @@ def optimalPolicy(env, num_episodes, discount_factor):
         #print(state, action, reward, param)
     return stats
 
+
+
 def createEpisode(env, episode_length, param, state):
     """
     The function creates a new episode
@@ -173,7 +175,63 @@ def computeImportanceWeightsSourceTarget(env, param, source_param, variance_acti
 
     return weights
 
-def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, variance_action, episode_length, mean_initial_param, episode_per_config, num_batch):
+def offPolicyUpdate(env, param, source_param, episodes_per_config, source_task, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor):
+    #Compute gradients of the source task
+    gradient_off_policy = computeGradientsSourceTarget(param, source_task, variance_action)
+    #Compute importance weights_source_target of source task
+    weights_source_target = computeImportanceWeightsSourceTarget(env, param, source_param, variance_action, source_task, episode_length)
+    num_episodes_target = m.ceil((batch_size - 2*np.sum(weights_source_target) - m.sqrt(batch_size*(batch_size+4*(np.dot(weights_source_target, weights_source_target)-np.sum(weights_source_target)))))/2)
+    episode_informations = np.zeros((num_episodes_target, 3))
+    # Create new parameters and new tasks associated to episodes, used tu update the source_param and source_task later
+    source_param_new = np.ones((num_episodes_target, 5))
+    source_task_new = np.ones((num_episodes_target, episode_length*3+1))
+    # Iterate for every episode in batch
+    for i_episode in range(num_episodes_target):
+        # Reset the environment and pick the first action
+        state = env.reset()
+        total_return = 0
+        discounted_return = 0
+        gradient_est = 0
+        episode = createEpisode(env, episode_length, param, state) # [state, action, reward, next_state]
+
+        # Go through the episode and compute estimators
+        for t in range(episode.shape[0]):
+            # The return after this timestep
+            total_return += episode[t, 2]
+            discounted_return += discount_factor ** t * episode[t, 2]
+            gradient_est += (episode[t, 1] - param * episode[t, 0]) * episode[t, 0] / variance_action
+            source_task_new[i_episode, t*3] = episode[t, 0]
+            source_task_new[i_episode, t*3+1] = episode[t, 1]
+            source_task_new[i_episode, t*3+2] = episode[t, 2]
+        source_task_new[i_episode, t*3+3] = episode[t, 3]
+
+        episode_informations[i_episode,:] = [gradient_est, total_return, discounted_return]
+        source_param_new[i_episode, 0] = discounted_return
+        source_param_new[i_episode, 1] = param
+        source_param_new[i_episode, 2] = env.A
+        source_param_new[i_episode, 3] = env.B
+        source_param_new[i_episode, 4] = env.sigma_noise**2
+
+
+    #Update the parameters
+    N = weights_source_target.shape[0] + num_episodes_target
+    weights_source_target_update = np.concatenate([weights_source_target, np.ones(num_episodes_target)], axis=0) # are the weights used for computing ESS
+    gradient_off_policy_update = np.concatenate([gradient_off_policy, episode_informations[:,0]], axis=0)
+    discounted_rewards_all = np.concatenate([source_task[:,1], episode_informations[:,2]], axis=0)
+    gradient = 1/N * np.dot(np.multiply(weights_source_target_update, gradient_off_policy_update), discounted_rewards_all)
+    param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+
+    #Compute rewards of batch
+    tot_reward_batch = np.mean(episode_informations[:,1])
+    discounted_reward_batch = np.mean(episode_informations[:,2])
+
+    # Concatenate new episodes to source tasks
+    source_param = np.concatenate((source_param, source_param_new), axis=0)
+    source_task = np.concatenate((source_task, source_task_new), axis=0)
+    episodes_per_config = np.concatenate(episodes_per_config, batch_size)
+    return source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch
+
+def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, mean_initial_param, num_batch):
     """
         Perform transfer from source tasks, using REINFORCE with IS
 
@@ -192,7 +250,6 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, s
             An EpisodeStats object with two numpy arrays for episode_disc_reward and episode_rewards.
 
     """
-    #param = np.random.normal(mean_initial_param, variance_initial_param)
     param = mean_initial_param
     # Adam initial params
     m_t = 0
@@ -204,72 +261,11 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, s
         episode_total_rewards=np.zeros(num_batch),
         episode_disc_rewards=np.zeros(num_batch))
 
-
-    #Compute gradients of the source task
-    gradient_off_policy = computeGradientsSourceTarget(param, source_task, variance_action)
-    #Compute importance weights_source_target of source task
-    weights_source_target = computeImportanceWeightsSourceTarget(env, param, source_param, variance_action, source_task, episode_length)
     for i_batch in range(num_batch):
-
-        episode_informations = np.zeros((batch_size, 3))
-        # Create new parameters and new tasks associated to episodes, used tu update the source_param and source_task later
-        source_param_new = np.ones((batch_size, 5))
-        source_task_new = np.ones((batch_size, episode_length*3+1))
-
-        # Iterate for every episode in batch
-        for i_episode in range(batch_size):
-            # Reset the environment and pick the first action
-            state = env.reset()
-            total_return = 0
-            discounted_return = 0
-            gradient_est = 0
-            episode = createEpisode(env, episode_length, param, state) # [state, action, reward, next_state]
-
-            # Go through the episode and compute estimators
-            for t in range(episode.shape[0]):
-                # The return after this timestep
-                total_return += episode[t, 2]
-                discounted_return += discount_factor ** t * episode[t, 2]
-                gradient_est += (episode[t, 1] - param * episode[t, 0]) * episode[t, 0] / variance_action
-                source_task_new[i_episode, t*3] = episode[t, 0]
-                source_task_new[i_episode, t*3+1] = episode[t, 1]
-                source_task_new[i_episode, t*3+2] = episode[t, 2]
-            source_task_new[i_episode, t*3+3] = episode[t, 3]
-
-            episode_informations[i_episode,:] = [gradient_est, total_return, discounted_return]
-            source_param_new[i_episode, 0] = discounted_return
-            source_param_new[i_episode, 1] = param
-            source_param_new[i_episode, 2] = env.A
-            source_param_new[i_episode, 3] = env.B
-            source_param_new[i_episode, 4] = env.sigma_noise**2
-
-
-        #Update the parameters
-        N = weights_source_target.shape[0] + batch_size
-        weights_source_target_update = np.concatenate([weights_source_target, np.ones(batch_size)], axis=0) # are the weights used for computing ESS
-        gradient_off_policy_update = np.concatenate([gradient_off_policy, episode_informations[:,0]], axis=0)
-        discounted_rewards_all = np.concatenate([source_task[:,1], episode_informations[:,2]], axis=0)
-        gradient = 1/N * np.dot(np.multiply(weights_source_target_update, gradient_off_policy_update), discounted_rewards_all)
-        param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
-
-        #Compute rewards of batch
-        tot_reward_batch = np.mean(episode_informations[:,1])
-        discounted_reward_batch = np.mean(episode_informations[:,2])
-
-        # Update weights_source_target, the gradients and source tasks and parameters with new episodes
-        gradient_off_policy_new = computeGradientsSourceTarget(param, source_task_new, variance_action)
-        weights_source_target_new = computeImportanceWeightsSourceTarget(env, param, source_param_new, variance_action, source_task_new, episode_length)
-
-        # Concatenate new episodes to source tasks
-        source_param = np.concatenate((source_param, source_param_new), axis=0)
-        source_task = np.concatenate((source_task, source_task_new), axis=0)
-        weights_source_target = np.concatenate((weights_source_target, weights_source_target_new), axis=0)
-        gradient_off_policy = np.concatenate((gradient_off_policy, gradient_off_policy_new), axis=0)
-
+        [source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch] = offPolicyUpdate(env, param, source_param, episodes_per_config, source_task, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor)
         # Update statistics
         stats.episode_total_rewards[i_batch] = tot_reward_batch
         stats.episode_disc_rewards[i_batch] = discounted_reward_batch
-        #print(state, action, reward, param)
     return stats
 
 
@@ -286,7 +282,7 @@ num_episodes=1000
 batch_size=40
 num_batch = num_episodes//batch_size
 discount_factor = 0.99
-runs = 10
+runs = 1
 
 source_task = np.genfromtxt('source_task.csv', delimiter=',')
 episodes_per_config = np.genfromtxt('episodes_per_config.csv', delimiter=',').astype(int)
@@ -295,9 +291,10 @@ source_param = np.genfromtxt('source_param.csv', delimiter=',')
 discounted_reward_off_policy = np.zeros((runs, num_batch))
 discounted_reward_reinfroce = np.zeros((runs, num_batch))
 for i_run in range(runs):
+    print(i_run)
     np.random.seed(2000+500*i_run)
     initial_param = np.random.normal(mean_initial_param, variance_initial_param)
-    discounted_reward_off_policy[i_run,:] = offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, variance_action, episode_length, mean_initial_param, episodes_per_config, num_batch).episode_disc_rewards
+    discounted_reward_off_policy[i_run,:] = offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, mean_initial_param, num_batch).episode_disc_rewards
     discounted_reward_reinfroce[i_run, :] = alg.reinforce(env, num_episodes, batch_size, discount_factor, episode_length, initial_param).episode_disc_rewards
 
 np.savetxt("discounted_reward_off_policy.csv", discounted_reward_off_policy, delimiter=",")
