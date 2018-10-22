@@ -180,7 +180,8 @@ def offPolicyUpdate(env, param, source_param, episodes_per_config, source_task, 
     gradient_off_policy = computeGradientsSourceTarget(param, source_task, variance_action)
     #Compute importance weights_source_target of source task
     weights_source_target = computeImportanceWeightsSourceTarget(env, param, source_param, variance_action, source_task, episode_length)
-    num_episodes_target = m.ceil((batch_size - 2*np.sum(weights_source_target) - m.sqrt(batch_size*(batch_size+4*(np.dot(weights_source_target, weights_source_target)-np.sum(weights_source_target)))))/2)
+    # num_episodes_target = m.ceil((batch_size - 2*np.sum(weights_source_target) - m.sqrt(batch_size*(batch_size+4*(np.dot(weights_source_target, weights_source_target)-np.sum(weights_source_target)))))/2)
+    num_episodes_target = batch_size
     episode_informations = np.zeros((num_episodes_target, 3))
     # Create new parameters and new tasks associated to episodes, used tu update the source_param and source_task later
     source_param_new = np.ones((num_episodes_target, 5))
@@ -188,6 +189,7 @@ def offPolicyUpdate(env, param, source_param, episodes_per_config, source_task, 
     # Iterate for every episode in batch
     for i_episode in range(num_episodes_target):
         # Reset the environment and pick the first action
+        print(i_episode)
         state = env.reset()
         total_return = 0
         discounted_return = 0
@@ -228,7 +230,7 @@ def offPolicyUpdate(env, param, source_param, episodes_per_config, source_task, 
     # Concatenate new episodes to source tasks
     source_param = np.concatenate((source_param, source_param_new), axis=0)
     source_task = np.concatenate((source_task, source_task_new), axis=0)
-    episodes_per_config = np.concatenate(episodes_per_config, batch_size)
+    episodes_per_config = np.concatenate((episodes_per_config, [batch_size]))
     return source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch
 
 def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, mean_initial_param, num_batch):
@@ -262,6 +264,7 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, s
         episode_disc_rewards=np.zeros(num_batch))
 
     for i_batch in range(num_batch):
+        print(i_batch)
         [source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch] = offPolicyUpdate(env, param, source_param, episodes_per_config, source_task, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor)
         # Update statistics
         stats.episode_total_rewards[i_batch] = tot_reward_batch
@@ -278,11 +281,11 @@ episode_length = 50
 mean_initial_param = -0.5
 variance_initial_param = 0.2
 variance_action = 0.001
-num_episodes=1000
-batch_size=40
+num_episodes=400
+batch_size=20
 num_batch = num_episodes//batch_size
 discount_factor = 0.99
-runs = 1
+runs = 15
 
 source_task = np.genfromtxt('source_task.csv', delimiter=',')
 episodes_per_config = np.genfromtxt('episodes_per_config.csv', delimiter=',').astype(int)
@@ -290,6 +293,7 @@ source_param = np.genfromtxt('source_param.csv', delimiter=',')
 
 discounted_reward_off_policy = np.zeros((runs, num_batch))
 discounted_reward_reinfroce = np.zeros((runs, num_batch))
+print("ciao!")
 for i_run in range(runs):
     print(i_run)
     np.random.seed(2000+500*i_run)
