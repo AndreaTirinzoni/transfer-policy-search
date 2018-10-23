@@ -22,8 +22,10 @@ def optimalPolicy(env, num_episodes, discount_factor):
     # Keeps track of useful statistics#
     stats = EpisodeStats(
         episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch))
+        episode_disc_rewards=np.zeros(num_batch),
+        policy_parameter=np.zeros(num_batch))
     K = env.computeOptimalK()
+    print(K)
     for i_batch in range(num_batch):
         episode_informations = np.zeros((batch_size, 3))
         # Iterate for every episode in batch
@@ -270,14 +272,14 @@ env = gym.make('LQG1D-v0')
 #env = gym.make('LQG1D-v1')
 eps = 10**-16
 episode_length = 50
-mean_initial_param = -1
-variance_initial_param = 0.2
+mean_initial_param = -0.15
+variance_initial_param = 0.1
 variance_action = 0.001
-num_episodes=400
+num_episodes=600
 batch_size=20
 num_batch = num_episodes//batch_size
 discount_factor = 0.99
-runs = 10
+runs = 15
 
 source_task = np.genfromtxt('source_task.csv', delimiter=',')
 episodes_per_config = np.genfromtxt('episodes_per_config.csv', delimiter=',').astype(int)
@@ -306,7 +308,7 @@ np.savetxt("policy_param_reinfroce_1.csv", policy_param_reinfroce, delimiter=","
 # discounted_reward_off_policy = np.genfromtxt('discounted_reward_off_policy.csv', delimiter=',')
 # discounted_reward_reinfroce = np.genfromtxt('discounted_reward_reinfroce.csv', delimiter=',')
 
-stats_opt = optimalPolicy(env, num_episodes, discount_factor).episode_disc_rewards # Optimal policy
+stats_opt = optimalPolicy(env, num_episodes, discount_factor) # Optimal policy
 
-plt.plot_mean_and_variance(discounted_reward_reinfroce, discounted_reward_off_policy, stats_opt, num_batch, discount_factor)
-plt.plot_mean_and_variance(policy_param_off_policy, policy_param_reinfroce, stats_opt, num_batch, discount_factor)
+plt.plot_mean_and_variance(discounted_reward_reinfroce, discounted_reward_off_policy, stats_opt.episode_disc_rewards, num_batch, discount_factor)
+#plt.plot_mean_and_variance(policy_param_off_policy, policy_param_reinfroce, stats_opt.policy_parameter, num_batch, discount_factor)

@@ -83,7 +83,8 @@ def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, in
     # Keeps track of useful statistics#
     stats = EpisodeStats(
         episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch))
+        episode_disc_rewards=np.zeros(num_batch),
+        policy_parameter=np.zeros(num_batch))
 
     for i_batch in range(num_batch):
         episode_informations = np.zeros((batch_size, 3))
