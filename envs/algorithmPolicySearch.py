@@ -2,7 +2,7 @@ import numpy as np
 from collections import namedtuple
 
 variance_action = 0.001
-EpisodeStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards"])
+EpisodeStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards", "policy_parameter"])
 
 def createEpisode(env, episode_length, param, state):
     """
