@@ -11,6 +11,7 @@ def createEpisode(env, episode_length, param, state, variance_action):
         episode_length: length of the episode
         param: policy parameter
         state: initial state
+        variance_action: variance of the action distribution
     """
     episode = np.zeros((episode_length, 4)) # [state, action, reward, next_state]
     for t in range(episode_length):
@@ -30,7 +31,7 @@ def createEpisode(env, episode_length, param, state, variance_action):
         state = next_state
     return episode
 
-def sourceTaskCreationWithReinforce(env, num_episodes, batch_size, discount_factor, source_task, source_param):
+def sourceTaskCreationWithReinforce(env, num_episodes, batch_size, discount_factor):
     """
     Creates the source dataset for IS and perform REINFORCE
 
@@ -39,8 +40,6 @@ def sourceTaskCreationWithReinforce(env, num_episodes, batch_size, discount_fact
         num_episodes: Number of episodes to run for
         batch_size: Number of episodes for each batch
         discount_factor: Time-discount factor
-        source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
-        source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
 
     Returns:
         An EpisodeStats object with two numpy arrays for episode_disc_reward and episode_rewards related to the batch.
@@ -116,14 +115,15 @@ def computeImportanceWeightsSourceTarget(env, policy_param, env_param, source_pa
 
         Args:
             env: OpenAI environment
-            param: current policy parameter
+            policy_param: current policy parameter
+            env_param: current environment parameter
             source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
             variance_action: variance of the action's distribution
             source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
             episode_length: length of the episodes
 
         Returns:
-            Returns the weights of the importance sampling
+            Returns the importance weights
     """
     weights = np.ones(source_task.shape[0])
 
@@ -155,10 +155,15 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
         discount_factor: Time-discount factor
         source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
         source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
+        env_param_min: the minimum value of the environment parameter in our source_task
+        env_param_max: the maximum value of the environment parameter in our source_task
+        policy_param_min: the minimum value of the policy parameter in our source_task
+        policy_param_max: the maximum value of the policyparameter in our source_task
 
     Returns:
         A data structure containing all informations about [state, action reward] in all time steps.
         A data structure containing the parameters for all episode contained in source_task.
+        A data structure containing the number of episodes per environment_parameter - policy_parameter configuration
     """
     policy_param = np.linspace(policy_param_min, policy_param_max, 20)
     env_param = np.linspace(env_param_min, env_param_max, 80)
@@ -211,18 +216,19 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
 
 def essPerTarget(env, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, source_param, source_task, episode_length):
     """
-    Creates the source dataset for IS
+    The function computes eh ess for every combination of environment_parameter and policy_parameter
+    :param env: OpenAI environment.
+    :param variance_action: variance of the action distribution
+    :param env_param_min: minimum value assumed by the environment parameter
+    :param env_param_max: maximum value assumed by the environment parameter
+    :param policy_param_min: minimum value assumed by the policy parameter
+    :param policy_param_max: maximum value assumed by the policy parameter
+    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
+    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
+    :param episode_length: lenght of the episodes
+    :return:
 
-    Args:
-        env: OpenAI environment.
-        batch_size: Number of episodes for each batch
-        discount_factor: Time-discount factor
-        source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
-        source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
-
-    Returns:
-        A data structure containing all informations about [state, action reward] in all time steps.
-        A data structure containing the parameters for all episode contained in source_task.
+    A matrix containing ESS for every env_parameter - policy_parameter combination w.r.t the source task dataset
     """
     policy_param = np.linspace(policy_param_min, policy_param_max, 40)
     env_param = np.linspace(env_param_min, env_param_max, 160)

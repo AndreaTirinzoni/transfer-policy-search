@@ -3,8 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="580ed8e8-2879-471f-80f5-4010d44f10a5" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Figure_1.png" beforeDir="false" afterPath="$PROJECT_DIR$/Figure_1.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/importanceWeights.py" beforeDir="false" afterPath="$PROJECT_DIR$/importanceWeights.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/plotting.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sourceTaskCreation.py" beforeDir="false" afterPath="$PROJECT_DIR$/sourceTaskCreation.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -21,33 +22,34 @@
           <entry key="project.open.time.0" value="1" />
           <entry key="project.open.time.1" value="1" />
           <entry key="project.open.time.2" value="1" />
+          <entry key="project.open.time.3" value="1" />
           <entry key="project.open.time.4" value="1" />
           <entry key="project.open.time.5" value="1" />
-          <entry key="project.opened" value="5" />
+          <entry key="project.opened" value="6" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="csv" value="3" />
-          <entry key="py" value="13" />
+          <entry key="py" value="18" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="PLAIN_TEXT" value="3" />
-          <entry key="Python" value="13" />
+          <entry key="Python" value="18" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Python" value="1391" />
+          <entry key="Python" value="2735" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.vcs.git.usages" />
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="Python Console" value="212" />
-          <entry key="py" value="1179" />
+          <entry key="py" value="2523" />
         </counts>
       </usages-collector>
     </session>
@@ -57,30 +59,30 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/importanceWeights.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2060">
-              <caret line="182" column="203" selection-start-line="182" selection-start-column="203" selection-end-line="182" selection-end-column="203" />
+            <state relative-caret-position="80">
+              <caret line="4" column="21" selection-start-line="4" selection-start-column="21" selection-end-line="4" selection-end-column="21" />
               <folding>
-                <element signature="e#0#10#0" expanded="true" />
-                <element signature="e#269#1452#0" />
-                <element signature="e#1513#3429#0" />
-                <marker date="1540036708686" expanded="false" signature="3429:3431" ph="..." />
-                <marker date="1540036708686" expanded="true" signature="7246:10605" ph="..." />
+                <element signature="e#1553#3469#0" />
+                <element signature="e#3529#4271#0" />
+                <element signature="e#4348#4971#0" />
+                <element signature="e#5091#7127#0" />
+                <element signature="e#10894#12524#0" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/sourceTaskCreation.py">
+        <entry file="file://$PROJECT_DIR$/plotting.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1140">
-              <caret line="256" column="50" selection-start-line="256" selection-start-column="50" selection-end-line="256" selection-end-column="50" />
+            <state relative-caret-position="760">
+              <caret line="38" column="64" lean-forward="true" selection-start-line="38" selection-start-column="64" selection-end-line="38" selection-end-column="64" />
               <folding>
-                <element signature="e#0#10#0" expanded="true" />
-                <element signature="e#123#865#0" />
-                <element signature="e#983#4683#0" />
-                <element signature="e#4821#6827#0" />
-                <element signature="e#6990#10314#0" />
+                <element signature="e#0#17#0" expanded="true" />
+                <element signature="e#1658#2860#0" />
+                <element signature="e#3021#4253#0" />
+                <element signature="e#4400#5066#0" />
+                <element signature="e#5077#6798#0" />
               </folding>
             </state>
           </provider>
@@ -103,6 +105,7 @@
         <option value="$PROJECT_DIR$/algorithmPolicySearch.py" />
         <option value="$PROJECT_DIR$/algorithmComparison.py" />
         <option value="$PROJECT_DIR$/sourceTaskCreation.py" />
+        <option value="$PROJECT_DIR$/plotting.py" />
         <option value="$PROJECT_DIR$/importanceWeights.py" />
       </list>
     </option>
@@ -117,7 +120,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Course" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -129,6 +131,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Course" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -208,7 +211,7 @@
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.10993657" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.10993657" />
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
@@ -260,59 +263,58 @@
     <entry file="file://$PROJECT_DIR$/episodes_per_config.csv">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/plotting.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="40">
-          <caret line="2" column="19" lean-forward="true" selection-start-line="2" selection-start-column="19" selection-end-line="3" selection-end-column="34" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/algorithmPolicySearch.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="40">
+        <state relative-caret-position="-2008">
           <caret line="2" lean-forward="true" selection-start-line="2" selection-end-line="2" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
-            <element signature="e#223#965#0" />
-            <element signature="e#1058#1943#0" />
-            <element signature="e#2044#4532#0" />
-            <element signature="e#4641#7303#0" />
-            <element signature="e#7401#10501#0" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/algorithmComparison.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="540">
+        <state relative-caret-position="1520">
           <caret line="80" column="103" selection-start-line="80" selection-start-column="103" selection-end-line="80" selection-end-column="103" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/importanceWeights.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2060">
-          <caret line="182" column="203" selection-start-line="182" selection-start-column="203" selection-end-line="182" selection-end-column="203" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-            <element signature="e#269#1452#0" />
-            <element signature="e#1513#3429#0" />
-            <marker date="1540036708686" expanded="false" signature="3429:3431" ph="..." />
-            <marker date="1540036708686" expanded="true" signature="7246:10605" ph="..." />
-          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/sourceTaskCreation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1140">
-          <caret line="256" column="50" selection-start-line="256" selection-start-column="50" selection-end-line="256" selection-end-column="50" />
+        <state relative-caret-position="779">
+          <caret line="238" column="56" lean-forward="true" selection-start-line="238" selection-start-column="56" selection-end-line="238" selection-end-column="56" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
-            <element signature="e#123#865#0" />
-            <element signature="e#983#4683#0" />
             <element signature="e#4821#6827#0" />
-            <element signature="e#6990#10314#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/plotting.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="760">
+          <caret line="38" column="64" lean-forward="true" selection-start-line="38" selection-start-column="64" selection-end-line="38" selection-end-column="64" />
+          <folding>
+            <element signature="e#0#17#0" expanded="true" />
+            <element signature="e#1658#2860#0" />
+            <element signature="e#3021#4253#0" />
+            <element signature="e#4400#5066#0" />
+            <element signature="e#5077#6798#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/importanceWeights.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="80">
+          <caret line="4" column="21" selection-start-line="4" selection-start-column="21" selection-end-line="4" selection-end-column="21" />
+          <folding>
+            <element signature="e#1553#3469#0" />
+            <element signature="e#3529#4271#0" />
+            <element signature="e#4348#4971#0" />
+            <element signature="e#5091#7127#0" />
+            <element signature="e#10894#12524#0" />
           </folding>
         </state>
       </provider>
