@@ -149,20 +149,21 @@ def computeImportanceWeightsSourceTarget(env, param, source_param, variance_acti
 
 def offPolicyUpdate(env, param, source_param, episodes_per_config, source_task, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor):
     """
-
-    :param env:
-    :param param:
-    :param source_param:
-    :param episodes_per_config:
-    :param source_task:
-    :param variance_action:
-    :param episode_length:
-    :param batch_size:
-    :param t:
-    :param m_t:
-    :param v_t:
-    :param discount_factor:
+    Compute the gradient update of the policy parameter
+    :param env: OpenAI environment
+    :param param: current policy parameter
+    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
+    :param episodes_per_config: number of episodes for every policy_parameter - env_parameter
+    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
+    :param variance_action: variance of the action's distribution
+    :param episode_length: length of the episodes
+    :param batch_size: size of the batch
+    :param t: parameter of ADAM
+    :param m_t: parameter of ADAM
+    :param v_t: parameter of ADAM
+    :param discount_factor: the discout factor
     :return:
+    Returns all informations related to the update, the new sorce parameter, source tasks, new parameter ...
     """
     #Compute gradients of the source task
     gradient_off_policy = computeGradientsSourceTarget(param, source_task, variance_action)
