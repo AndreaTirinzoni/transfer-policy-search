@@ -5,40 +5,6 @@ import algorithmPolicySearch as alg
 import plotting as plt
 from collections import namedtuple
 
-def plot_mean_and_variance(stats_alg1, stats_alg2, stats_opt, num_episodes, discount_factor):
-    """
-
-    :param stats_alg1:
-    :param stats_alg2:
-    :param stats_opt:
-    :param num_episodes:
-    :param discount_factor:
-    :return:
-    """
-    mean_alg1 = np.mean(stats_alg1, axis=0)
-    mean_alg2 = np.mean(stats_alg2, axis=0)
-    var_alg1 = np.std(stats_alg1, axis=0)
-    var_alg2 = np.std(stats_alg2, axis=0)
-    x = range(num_episodes)
-
-    fig = plt.figure()
-    ax= fig.add_subplot ( 111 )
-
-    ax.plot(x, mean_alg1, marker = '.', color = 'red', markersize = 1, linewidth=2, label='REINFORCE')
-    ax.plot(x, mean_alg1+var_alg1, marker = '.', color = 'red', markersize = 1, linewidth=0.5, alpha=0.7)
-    ax.plot(x, mean_alg1-var_alg1, marker = '.', color = 'red', linewidth=0.5, markersize = 1, alpha=0.7)
-    ax.plot(x, mean_alg2, marker = '.', color = 'b', markersize = 1, linewidth=2, label='REINFORCE with transfer')
-    ax.plot(x, mean_alg2+var_alg2, marker = '.', color = 'b', markersize = 1, linewidth=0.5, alpha=0.7)
-    ax.plot(x, mean_alg2-var_alg2, marker = '.', color = 'b', linewidth=0.5, markersize = 1, alpha=0.7)
-    ax.plot(x, stats_opt, marker = '.', color = 'g', linewidth=1, markersize = 1, label='Optimal policy')
-    ax.legend()
-
-    # ax.fill(mean_alg2-var_alg2, mean_alg2+var_alg2, 'r', alpha=0.3)
-    #
-    # # Outline of the region we've filled in
-    # ax.plot(mean_alg2-var_alg2, mean_alg2+var_alg2, c='b', alpha=0.8)
-
-    plt.show()
 
 def optimalPolicy(env, num_episodes, discount_factor):
     """
@@ -255,7 +221,7 @@ def offPolicyUpdate(env, param, source_param, episodes_per_config, source_task, 
     episodes_per_config = np.concatenate((episodes_per_config, [batch_size]))
     return source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch
 
-def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, mean_initial_param, num_batch):
+def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch):
     """
         Perform transfer from source tasks, using REINFORCE with IS
 
@@ -275,7 +241,7 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, s
             An EpisodeStats object with two numpy arrays for episode_disc_reward and episode_rewards.
 
     """
-    param = mean_initial_param
+    param = initial_param
     # Adam initial params
     m_t = 0
     v_t = 0
@@ -284,10 +250,12 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, s
     # Keeps track of useful statistics#
     stats = EpisodeStats(
         episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch))
+        episode_disc_rewards=np.zeros(num_batch),
+        policy_parameter=np.zeros(num_batch))
 
     for i_batch in range(num_batch):
         print(i_batch)
+        stats.policy_parameter[i_batch] = param
         [source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch] = offPolicyUpdate(env, param, source_param, episodes_per_config, source_task, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor)
         # Update statistics
         stats.episode_total_rewards[i_batch] = tot_reward_batch
@@ -295,7 +263,7 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, s
     return stats
 
 
-EpisodeStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards"])
+EpisodeStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards", "policy_parameter"])
 np.set_printoptions(precision=4)
 env = gym.make('LQG1D-v0')
 #env = gym.make('LQG1D-v1')
@@ -310,24 +278,34 @@ num_batch = num_episodes//batch_size
 discount_factor = 0.99
 runs = 10
 
-# source_task = np.genfromtxt('source_task.csv', delimiter=',')
-# episodes_per_config = np.genfromtxt('episodes_per_config.csv', delimiter=',').astype(int)
-# source_param = np.genfromtxt('source_param.csv', delimiter=',')
+source_task = np.genfromtxt('source_task.csv', delimiter=',')
+episodes_per_config = np.genfromtxt('episodes_per_config.csv', delimiter=',').astype(int)
+source_param = np.genfromtxt('source_param.csv', delimiter=',')
 
-# discounted_reward_off_policy = np.zeros((runs, num_batch))
-# discounted_reward_reinfroce = np.zeros((runs, num_batch))
-# for i_run in range(runs):
-    # print(i_run)
-    # np.random.seed(2000+500*i_run)
-    # initial_param = np.random.normal(mean_initial_param, variance_initial_param)
-    # discounted_reward_off_policy[i_run,:] = offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, mean_initial_param, num_batch).episode_disc_rewards
-    # discounted_reward_reinfroce[i_run, :] = alg.reinforce(env, num_episodes, batch_size, discount_factor, episode_length, initial_param).episode_disc_rewards
+discounted_reward_off_policy = np.zeros((runs, num_batch))
+discounted_reward_reinfroce = np.zeros((runs, num_batch))
+policy_param_off_policy = np.zeros((runs, num_batch))
+policy_param_reinfroce = np.zeros((runs, num_batch))
+for i_run in range(runs):
+    print(i_run)
+    np.random.seed(2000+500*i_run)
+    initial_param = np.random.normal(mean_initial_param, variance_initial_param)
+    off_policy = offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
+    reinforce = alg.reinforce(env, num_episodes, batch_size, discount_factor, episode_length, initial_param)
+    discounted_reward_off_policy[i_run,:] = off_policy.episode_disc_rewards
+    discounted_reward_reinfroce[i_run, :] = reinforce.episode_disc_rewards
+    policy_param_off_policy[i_run,:] = off_policy.policy_parameter
+    policy_param_reinfroce[i_run, :] = reinforce.policy_parameter
 
-# np.savetxt("discounted_reward_off_policy.csv", discounted_reward_off_policy, delimiter=",")
-# np.savetxt("discounted_reward_reinfroce.csv", discounted_reward_reinfroce, delimiter=",")
+np.savetxt("discounted_reward_off_policy_1.csv", discounted_reward_off_policy, delimiter=",")
+np.savetxt("discounted_reward_reinfroce_1.csv", discounted_reward_reinfroce, delimiter=",")
+np.savetxt("policy_param_off_policy_1.csv", policy_param_off_policy, delimiter=",")
+np.savetxt("policy_param_reinfroce_1.csv", policy_param_reinfroce, delimiter=",")
 
-discounted_reward_off_policy = np.genfromtxt('discounted_reward_off_policy.csv', delimiter=',')
-discounted_reward_reinfroce = np.genfromtxt('discounted_reward_reinfroce.csv', delimiter=',')
+# discounted_reward_off_policy = np.genfromtxt('discounted_reward_off_policy.csv', delimiter=',')
+# discounted_reward_reinfroce = np.genfromtxt('discounted_reward_reinfroce.csv', delimiter=',')
+
 stats_opt = optimalPolicy(env, num_episodes, discount_factor).episode_disc_rewards # Optimal policy
 
 plt.plot_mean_and_variance(discounted_reward_reinfroce, discounted_reward_off_policy, stats_opt, num_batch, discount_factor)
+plt.plot_mean_and_variance(policy_param_off_policy, policy_param_reinfroce, stats_opt, num_batch, discount_factor)

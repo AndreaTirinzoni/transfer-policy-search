@@ -3,10 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="580ed8e8-2879-471f-80f5-4010d44f10a5" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Figure_1.png" beforeDir="false" afterPath="$PROJECT_DIR$/Figure_1.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/importanceWeights.py" beforeDir="false" afterPath="$PROJECT_DIR$/importanceWeights.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/plotting.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sourceTaskCreation.py" beforeDir="false" afterPath="$PROJECT_DIR$/sourceTaskCreation.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -18,71 +16,67 @@
     <session id="-876977914">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="5" />
+          <entry key="project.closed" value="7" />
           <entry key="project.open.time.0" value="1" />
           <entry key="project.open.time.1" value="1" />
-          <entry key="project.open.time.2" value="1" />
+          <entry key="project.open.time.2" value="2" />
           <entry key="project.open.time.3" value="1" />
           <entry key="project.open.time.4" value="1" />
           <entry key="project.open.time.5" value="1" />
-          <entry key="project.opened" value="6" />
+          <entry key="project.opened" value="7" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="csv" value="3" />
-          <entry key="py" value="18" />
+          <entry key="py" value="20" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="PLAIN_TEXT" value="3" />
-          <entry key="Python" value="18" />
+          <entry key="Python" value="20" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Python" value="2735" />
+          <entry key="Python" value="2881" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.vcs.git.usages" />
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="Python Console" value="212" />
-          <entry key="py" value="2523" />
+          <entry key="py" value="2669" />
         </counts>
       </usages-collector>
     </session>
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+    <leaf>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/importanceWeights.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="80">
-              <caret line="4" column="21" selection-start-line="4" selection-start-column="21" selection-end-line="4" selection-end-column="21" />
-              <folding>
-                <element signature="e#1553#3469#0" />
-                <element signature="e#3529#4271#0" />
-                <element signature="e#4348#4971#0" />
-                <element signature="e#5091#7127#0" />
-                <element signature="e#10894#12524#0" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/plotting.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="760">
               <caret line="38" column="64" lean-forward="true" selection-start-line="38" selection-start-column="64" selection-end-line="38" selection-end-column="64" />
               <folding>
                 <element signature="e#0#17#0" expanded="true" />
-                <element signature="e#1658#2860#0" />
-                <element signature="e#3021#4253#0" />
-                <element signature="e#4400#5066#0" />
-                <element signature="e#5077#6798#0" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/importanceWeights.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="2380">
+              <caret line="252" column="49" selection-start-line="252" selection-start-column="49" selection-end-line="252" selection-end-column="49" />
+              <folding>
+                <element signature="e#0#10#0" expanded="true" />
+                <element signature="e#1675#3591#0" />
+                <element signature="e#3651#4393#0" />
+                <element signature="e#4470#5093#0" />
+                <element signature="e#5213#7249#0" />
               </folding>
             </state>
           </provider>
@@ -120,6 +114,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Course" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -131,7 +126,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Course" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -267,9 +261,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-2008">
           <caret line="2" lean-forward="true" selection-start-line="2" selection-end-line="2" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -284,9 +275,19 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="779">
           <caret line="238" column="56" lean-forward="true" selection-start-line="238" selection-start-column="56" selection-end-line="238" selection-end-column="56" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/importanceWeights.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2380">
+          <caret line="252" column="49" selection-start-line="252" selection-start-column="49" selection-end-line="252" selection-end-column="49" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
-            <element signature="e#4821#6827#0" />
+            <element signature="e#1675#3591#0" />
+            <element signature="e#3651#4393#0" />
+            <element signature="e#4470#5093#0" />
+            <element signature="e#5213#7249#0" />
           </folding>
         </state>
       </provider>
@@ -297,24 +298,6 @@
           <caret line="38" column="64" lean-forward="true" selection-start-line="38" selection-start-column="64" selection-end-line="38" selection-end-column="64" />
           <folding>
             <element signature="e#0#17#0" expanded="true" />
-            <element signature="e#1658#2860#0" />
-            <element signature="e#3021#4253#0" />
-            <element signature="e#4400#5066#0" />
-            <element signature="e#5077#6798#0" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/importanceWeights.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="80">
-          <caret line="4" column="21" selection-start-line="4" selection-start-column="21" selection-end-line="4" selection-end-column="21" />
-          <folding>
-            <element signature="e#1553#3469#0" />
-            <element signature="e#3529#4271#0" />
-            <element signature="e#4348#4971#0" />
-            <element signature="e#5091#7127#0" />
-            <element signature="e#10894#12524#0" />
           </folding>
         </state>
       </provider>
