@@ -103,14 +103,12 @@ def computeGradientsSourceTarget(param, source_task, variance_action):
         Returns:
             A vector containing all the gradients
     """
-    gradient_off_policy = np.zeros(source_task.shape[0])
 
-    for i_episode in range(source_task.shape[0]):
-        gradient_off_policy[i_episode] = sum(source_task[i_episode, 2::3] - param * source_task[i_episode, 1::3] * source_task[i_episode, 1::3] / variance_action)
+    gradient_off_policy = np.sum(source_task[:, 2::3] - param * np.multiply(source_task[:, 1::3], source_task[:, 1::3]) / variance_action, axis=1)
 
     return gradient_off_policy
 
-def computeImportanceWeightsSourceTarget(env, param, source_param, variance_action, source_task, episode_length):
+def computeImportanceWeightsSourceTarget(env, param, source_param, variance_action, source_task):
     """
         Compute the importance weights considering policy and transition model_src
 
@@ -125,27 +123,20 @@ def computeImportanceWeightsSourceTarget(env, param, source_param, variance_acti
         Returns:
             Returns the weights of the importance sampling
     """
-    weights = np.ones(source_task.shape[0])
 
-    for i_episode in range(source_task.shape[0]):
-        for t in range(episode_length):
-            param_policy = source_param[i_episode, 1] #policy parameter of source
-            state_t = source_task[i_episode, t*3] # state t
-            state_t1 = source_task[i_episode, t*3+3] # state t+1
-            action_t = source_task[i_episode, t*3+1] # action t
-            variance_env = source_param[i_episode, 4] # variance of the model transition
-            A = source_param[i_episode, 2] # environment parameter A of src
-            B = source_param[i_episode, 3] # environment parameter B of src
-            policy_src = 1/m.sqrt(2*m.pi*variance_action) * m.exp(-(action_t - param*state_t)**2/(2*variance_action))
-            policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * m.exp(-(action_t - param_policy*state_t)**2/(2*variance_action))
-            model_src = 1/m.sqrt(2*m.pi*variance_env) * m.exp(-(state_t1 - env.A * state_t - env.B * action_t)**2/(2*variance_env))
-            model_tgt = 1/m.sqrt(2*m.pi*variance_env) * m.exp(-(state_t1 - A * state_t - B * action_t)**2/(2*variance_env))
-            # model_src = 1
-            # model_tgt = 1
+    param_policy = source_param[:, 1] #policy parameter of source
+    state_t = np.delete(source_task[:, 0::3], -1, axis=1)# state t
+    state_t1 = source_task[:, 3::3] # state t+1
+    action_t = source_task[:, 1::3] # action t
+    variance_env = source_param[:, 4] # variance of the model transition
+    A = source_param[:, 2] # environment parameter A of src
+    B = source_param[:, 3] # environment parameter B of src
+    policy_src = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t - param*state_t)**2/(2*variance_action))
+    policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t - np.multiply(param_policy, state_t.T).T)**2/(2*variance_action))
+    model_src = np.multiply(1/np.sqrt(2*m.pi*variance_env), np.exp(np.divide(-(state_t1 - env.A * state_t - env.B * action_t).T **2, (2*variance_env)).T).T).T
+    model_tgt = np.multiply(1/np.sqrt(2*m.pi*variance_env), np.exp(np.divide(-(state_t1 - (A * state_t.T).T - (B * action_t.T).T).T **2, (2*variance_env)).T).T).T
 
-            weights[i_episode] = weights[i_episode] * policy_src/policy_tgt * model_src/model_tgt
-
-        #print(weights[i_episode], i_episode)
+    weights = np.prod(policy_tgt / policy_src * model_tgt / model_src, axis = 1)
 
     return weights
 
@@ -170,7 +161,7 @@ def offPolicyUpdate(env, param, source_param, episodes_per_config, source_task, 
     #Compute gradients of the source task
     gradient_off_policy = computeGradientsSourceTarget(param, source_task, variance_action)
     #Compute importance weights_source_target of source task
-    weights_source_target = computeImportanceWeightsSourceTarget(env, param, source_param, variance_action, source_task, episode_length)
+    weights_source_target = computeImportanceWeightsSourceTarget(env, param, source_param, variance_action, source_task)
     # num_episodes_target = m.ceil((batch_size - 2*np.sum(weights_source_target) - m.sqrt(batch_size*(batch_size+4*(np.dot(weights_source_target, weights_source_target)-np.sum(weights_source_target)))))/2)
     num_episodes_target = batch_size
     episode_informations = np.zeros((num_episodes_target, 3))
@@ -182,21 +173,16 @@ def offPolicyUpdate(env, param, source_param, episodes_per_config, source_task, 
         # Reset the environment and pick the first action
         print(i_episode)
         state = env.reset()
-        total_return = 0
-        discounted_return = 0
-        gradient_est = 0
         episode = createEpisode(env, episode_length, param, state) # [state, action, reward, next_state]
 
         # Go through the episode and compute estimators
-        for t in range(episode.shape[0]):
-            # The return after this timestep
-            total_return += episode[t, 2]
-            discounted_return += discount_factor ** t * episode[t, 2]
-            gradient_est += (episode[t, 1] - param * episode[t, 0]) * episode[t, 0] / variance_action
-            source_task_new[i_episode, t*3] = episode[t, 0]
-            source_task_new[i_episode, t*3+1] = episode[t, 1]
-            source_task_new[i_episode, t*3+2] = episode[t, 2]
-        source_task_new[i_episode, t*3+3] = episode[t, 3]
+
+        total_return = np.sum(episode[:, 2])
+        discounted_return = np.sum(np.multiply(np.power(discount_factor*np.ones(episode.shape[0]), range(episode.shape[0])), episode[:, 2]))
+        gradient_est = np.sum((episode[:, 1] - param * np.multiply(episode[:, 0], episode[:, 0])) / variance_action)
+        source_task_new[i_episode, 0::3] = np.concatenate((episode[:, 0].T, [episode[-1, 3]]))
+        source_task_new[i_episode, 1::3] = episode[:, 1].T
+        source_task_new[i_episode, 2::3] = episode[:, 2].T
 
         episode_informations[i_episode,:] = [gradient_est, total_return, discounted_return]
         source_param_new[i_episode, 0] = discounted_return
@@ -269,16 +255,16 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, s
 EpisodeStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards", "policy_parameter"])
 np.set_printoptions(precision=4)
 env = gym.make('LQG1D-v0')
-eps = 10**-16
-episode_length = 50
-mean_initial_param = -0.8
+
+episode_length = 100
+mean_initial_param = -2
 variance_initial_param = 0.1
 variance_action = 0.001
-num_episodes=400
-batch_size=20
+num_episodes = 4000
+batch_size = 40
 num_batch = num_episodes//batch_size
 discount_factor = 0.99
-runs = 10
+runs = 2
 
 source_task = np.genfromtxt('source_task.csv', delimiter=',')
 episodes_per_config = np.genfromtxt('episodes_per_config.csv', delimiter=',').astype(int)
@@ -290,13 +276,13 @@ policy_param_off_policy = np.zeros((runs, num_batch))
 policy_param_reinfroce = np.zeros((runs, num_batch))
 for i_run in range(runs):
     print(i_run)
-    np.random.seed(2000+500*i_run)
+    np.random.seed(2000+5*i_run)
     initial_param = np.random.normal(mean_initial_param, variance_initial_param)
-    #off_policy = offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
+    off_policy = offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
     reinforce = alg.reinforce(env, num_episodes, batch_size, discount_factor, episode_length, initial_param)
-    #discounted_reward_off_policy[i_run,:] = off_policy.episode_disc_rewards
+    discounted_reward_off_policy[i_run,:] = off_policy.episode_disc_rewards
     discounted_reward_reinfroce[i_run, :] = reinforce.episode_disc_rewards
-    #policy_param_off_policy[i_run,:] = off_policy.policy_parameter
+    policy_param_off_policy[i_run,:] = off_policy.policy_parameter
     policy_param_reinfroce[i_run, :] = reinforce.policy_parameter
 
 # np.savetxt("discounted_reward_off_policy.csv", discounted_reward_off_policy, delimiter=",")

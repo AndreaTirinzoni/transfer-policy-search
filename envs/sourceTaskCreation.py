@@ -125,24 +125,21 @@ def computeImportanceWeightsSourceTarget(env, policy_param, env_param, source_pa
         Returns:
             Returns the importance weights
     """
-    weights = np.ones(source_task.shape[0])
 
-    for i_episode in range(source_task.shape[0]):
-        for t in range(episode_length):
-            policy_param_src = source_param[i_episode, 1] #policy parameter of source
-            state_t = source_task[i_episode, t*3] # state t
-            state_t1 = source_task[i_episode, t*3+3] # state t+1
-            action_t = source_task[i_episode, t*3+1] # action t
-            variance_env = source_param[i_episode, 4] # variance of the model transition
-            A = source_param[i_episode, 2] # environment parameter A of src
-            B = source_param[i_episode, 3] # environment parameter B of src
-            policy_src = 1/m.sqrt(2*m.pi*variance_action) * m.exp(-(action_t - policy_param*state_t)**2/(2*variance_action))
-            policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * m.exp(-(action_t - policy_param_src*state_t)**2/(2*variance_action))
-            model_src = 1/m.sqrt(2*m.pi*variance_env) * m.exp(-(state_t1 - env_param * state_t - env.B * action_t)**2/(2*variance_env))
-            model_tgt = 1/m.sqrt(2*m.pi*variance_env) * m.exp(-(state_t1 - A * state_t - B * action_t)**2/(2*variance_env))
-            # model_src = 1
-            # model_tgt = 1
-            weights[i_episode] = weights[i_episode] * policy_src/policy_tgt * model_src/model_tgt
+    param_policy = source_param[:, 1] #policy parameter of source
+    state_t = np.delete(source_task[:, 0::3], -1, axis=1)# state t
+    state_t1 = source_task[:, 3::3] # state t+1
+    action_t = source_task[:, 1::3] # action t
+    variance_env = source_param[:, 4] # variance of the model transition
+    A = source_param[:, 2] # environment parameter A of src
+    B = source_param[:, 3] # environment parameter B of src
+    policy_src = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t - policy_param*state_t)**2/(2*variance_action))
+    policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t - np.multiply(param_policy, state_t.T).T)**2/(2*variance_action))
+    model_src = np.multiply(1/np.sqrt(2*m.pi*variance_env), np.exp(np.divide(-(state_t1 - env_param * state_t - B * action_t).T **2, (2*variance_env)).T).T).T
+    model_tgt = np.multiply(1/np.sqrt(2*m.pi*variance_env), np.exp(np.divide(-(state_t1 - (A * state_t.T).T - (B * action_t.T).T).T **2, (2*variance_env)).T).T).T
+
+    weights = np.prod(policy_tgt / policy_src * model_tgt / model_src, axis = 1)
+
     return weights
 
 def sourceTaskCreation(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max):
@@ -177,28 +174,19 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
     source_param = np.zeros((length_source_task, 5))
     for i_policy_param in range(policy_param.shape[0]):
         for i_env_param in range(env_param.shape[0]):
-            episode_informations = np.zeros((episode_per_param, 3))
-            #env.setA(env.param[i_env_param])
+            env.setA(env_param[i_env_param])
             # Iterate for every episode
             for i_episode_param in range(episode_per_param):
             # Reset the environment and pick the first action
                 state = env.reset()
-                episode = np.zeros((episode_length, 4)) # [state, action, reward, next_state]
-                total_return = 0
-                discounted_return = 0
-                gradient_est = 0
                 episode = createEpisode(env, episode_length, policy_param[i_policy_param], state, variance_action) # [state, action, reward, next_state]
                 # Go through the episode and compute estimators
-                for t in range(episode.shape[0]):
-                    # The return after this timestep
-                    #total_return += episode[t, 2]
-                    discounted_return += discount_factor ** t * episode[t, 2]
 
-                    #I populate the source task
-                    source_task[i_task, t*3] = episode[t, 0]
-                    source_task[i_task, t*3+1] = episode[t, 1]
-                    source_task[i_task, t*3+2] = episode[t, 2]
-                source_task[i_task, t*3+3] = episode[t, 3]
+                discounted_return = np.sum(np.multiply(np.power(discount_factor*np.ones(episode.shape[0]), range(episode.shape[0])), episode[:, 2]))
+
+                #I populate the source task
+                source_task[i_task, 1::3] = episode[:, 1]
+                source_task[i_task, 2::3] = episode[:, 2]
 
                 #I populate the source parameters
                 source_param[i_task, 0] = discounted_return

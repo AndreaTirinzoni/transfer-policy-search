@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 from collections import namedtuple
 from matplotlib import pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 # def plot_value_function(V, title="Value Function"):
     # """
@@ -116,7 +115,7 @@ def plot_algorithm_comparison_disc_two(stats_alg1, stats_alg2, stats_opt, num_ep
         plt.show(fig1)
     return fig1
 
-def plot_mean_and_variance(stats_alg1, stats_alg2, stats_alg3, stats_opt, num_batch, discount_factor):
+def plot_mean_and_variance(stats_alg1, stats_alg2, stats_opt, num_batch, discount_factor):
     """
     Plot the mean and standard deviation of the discounted rewards in every batch over the multiple runs
     :param stats_alg1: Set of discounted rewards of alg1 over multiple runs
@@ -129,10 +128,10 @@ def plot_mean_and_variance(stats_alg1, stats_alg2, stats_alg3, stats_opt, num_ba
     """
     mean_alg1 = np.mean(stats_alg1, axis=0)
     mean_alg2 = np.mean(stats_alg2, axis=0)
-    mean_alg3 = np.mean(stats_alg3, axis=0)
+    #mean_alg3 = np.mean(stats_alg3, axis=0)
     var_alg1 = np.std(stats_alg1, axis=0)
     var_alg2 = np.std(stats_alg1, axis=0)
-    var_alg3 = np.std(stats_alg3, axis=0)
+    #var_alg3 = np.std(stats_alg3, axis=0)
     x = range(num_batch)
 
     fig = plt.figure()
@@ -144,9 +143,9 @@ def plot_mean_and_variance(stats_alg1, stats_alg2, stats_alg3, stats_opt, num_ba
     ax.plot(x, mean_alg2, marker = '.', color = 'b', markersize = 1, linewidth=2, label='REINFORCE with baseline')
     ax.plot(x, mean_alg2+var_alg2, marker = '.', color = 'b', markersize = 1, linewidth=0.5, alpha=0.7)
     ax.plot(x, mean_alg2-var_alg2, marker = '.', color = 'b', linewidth=0.5, markersize = 1, alpha=0.7)
-    ax.plot(x, mean_alg3, marker = '.', color = 'b', markersize = 1, linewidth=2, label='G(PO)MDP')
-    ax.plot(x, mean_alg3+var_alg3, marker = '.', color = 'b', markersize = 1, linewidth=0.5, alpha=0.7)
-    ax.plot(x, mean_alg3-var_alg3, marker = '.', color = 'b', linewidth=0.5, markersize = 1, alpha=0.7)
+    # ax.plot(x, mean_alg3, marker = '.', color = 'c', markersize = 1, linewidth=2, label='G(PO)MDP')
+    # ax.plot(x, mean_alg3+var_alg3, marker = '.', color = 'c', markersize = 1, linewidth=0.5, alpha=0.7)
+    # ax.plot(x, mean_alg3-var_alg3, marker = '.', color = 'c', linewidth=0.5, markersize = 1, alpha=0.7)
     ax.plot(x, stats_opt, marker = '.', color = 'g', linewidth=1, markersize = 1, label='Optimal policy')
     ax.legend()
 
