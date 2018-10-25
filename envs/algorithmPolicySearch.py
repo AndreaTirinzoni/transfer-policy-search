@@ -88,6 +88,7 @@ def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, in
 
     for i_batch in range(num_batch):
         episode_informations = np.zeros((batch_size, 3))
+        stats.policy_parameter[i_batch] = param
         # Iterate for every episode in batch
         for i_episode in range(batch_size):
             # Reset the environment and pick the first action
@@ -145,10 +146,12 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_le
     # Keeps track of useful statistics#
     stats = EpisodeStats(
         episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch))
+        episode_disc_rewards=np.zeros(num_batch),
+        policy_parameter=np.zeros(num_batch))
 
     for i_batch in range(num_batch):
         episode_informations = np.zeros((batch_size, 3))
+        stats.policy_parameter[i_batch] = param
         # Iterate for every episode in batch
         for i_episode in range(batch_size):
             # Reset the environment and pick the first action
@@ -210,21 +213,21 @@ def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initi
     # Keeps track of useful statistics#
     stats = EpisodeStats(
         episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch))
+        episode_disc_rewards=np.zeros(num_batch),
+        policy_parameter=np.zeros(num_batch))
 
     for i_batch in range(num_batch):
         episode_informations = np.zeros((batch_size, 2))
         gradient_est_timestep = np.zeros((batch_size, episode_length))
         reward_est_timestep = np.zeros((batch_size, episode_length))
+        stats.policy_parameter[i_batch] = param
         # Iterate for every episode in batch
         for i_episode in range(batch_size):
             # Reset the environment and pick the first action
             state = env.reset()
-            episode = np.zeros((episode_length, 4)) # [state, action, reward, next_state]
             total_return = 0
             discounted_return = 0
             gradient_est = 0
-            baseline = 0
 
             # One episode in the environment
             episode = createEpisode(env, episode_length, param, state) # [state, action, reward, next_state]
@@ -240,7 +243,6 @@ def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initi
                 episode_informations[i_episode,:] = [total_return, discounted_return]
         #estimate = 0
 
-        baseline = np.zeros((episode_length, 1))
         baseline_den = sum(sum(gradient_est_timestep[i,:]**2) for i in range(batch_size))
         baseline = list(np.dot(gradient_est_timestep[:,i]**2, reward_est_timestep[:,i])/baseline_den for i in range(episode_length))
 

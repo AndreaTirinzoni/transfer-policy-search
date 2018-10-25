@@ -25,7 +25,6 @@ def optimalPolicy(env, num_episodes, discount_factor):
         episode_disc_rewards=np.zeros(num_batch),
         policy_parameter=np.zeros(num_batch))
     K = env.computeOptimalK()
-    print(K)
     for i_batch in range(num_batch):
         episode_informations = np.zeros((batch_size, 3))
         # Iterate for every episode in batch
@@ -57,8 +56,9 @@ def optimalPolicy(env, num_episodes, discount_factor):
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
         # Update statistics
-        stats.episode_total_rewards[i_batch] += tot_reward_batch
-        stats.episode_disc_rewards[i_batch] += discounted_reward_batch
+        stats.episode_total_rewards[i_batch] = tot_reward_batch
+        stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.policy_parameter[i_batch] = K
 
         #print(state, action, reward, param)
     return stats
@@ -269,17 +269,16 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, s
 EpisodeStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards", "policy_parameter"])
 np.set_printoptions(precision=4)
 env = gym.make('LQG1D-v0')
-#env = gym.make('LQG1D-v1')
 eps = 10**-16
 episode_length = 50
-mean_initial_param = -0.15
+mean_initial_param = -0.8
 variance_initial_param = 0.1
 variance_action = 0.001
-num_episodes=600
+num_episodes=400
 batch_size=20
 num_batch = num_episodes//batch_size
 discount_factor = 0.99
-runs = 15
+runs = 10
 
 source_task = np.genfromtxt('source_task.csv', delimiter=',')
 episodes_per_config = np.genfromtxt('episodes_per_config.csv', delimiter=',').astype(int)
@@ -293,20 +292,22 @@ for i_run in range(runs):
     print(i_run)
     np.random.seed(2000+500*i_run)
     initial_param = np.random.normal(mean_initial_param, variance_initial_param)
-    off_policy = offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
+    #off_policy = offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
     reinforce = alg.reinforce(env, num_episodes, batch_size, discount_factor, episode_length, initial_param)
-    discounted_reward_off_policy[i_run,:] = off_policy.episode_disc_rewards
+    #discounted_reward_off_policy[i_run,:] = off_policy.episode_disc_rewards
     discounted_reward_reinfroce[i_run, :] = reinforce.episode_disc_rewards
-    policy_param_off_policy[i_run,:] = off_policy.policy_parameter
+    #policy_param_off_policy[i_run,:] = off_policy.policy_parameter
     policy_param_reinfroce[i_run, :] = reinforce.policy_parameter
 
-np.savetxt("discounted_reward_off_policy_1.csv", discounted_reward_off_policy, delimiter=",")
-np.savetxt("discounted_reward_reinfroce_1.csv", discounted_reward_reinfroce, delimiter=",")
-np.savetxt("policy_param_off_policy_1.csv", policy_param_off_policy, delimiter=",")
-np.savetxt("policy_param_reinfroce_1.csv", policy_param_reinfroce, delimiter=",")
+# np.savetxt("discounted_reward_off_policy.csv", discounted_reward_off_policy, delimiter=",")
+# np.savetxt("discounted_reward_reinfroce.csv", discounted_reward_reinfroce, delimiter=",")
+# np.savetxt("policy_param_off_policy.csv", policy_param_off_policy, delimiter=",")
+# np.savetxt("policy_param_reinfroce.csv", policy_param_reinfroce, delimiter=",")
 
-# discounted_reward_off_policy = np.genfromtxt('discounted_reward_off_policy.csv', delimiter=',')
-# discounted_reward_reinfroce = np.genfromtxt('discounted_reward_reinfroce.csv', delimiter=',')
+# discounted_reward_off_policy = np.genfromtxt('discounted_reward_off_policy_1.csv', delimiter=',')
+# discounted_reward_reinfroce = np.genfromtxt('discounted_reward_reinfroce_1.csv', delimiter=',')
+# policy_param_off_policy = np.genfromtxt('policy_param_off_policy_1.csv', delimiter=',')
+# policy_param_reinfroce = np.genfromtxt('policy_param_reinfroce_1.csv', delimiter=',')
 
 stats_opt = optimalPolicy(env, num_episodes, discount_factor) # Optimal policy
 
