@@ -1,6 +1,6 @@
 import gym
-import math as m
 import numpy as np
+import importanceWeights as iw
 
 def createEpisode(env, episode_length, param, state, variance_action):
     """
@@ -109,39 +109,6 @@ def sourceTaskCreationWithReinforce(env, num_episodes, batch_size, discount_fact
         #print(state, action, reward, param)
     return stats, source_task, source_param
 
-def computeImportanceWeightsSourceTarget(env, policy_param, env_param, source_param, variance_action, source_task, episode_length):
-    """
-        Compute the importance weights considering policy and transition model_src
-
-        Args:
-            env: OpenAI environment
-            policy_param: current policy parameter
-            env_param: current environment parameter
-            source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
-            variance_action: variance of the action's distribution
-            source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
-            episode_length: length of the episodes
-
-        Returns:
-            Returns the importance weights
-    """
-
-    param_policy = source_param[:, 1] #policy parameter of source
-    state_t = np.delete(source_task[:, 0::3], -1, axis=1)# state t
-    state_t1 = source_task[:, 3::3] # state t+1
-    action_t = source_task[:, 1::3] # action t
-    variance_env = source_param[:, 4] # variance of the model transition
-    A = source_param[:, 2] # environment parameter A of src
-    B = source_param[:, 3] # environment parameter B of src
-    policy_src = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t - policy_param*state_t)**2/(2*variance_action))
-    policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t - np.multiply(param_policy, state_t.T).T)**2/(2*variance_action))
-    model_src = np.multiply(1/np.sqrt(2*m.pi*variance_env), np.exp(np.divide(-(state_t1 - env_param * state_t - B * action_t).T **2, (2*variance_env)).T).T).T
-    model_tgt = np.multiply(1/np.sqrt(2*m.pi*variance_env), np.exp(np.divide(-(state_t1 - (A * state_t.T).T - (B * action_t.T).T).T **2, (2*variance_env)).T).T).T
-
-    weights = np.prod(policy_tgt / policy_src * model_tgt / model_src, axis = 1)
-
-    return weights
-
 def sourceTaskCreation(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max):
     """
     Creates the source dataset for IS
@@ -162,8 +129,8 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
         A data structure containing the parameters for all episode contained in source_task.
         A data structure containing the number of episodes per environment_parameter - policy_parameter configuration
     """
-    policy_param = np.linspace(policy_param_min, policy_param_max, 20)
-    env_param = np.linspace(env_param_min, env_param_max, 80)
+    policy_param = np.linspace(policy_param_min, policy_param_max, 10)
+    env_param = np.linspace(env_param_min, env_param_max, 40)
     i_task = 0
     episodes_per_configuration = np.zeros(policy_param.shape[0]*env_param.shape[0])
     i_configuration = 0
@@ -174,7 +141,7 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
     source_param = np.zeros((length_source_task, 5))
     for i_policy_param in range(policy_param.shape[0]):
         for i_env_param in range(env_param.shape[0]):
-            env.setA(env_param[i_env_param])
+            #env.setA(env_param[i_env_param])
             # Iterate for every episode
             for i_episode_param in range(episode_per_param):
             # Reset the environment and pick the first action
@@ -185,6 +152,7 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
                 discounted_return = np.sum(np.multiply(np.power(discount_factor*np.ones(episode.shape[0]), range(episode.shape[0])), episode[:, 2]))
 
                 #I populate the source task
+                source_task[i_task, 0::3] = np.concatenate((episode[:, 0].T, [episode[-1, 3]]))
                 source_task[i_task, 1::3] = episode[:, 1]
                 source_task[i_task, 2::3] = episode[:, 2]
 
@@ -202,10 +170,9 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
 
     return source_task, source_param, episodes_per_configuration.astype(int)
 
-def essPerTarget(env, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, source_param, source_task, episode_length):
+def essPerTarget(variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, source_param, source_task, episode_length):
     """
     The function computes eh ess for every combination of environment_parameter and policy_parameter
-    :param env: OpenAI environment.
     :param variance_action: variance of the action distribution
     :param env_param_min: minimum value assumed by the environment parameter
     :param env_param_max: maximum value assumed by the environment parameter
@@ -225,7 +192,7 @@ def essPerTarget(env, variance_action, env_param_min, env_param_max, policy_para
     ess = np.zeros((env_param.shape[0], policy_param.shape[0]))
     for i_policy_param in range(env_param.shape[0]):
         for i_env_param in range(policy_param.shape[0]):
-            weights_per_configuration = computeImportanceWeightsSourceTarget(env, policy_param[i_policy_param], env_param[i_env_param], source_param, variance_action, source_task, episode_length)
+            weights_per_configuration = iw.computeImportanceWeightsSourceTarget(policy_param[i_policy_param], env_param[i_env_param], source_param, variance_action, source_task, episode_length)
             ess[i_env_param, i_policy_param] = np.linalg.norm(weights_per_configuration, 1)**2 / np.linalg.norm(weights_per_configuration, 2)**2
     return ess
 
@@ -245,9 +212,9 @@ policy_param_max = 0
 
 
 [source_task, source_param, episodes_per_config] = sourceTaskCreation(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max)
-ess = essPerTarget(env, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, source_param, source_task, episode_length)
+#ess = essPerTarget(variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, source_param, source_task, episode_length)
 
 np.savetxt("source_task.csv", source_task, delimiter=",")
 np.savetxt("source_param.csv", source_param, delimiter=",")
 np.savetxt("episodes_per_config.csv", episodes_per_config, delimiter=",")
-np.savetxt("ess_source_tasks.csv", ess, delimiter=",")
+#np.savetxt("ess_source_tasks.csv", ess, delimiter=",")

@@ -1,7 +1,7 @@
 import gym
 from collections import namedtuple
 import numpy as np
-import plotting as plot
+from matplotlib import pyplot as plt
 import algorithmPolicySearch as alg
 
 def optimalPolicy(env, num_episodes, batch_size, discount_factor):
@@ -61,6 +61,52 @@ def optimalPolicy(env, num_episodes, batch_size, discount_factor):
         #print(state, action, reward, param)
     return stats
 
+def plot_mean_and_variance(stats_alg1, stats_alg2, stats_alg3, stats_opt, num_batch, discount_factor):
+    """
+    Plot the mean and standard deviation of the discounted rewards in every batch over the multiple runs
+    :param stats_alg1: Set of discounted rewards of alg1 over multiple runs
+    :param stats_alg2: Set of discounted rewards of alg2 over multiple runs
+    :param stats_opt:  Set of discounted rewards of the optimal policy
+    :param num_batch: number of batch in every simulation
+    :param discount_factor: discount factor of the algorithm
+    :return:
+            Returns the plot
+    """
+    mean_alg1 = np.mean(stats_alg1, axis=0)
+    mean_alg2 = np.mean(stats_alg2, axis=0)
+    mean_alg3 = np.mean(stats_alg3, axis=0)
+    var_alg1 = np.std(stats_alg1, axis=0)
+    var_alg2 = np.std(stats_alg1, axis=0)
+    var_alg3 = np.std(stats_alg3, axis=0)
+    x = range(num_batch)
+
+    fig = plt.figure()
+    ax= fig.add_subplot ( 111 )
+
+    ax.plot(x, mean_alg1, marker = '.', color = 'red', markersize = 1, linewidth=2, label='REINFORCE')
+    ax.plot(x, mean_alg1+var_alg1, marker = '.', color = 'red', markersize = 1, linewidth=0.5, alpha=0.7)
+    ax.plot(x, mean_alg1-var_alg1, marker = '.', color = 'red', linewidth=0.5, markersize = 1, alpha=0.7)
+    ax.plot(x, mean_alg2, marker = '.', color = 'b', markersize = 1, linewidth=2, label='REINFORCE with baseline')
+    ax.plot(x, mean_alg2+var_alg2, marker = '.', color = 'b', markersize = 1, linewidth=0.5, alpha=0.7)
+    ax.plot(x, mean_alg2-var_alg2, marker = '.', color = 'b', linewidth=0.5, markersize = 1, alpha=0.7)
+    ax.plot(x, mean_alg3, marker = '.', color = 'c', markersize = 1, linewidth=2, label='G(PO)MDP')
+    ax.plot(x, mean_alg3+var_alg3, marker = '.', color = 'c', markersize = 1, linewidth=0.5, alpha=0.7)
+    ax.plot(x, mean_alg3-var_alg3, marker = '.', color = 'c', linewidth=0.5, markersize = 1, alpha=0.7)
+    ax.plot(x, stats_opt, marker = '.', color = 'g', linewidth=1, markersize = 1, label='Optimal policy')
+    ax.legend()
+
+    title = "Discounted reward over Batches - gamma = " + str(discount_factor)
+    plt.title(title)
+
+    # ax.fill(mean_alg2-var_alg2, mean_alg2+var_alg2, 'r', alpha=0.3)
+    #
+    # # Outline of the region we've filled in
+    # ax.plot(mean_alg2-var_alg2, mean_alg2+var_alg2, c='b', alpha=0.8)
+
+    plt.show()
+
+    return fig
+
 EpisodeStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards", "policy_parameter"])
 # Inizialize environment and parameters
 env = gym.make('LQG1D-v0')
@@ -109,5 +155,5 @@ stats_opt = optimalPolicy(env, num_episodes, batch_size, discount_factor) # Opti
 # print(stats_opt.episode_disc_rewards)
 
 # Compare the statistics of the different algorithms
-plot.plot_mean_and_variance(reward_reinforce, reward_reinforce_baseline, reward_gpomdp, stats_opt.episode_disc_rewards, num_batch, discount_factor)
-plot.plot_mean_and_variance(policy_reinforce, policy_reinforce_baseline, policy_gpomdp, stats_opt.policy_parameter, num_batch, discount_factor)
+plot_mean_and_variance(reward_reinforce, reward_reinforce_baseline, reward_gpomdp, stats_opt.episode_disc_rewards, num_batch, discount_factor)
+#plot.plot_mean_and_variance(policy_reinforce, policy_reinforce_baseline, policy_gpomdp, stats_opt.policy_parameter, num_batch, discount_factor)
