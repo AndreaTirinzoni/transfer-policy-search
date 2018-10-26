@@ -109,7 +109,8 @@ def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, in
 
 
         gradient = 1/batch_size * np.dot(episode_informations[:,0], episode_informations[:,2])
-        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+        #param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+        param = param - 0.01 * gradient
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
         # Update statistics
@@ -176,7 +177,8 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_le
         # baseline = 0
         # Update parameters
         gradient = 1/batch_size * np.dot(episode_informations[:,0], episode_informations[:,2]-baseline)
-        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+        #param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+        param = param - 0.01 * gradient
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
         # Update statistics
@@ -248,7 +250,8 @@ def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initi
 
         gradient = sum(np.dot(gradient_est_timestep[i,:], (reward_est_timestep[i,:]-baseline[:])) for i in range(batch_size))
         # print(baseline, gradient, param)
-        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+        #param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+        param = param - 0.01 * gradient
         tot_reward_batch = np.mean(episode_informations[:,0])
         discounted_reward_batch = np.mean(episode_informations[:,1])
         # Update statistics

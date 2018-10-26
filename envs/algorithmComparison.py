@@ -110,11 +110,11 @@ def plot_mean_and_variance(stats_alg1, stats_alg2, stats_alg3, stats_opt, num_ba
 EpisodeStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards", "policy_parameter"])
 # Inizialize environment and parameters
 env = gym.make('LQG1D-v0')
-episode_length = 100
-mean_initial_param = -0.1
+episode_length = 50
+mean_initial_param = -2
 variance_initial_param = 0.01
-num_episodes=2000
-batch_size=40
+num_episodes=3000
+batch_size=30
 num_batch = num_episodes//batch_size
 discount_factor = 0.99
 

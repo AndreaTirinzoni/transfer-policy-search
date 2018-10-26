@@ -3,7 +3,6 @@ import numpy as np
 import algorithmPolicySearch as alg
 from collections import namedtuple
 
-
 def optimalPolicy(env, num_episodes, discount_factor, batch_size, episode_length):
     """
     Optimal policy (uses Riccati equation)
