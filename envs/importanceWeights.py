@@ -1,7 +1,7 @@
 import math as m
 import numpy as np
-import algorithmPolicySearch as alg
 from collections import namedtuple
+import algorithmPolicySearch as alg
 
 def optimalPolicy(env, num_episodes, discount_factor, batch_size, episode_length):
     """
@@ -195,6 +195,7 @@ def offPolicyUpdate(env, param, source_param, episodes_per_config, source_task, 
     discounted_rewards_all = np.concatenate([source_task[:,1], episode_informations[:,2]], axis=0)
     gradient = 1/N * np.dot(np.multiply(weights_source_target_update, gradient_off_policy_update), discounted_rewards_all)
     param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+    #param = param + 0.01 * gradient
 
     #Compute rewards of batch
     tot_reward_batch = np.mean(episode_informations[:,1])

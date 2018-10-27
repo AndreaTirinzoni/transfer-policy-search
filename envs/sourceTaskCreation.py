@@ -1,6 +1,5 @@
 import gym
 import numpy as np
-import importanceWeights as iw
 
 def createEpisode(env, episode_length, param, state, variance_action):
     """
@@ -129,8 +128,8 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
         A data structure containing the parameters for all episode contained in source_task.
         A data structure containing the number of episodes per environment_parameter - policy_parameter configuration
     """
-    policy_param = np.linspace(policy_param_min, policy_param_max, 10)
-    env_param = np.linspace(env_param_min, env_param_max, 40)
+    policy_param = np.linspace(policy_param_min, policy_param_max, 20)
+    env_param = np.linspace(env_param_min, env_param_max, 80)
     i_task = 0
     episodes_per_configuration = np.zeros(policy_param.shape[0]*env_param.shape[0])
     i_configuration = 0
@@ -170,32 +169,6 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
 
     return source_task, source_param, episodes_per_configuration.astype(int)
 
-def essPerTarget(variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, source_param, source_task, episode_length):
-    """
-    The function computes eh ess for every combination of environment_parameter and policy_parameter
-    :param variance_action: variance of the action distribution
-    :param env_param_min: minimum value assumed by the environment parameter
-    :param env_param_max: maximum value assumed by the environment parameter
-    :param policy_param_min: minimum value assumed by the policy parameter
-    :param policy_param_max: maximum value assumed by the policy parameter
-    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
-    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
-    :param episode_length: lenght of the episodes
-    :return:
-
-    A matrix containing ESS for every env_parameter - policy_parameter combination w.r.t the source task dataset
-    """
-    policy_param = np.linspace(policy_param_min, policy_param_max, 40)
-    env_param = np.linspace(env_param_min, env_param_max, 160)
-    i_task = 0
-    i_configuration = 0
-    ess = np.zeros((env_param.shape[0], policy_param.shape[0]))
-    for i_policy_param in range(env_param.shape[0]):
-        for i_env_param in range(policy_param.shape[0]):
-            weights_per_configuration = iw.computeImportanceWeightsSourceTarget(policy_param[i_policy_param], env_param[i_env_param], source_param, variance_action, source_task, episode_length)
-            ess[i_env_param, i_policy_param] = np.linalg.norm(weights_per_configuration, 1)**2 / np.linalg.norm(weights_per_configuration, 2)**2
-    return ess
-
 env = gym.make('LQG1D-v0')
 episode_length = 50
 mean_initial_param = 0
@@ -210,11 +183,8 @@ env_param_max = 2
 policy_param_min = -1
 policy_param_max = 0
 
-
 [source_task, source_param, episodes_per_config] = sourceTaskCreation(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max)
-#ess = essPerTarget(variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, source_param, source_task, episode_length)
 
 np.savetxt("source_task.csv", source_task, delimiter=",")
 np.savetxt("source_param.csv", source_param, delimiter=",")
 np.savetxt("episodes_per_config.csv", episodes_per_config, delimiter=",")
-#np.savetxt("ess_source_tasks.csv", ess, delimiter=",")

@@ -93,24 +93,18 @@ def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, in
         for i_episode in range(batch_size):
             # Reset the environment and pick the first action
             state = env.reset()
-            episode = np.zeros((episode_length, 4)) # [state, action, reward, next_state]
-            total_return = 0
-            discounted_return = 0
-            gradient_est = 0
             episode = createEpisode(env, episode_length, param, state) # [state, action, reward, next_state]
 
-            # Go through the episode and compute estimators
-            for t in range(episode.shape[0]):
-                # The return after this timestep
-                total_return += episode[t, 2]
-                discounted_return += discount_factor ** t * episode[t, 2]
-                gradient_est += (episode[t, 1] - param * episode[t, 0]) * episode[t, 0] / variance_action
+            # The return after this timestep
+            total_return = np.sum(episode[:, 2])
+            discounted_return = np.sum(np.multiply(np.power(discount_factor*np.ones(episode.shape[0]), range(episode.shape[0])), episode[:, 2]))
+            gradient_est = np.sum(np.multiply((episode[:, 1] - param * episode[:, 0]), episode[:, 0]) / variance_action)
             episode_informations[i_episode,:] = [gradient_est, total_return, discounted_return]
 
 
         gradient = 1/batch_size * np.dot(episode_informations[:,0], episode_informations[:,2])
-        #param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
-        param = param - 0.01 * gradient
+        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+        #param = param + 0.01 * gradient
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
         # Update statistics
@@ -157,19 +151,14 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_le
         for i_episode in range(batch_size):
             # Reset the environment and pick the first action
             state = env.reset()
-            episode = np.zeros((episode_length, 4)) # [state, action, reward, next_state]
-            total_return = 0
-            discounted_return = 0
-            gradient_est = 0
 
             episode = createEpisode(env, episode_length, param, state) # [state, action, reward, next_state]
 
             # Go through the episode and compute estimators
-            for t in range(episode.shape[0]):
-                # The return after this timestep
-                total_return += episode[t, 2]
-                discounted_return += discount_factor ** t * episode[t, 2]
-                gradient_est += (episode[t, 1] - param * episode[t, 0]) * episode[t, 0] / variance_action
+            # The return after this timestep
+            total_return = np.sum(episode[:, 2])
+            discounted_return = np.sum(np.multiply(np.power(discount_factor*np.ones(episode.shape[0]), range(episode.shape[0])), episode[:, 2]))
+            gradient_est = np.sum(np.multiply((episode[:, 1] - param * episode[:, 0]), episode[:, 0]) / variance_action)
             episode_informations[i_episode,:] = [gradient_est, total_return, discounted_return]
 
 
@@ -177,8 +166,8 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_le
         # baseline = 0
         # Update parameters
         gradient = 1/batch_size * np.dot(episode_informations[:,0], episode_informations[:,2]-baseline)
-        #param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
-        param = param - 0.01 * gradient
+        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+        #param = param + 0.01 * gradient
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
         # Update statistics
@@ -250,8 +239,8 @@ def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initi
 
         gradient = sum(np.dot(gradient_est_timestep[i,:], (reward_est_timestep[i,:]-baseline[:])) for i in range(batch_size))
         # print(baseline, gradient, param)
-        #param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
-        param = param - 0.01 * gradient
+        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+        #param = param + 0.01 * gradient
         tot_reward_batch = np.mean(episode_informations[:,0])
         discounted_reward_batch = np.mean(episode_informations[:,1])
         # Update statistics
