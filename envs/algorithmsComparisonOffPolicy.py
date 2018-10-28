@@ -90,9 +90,9 @@ np.set_printoptions(precision=4)
 env = gym.make('LQG1D-v0')
 
 mean_initial_param = 0
-episode_length = 50
-variance_initial_param = 0.01
-variance_action = 0.001
+episode_length = 20
+variance_initial_param = 0
+variance_action = 0.1
 num_episodes = 3000
 batch_size = 30
 num_batch = num_episodes//batch_size
@@ -100,31 +100,31 @@ discount_factor = 0.99
 runs = 5
 
 print("Loading files")
-source_task = np.genfromtxt('source_task.csv', delimiter=',')
-episodes_per_config = np.genfromtxt('episodes_per_config.csv', delimiter=',').astype(int)
-source_param = np.genfromtxt('source_param.csv', delimiter=',')
+# source_task = np.genfromtxt('source_task.csv', delimiter=',')
+# episodes_per_config = np.genfromtxt('episodes_per_config.csv', delimiter=',').astype(int)
+# source_param = np.genfromtxt('source_param.csv', delimiter=',')
+#
+# discounted_reward_off_policy = np.zeros((runs, num_batch))
+# discounted_reward_reinfroce = np.zeros((runs, num_batch))
+# policy_param_off_policy = np.zeros((runs, num_batch))
+# policy_param_reinfroce = np.zeros((runs, num_batch))
+#
+# print("Learn policy")
+# for i_run in range(runs):
+#     print(i_run)
+#     np.random.seed(2000+5*i_run)
+#     initial_param = np.random.normal(mean_initial_param, variance_initial_param)
+#     off_policy = iw.offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
+#     reinforce = alg.reinforce(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action)
+#     discounted_reward_off_policy[i_run,:] = off_policy.episode_disc_rewards
+#     discounted_reward_reinfroce[i_run, :] = reinforce.episode_disc_rewards
+#     policy_param_off_policy[i_run,:] = off_policy.policy_parameter
+#     policy_param_reinfroce[i_run, :] = reinforce.policy_parameter
 
-discounted_reward_off_policy = np.zeros((runs, num_batch))
-discounted_reward_reinfroce = np.zeros((runs, num_batch))
-policy_param_off_policy = np.zeros((runs, num_batch))
-policy_param_reinfroce = np.zeros((runs, num_batch))
-
-print("Learn policy")
-for i_run in range(runs):
-    print(i_run)
-    np.random.seed(2000+5*i_run)
-    initial_param = np.random.normal(mean_initial_param, variance_initial_param)
-    off_policy = iw.offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
-    reinforce = alg.reinforce(env, num_episodes, batch_size, discount_factor, episode_length, initial_param)
-    discounted_reward_off_policy[i_run,:] = off_policy.episode_disc_rewards
-    discounted_reward_reinfroce[i_run, :] = reinforce.episode_disc_rewards
-    policy_param_off_policy[i_run,:] = off_policy.policy_parameter
-    policy_param_reinfroce[i_run, :] = reinforce.policy_parameter
-
-# discounted_reward_off_policy = np.genfromtxt('discounted_reward_off_policy.csv', delimiter=',')
-# discounted_reward_reinfroce = np.genfromtxt('discounted_reward_reinfroce.csv', delimiter=',')
-# policy_param_off_policy = np.genfromtxt('policy_param_off_policy.csv', delimiter=',')
-# policy_param_reinfroce = np.genfromtxt('policy_param_reinfroce.csv', delimiter=',')
+discounted_reward_off_policy = np.genfromtxt('discounted_reward_off_policy.csv', delimiter=',')
+discounted_reward_reinfroce = np.genfromtxt('discounted_reward_reinfroce.csv', delimiter=',')
+policy_param_off_policy = np.genfromtxt('policy_param_off_policy.csv', delimiter=',')
+policy_param_reinfroce = np.genfromtxt('policy_param_reinfroce.csv', delimiter=',')
 
 stats_opt = iw.optimalPolicy(env, num_episodes, discount_factor, batch_size, episode_length) # Optimal policy
 

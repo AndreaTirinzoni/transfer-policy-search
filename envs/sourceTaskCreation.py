@@ -170,10 +170,10 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
     return source_task, source_param, episodes_per_configuration.astype(int)
 
 env = gym.make('LQG1D-v0')
-episode_length = 50
+episode_length = 20
 mean_initial_param = 0
 variance_initial_param = 0
-variance_action = 0.001
+variance_action = 0.1
 np.random.seed(2000)
 num_episodes=1000
 batch_size=40

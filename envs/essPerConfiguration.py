@@ -21,12 +21,11 @@ def essPerTarget(variance_action, env_param_min, env_param_max, policy_param_min
     ess = np.zeros((env_param.shape[0], policy_param.shape[0]))
     for i_policy_param in range(policy_param.shape[0]):
         for i_env_param in range(env_param.shape[0]):
-            print(i_policy_param, i_env_param)
             weights_per_configuration = iw.computeImportanceWeightsSourceTarget(policy_param[i_policy_param], env_param[i_env_param], source_param, variance_action, source_task)
             ess[i_env_param, i_policy_param] = np.linalg.norm(weights_per_configuration, 1)**2 / np.linalg.norm(weights_per_configuration, 2)**2
     return ess
 
-episode_length = 50
+episode_length = 20
 mean_initial_param = 0
 variance_initial_param = 0
 variance_action = 0.001
