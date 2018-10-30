@@ -208,25 +208,22 @@ def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initi
         policy_parameter=np.zeros(num_batch))
 
     for i_batch in range(num_batch):
-        episode_informations = np.zeros((batch_size, 2))
-        gradient_est_timestep = np.zeros((batch_size, episode_length))
-        reward_est_timestep = np.zeros((batch_size, episode_length))
         stats.policy_parameter[i_batch] = param
 
         batch = createBatch(env, batch_size, episode_length, param, variance_action) # [state, action, reward, next_state]
 
         # The return after this timestep
-        total_return_timestep = list(np.sum(batch[:, t, 2], axis=1) for t in range(episode_length))
-        discounted_return_timestep = list(np.sum(np.multiply(np.power(discount_factor*np.ones(batch.shape[1]), range(batch.shape[1])), batch[:, t, 2]), axis=1) for t in range(episode_length))
-        gradient_est_timestep = list(np.sum(np.multiply((batch[:, t, 1] - param * batch[:, t, 0]), batch[:, t, 0]) / variance_action, axis=1) for t in range(episode_length))
+        total_return = np.sum(batch[:, :, 2], axis=1)
+        discounted_return = np.sum(np.multiply(np.power(discount_factor * np.ones(batch.shape[1]), range(batch.shape[1])), batch[:, :, 2]), axis=1)
+        gradient_est_timestep = np.array(list(np.sum(np.multiply((batch[:, 0:t+1, 1] - param * batch[:, 0:t+1, 0]), batch[:, 0:t+1, 0]) / variance_action, axis=1) for t in range(episode_length))).T
 
-        episode_informations = np.matrix([total_return_timestep[:,-1], discounted_return_timestep[:,-1]])
+        episode_informations = np.matrix([total_return, discounted_return])
         #estimate = 0
 
-        baseline_den = (sum(gradient_est_timestep[i,:]**2) for i in range(batch_size))
-        baseline = list(np.dot(gradient_est_timestep[:,i]**2, reward_est_timestep[:,i])/baseline_den for i in range(episode_length))
+        baseline_den = np.sum(gradient_est_timestep**2, axis=0)
+        baseline = np.sum(np.multiply(gradient_est_timestep**2, np.multiply(np.power(discount_factor * np.ones(batch.shape[1]), range(batch.shape[1])), batch[:, :, 2])), axis=0) / baseline_den
 
-        gradient = sum(np.dot(gradient_est_timestep[i,:], (reward_est_timestep[i,:]-baseline[:])) for i in range(batch_size))
+        gradient = 1/batch_size * np.sum(np.sum(np.multiply(gradient_est_timestep, np.multiply(np.power(discount_factor * np.ones(batch.shape[1]), range(batch.shape[1])), batch[:, :, 2]) - baseline), axis=1))
         # print(baseline, gradient, param)
         param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
         #param = param + 0.01 * gradient

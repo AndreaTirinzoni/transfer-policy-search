@@ -90,9 +90,9 @@ def plot_mean_and_variance_reward(stats_alg1, stats_alg2, stats_alg3, stats_opt,
     ax.plot(x, mean_alg2, marker = '.', color = 'b', markersize = 1, linewidth=2, label='REINFORCE with baseline')
     ax.plot(x, mean_alg2+var_alg2, marker = '.', color = 'b', markersize = 1, linewidth=0.5, alpha=0.7)
     ax.plot(x, mean_alg2-var_alg2, marker = '.', color = 'b', linewidth=0.5, markersize = 1, alpha=0.7)
-    # ax.plot(x, mean_alg3, marker = '.', color = 'c', markersize = 1, linewidth=2, label='G(PO)MDP')
-    # ax.plot(x, mean_alg3+var_alg3, marker = '.', color = 'c', markersize = 1, linewidth=0.5, alpha=0.7)
-    # ax.plot(x, mean_alg3-var_alg3, marker = '.', color = 'c', linewidth=0.5, markersize = 1, alpha=0.7)
+    ax.plot(x, mean_alg3, marker = '.', color = 'c', markersize = 1, linewidth=2, label='G(PO)MDP')
+    ax.plot(x, mean_alg3+var_alg3, marker = '.', color = 'c', markersize = 1, linewidth=0.5, alpha=0.7)
+    ax.plot(x, mean_alg3-var_alg3, marker = '.', color = 'c', linewidth=0.5, markersize = 1, alpha=0.7)
     ax.plot(x, stats_opt, marker = '.', color = 'g', linewidth=1, markersize = 1, label='Optimal policy')
     ax.legend()
 
@@ -154,15 +154,16 @@ EpisodeStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_reward
 # Inizialize environment and parameters
 env = gym.make('LQG1D-v0')
 episode_length = 20
-mean_initial_param = 0
+mean_initial_param = -0.1
 variance_initial_param = 0
 variance_action = 0.1
-num_episodes= 5000
-batch_size=20
+num_episodes = 5000
+batch_size = 50
 num_batch = num_episodes//batch_size
 discount_factor = 0.99
 
-runs = 5
+runs =
+
 reward_reinforce = np.zeros((runs, num_batch))
 reward_reinforce_baseline = np.zeros((runs, num_batch))
 reward_gpomdp = np.zeros((runs, num_batch))
@@ -184,9 +185,9 @@ for i_run in range(runs):
     reward_reinforce_baseline[i_run,:] = reinforce_baseline.episode_disc_rewards
     policy_reinforce_baseline[i_run,:] = reinforce_baseline.policy_parameter
 
-    # gpomdp = alg.gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action) # apply G(PO)MDP for estimating gradient
-    # reward_gpomdp[i_run,:] = gpomdp.episode_disc_rewards
-    # policy_gpomdp[i_run,:] = gpomdp.policy_parameter
+    gpomdp = alg.gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action) # apply G(PO)MDP for estimating gradient
+    reward_gpomdp[i_run,:] = gpomdp.episode_disc_rewards
+    policy_gpomdp[i_run,:] = gpomdp.policy_parameter
 
 stats_opt = optimalPolicy(env, num_episodes, batch_size, discount_factor) # Optimal policy
 # print("REINFORCE")
