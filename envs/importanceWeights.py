@@ -60,33 +60,38 @@ def optimalPolicy(env, num_episodes, discount_factor, batch_size, episode_length
         #print(state, action, reward, param)
     return stats
 
-def createEpisode(env, episode_length, param, state, variance_action):
+def createBatch(env, batch_size, episode_length, param, variance_action):
     """
     The function creates a new episode
 
     Args:
         env: OpenAI environment
         episode_length: length of the episode
+        batch_sizelength: size of the batch
         param: policy parameter
         state: initial state
     """
-    episode = np.zeros((episode_length, 4)) # [state, action, reward, next_state]
-    for t in range(episode_length):
-        #env.render()
-        # Take a step
-        mean_action = param*state
-        action = np.random.normal(mean_action, variance_action)
-        next_state, reward, done, _ = env.step(action)
-        # Keep track of the transition
+    batch = np.zeros((batch_size, episode_length, 4)) # [state, action, reward, next_state]
+    for i_batch in range(batch_size):
+        state = env.reset()
 
-        #print(state, action, reward, param)
-        episode[t,:] = [state, action, reward, next_state]
+        for t in range(episode_length):
+            #env.render()
+            # Take a step
+            mean_action = param*state
+            action = np.random.normal(mean_action, m.sqrt(variance_action))
+            next_state, reward, done, _ = env.step(action)
+            # Keep track of the transition
 
-        if done:
-            break
+            #print(state, action, reward, param)
+            batch[i_batch, t, :] = [state, action, reward, next_state]
 
-        state = next_state
-    return episode
+            if done:
+                break
+
+            state = next_state
+
+    return batch
 
 def computeGradientsSourceTarget(param, source_task, variance_action):
     """
@@ -166,33 +171,26 @@ def offPolicyUpdate(env, param, source_param, episodes_per_config, source_task, 
     source_param_new = np.ones((num_episodes_target, 5))
     source_task_new = np.ones((num_episodes_target, episode_length*3+1))
     # Iterate for every episode in batch
-    for i_episode in range(num_episodes_target):
-        # Reset the environment and pick the first action
-        state = env.reset()
-        episode = createEpisode(env, episode_length, param, state, variance_action) # [state, action, reward, next_state]
 
-        # Go through the episode and compute estimators
+    batch = createBatch(env, batch_size, episode_length, param, variance_action) # [state, action, reward, next_state]
 
-        total_return = np.sum(episode[:, 2])
-        discounted_return = np.sum(np.multiply(np.power(discount_factor*np.ones(episode.shape[0]), range(episode.shape[0])), episode[:, 2]))
-        gradient_est = np.sum((episode[:, 1] - param * np.multiply(episode[:, 0], episode[:, 0])) / variance_action)
-        source_task_new[i_episode, 0::3] = np.concatenate((episode[:, 0].T, [episode[-1, 3]]))
-        source_task_new[i_episode, 1::3] = episode[:, 1].T
-        source_task_new[i_episode, 2::3] = episode[:, 2].T
+    # The return after this timestep
+    total_return = np.sum(batch[:, :, 2], axis=1)
+    discounted_return = np.sum(np.multiply(np.power(discount_factor*np.ones(batch.shape[1]), range(batch.shape[1])), batch[:, :, 2]), axis=1)
+    gradient_est = np.sum(np.multiply((batch[:, :, 1] - param * batch[:, :, 0]), batch[:, :, 0]) / variance_action, axis=1)
+    episode_informations = np.matrix([gradient_est, total_return, discounted_return]).T
 
-        episode_informations[i_episode,:] = [gradient_est, total_return, discounted_return]
-        source_param_new[i_episode, 0] = discounted_return
-        source_param_new[i_episode, 1] = param
-        source_param_new[i_episode, 2] = env.A
-        source_param_new[i_episode, 3] = env.B
-        source_param_new[i_episode, 4] = env.sigma_noise**2
-
+    source_param_new[:, 0] = discounted_return
+    source_param_new[:, 1] = param
+    source_param_new[:, 2] = env.A
+    source_param_new[:, 3] = env.B
+    source_param_new[:, 4] = env.sigma_noise**2
 
     #Update the parameters
     N = weights_source_target.shape[0] + num_episodes_target
     weights_source_target_update = np.concatenate([weights_source_target, np.ones(num_episodes_target)], axis=0) # are the weights used for computing ESS
-    gradient_off_policy_update = np.concatenate([gradient_off_policy, episode_informations[:,0]], axis=0)
-    discounted_rewards_all = np.concatenate([source_task[:,1], episode_informations[:,2]], axis=0)
+    gradient_off_policy_update = np.concatenate([gradient_off_policy, np.squeeze(np.asarray(episode_informations[:,0]))], axis=0)
+    discounted_rewards_all = np.concatenate([source_task[:,1], np.squeeze(np.asarray(episode_informations[:,2]))], axis=0)
     gradient = 1/N * np.dot(np.multiply(weights_source_target_update, gradient_off_policy_update), discounted_rewards_all)
     param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     #param = param + 0.01 * gradient

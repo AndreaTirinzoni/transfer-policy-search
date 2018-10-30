@@ -3,6 +3,7 @@ from collections import namedtuple
 import numpy as np
 from matplotlib import pyplot as plt
 import algorithmPolicySearch as alg
+import math as m
 
 def optimalPolicy(env, num_episodes, batch_size, discount_factor):
     """
@@ -98,11 +99,6 @@ def plot_mean_and_variance_reward(stats_alg1, stats_alg2, stats_alg3, stats_opt,
     title = "Discounted reward over Batches - gamma = " + str(discount_factor)
     plt.title(title)
 
-    # ax.fill(mean_alg2-var_alg2, mean_alg2+var_alg2, 'r', alpha=0.3)
-    #
-    # # Outline of the region we've filled in
-    # ax.plot(mean_alg2-var_alg2, mean_alg2+var_alg2, c='b', alpha=0.8)
-
     plt.show()
 
     return fig
@@ -157,15 +153,17 @@ EpisodeStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_reward
 
 # Inizialize environment and parameters
 env = gym.make('LQG1D-v0')
-episode_length = 50
-mean_initial_param = -2
-variance_initial_param = 0.01
-num_episodes=9000
-batch_size=50
+episode_length = 20
+mean_initial_param = -0.1
+variance_initial_param = 0
+variance_action = 0.1
+num_episodes = 5000
+batch_size = 50
 num_batch = num_episodes//batch_size
 discount_factor = 0.99
 
-runs = 1
+runs =
+
 reward_reinforce = np.zeros((runs, num_batch))
 reward_reinforce_baseline = np.zeros((runs, num_batch))
 reward_gpomdp = np.zeros((runs, num_batch))
@@ -176,18 +174,18 @@ policy_gpomdp = np.zeros((runs, num_batch))
 for i_run in range(runs):
     # Apply different algorithms to learn optimal policy
     np.random.seed(2000+5*i_run)
-    initial_param = np.random.normal(mean_initial_param, variance_initial_param)
+    initial_param = np.random.normal(mean_initial_param, m.sqrt(variance_initial_param))
     print(i_run)
 
-    reinforce = alg.reinforce(env, num_episodes, batch_size, discount_factor, episode_length, initial_param) # apply REINFORCE for estimating gradient
+    reinforce = alg.reinforce(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action) # apply REINFORCE for estimating gradient
     reward_reinforce[i_run,:] = reinforce.episode_disc_rewards
     policy_reinforce[i_run,:] = reinforce.policy_parameter
 
-    reinforce_baseline = alg.reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_length, initial_param) # apply REINFORCE with baseline for estimating gradient
+    reinforce_baseline = alg.reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action) # apply REINFORCE with baseline for estimating gradient
     reward_reinforce_baseline[i_run,:] = reinforce_baseline.episode_disc_rewards
     policy_reinforce_baseline[i_run,:] = reinforce_baseline.policy_parameter
 
-    gpomdp = alg.gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initial_param) # apply G(PO)MDP for estimating gradient
+    gpomdp = alg.gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action) # apply G(PO)MDP for estimating gradient
     reward_gpomdp[i_run,:] = gpomdp.episode_disc_rewards
     policy_gpomdp[i_run,:] = gpomdp.policy_parameter
 
@@ -204,4 +202,3 @@ stats_opt = optimalPolicy(env, num_episodes, batch_size, discount_factor) # Opti
 # Compare the statistics of the different algorithms
 plot_mean_and_variance_reward(reward_reinforce, reward_reinforce_baseline, reward_gpomdp, stats_opt.episode_disc_rewards, num_batch, discount_factor)
 plot_mean_and_variance_policy(policy_reinforce, policy_reinforce_baseline, policy_gpomdp, stats_opt.policy_parameter, num_batch, discount_factor)
-#plot.plot_mean_and_variance(policy_reinforce, policy_reinforce_baseline, policy_gpomdp, stats_opt.policy_parameter, num_batch, discount_factor)
