@@ -214,7 +214,7 @@ def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initi
 
         # The return after this timestep
         total_return = np.sum(batch[:, :, 2], axis=1)
-        discounted_return = np.sum(np.multiply(np.power(discount_factor * np.ones(batch.shape[1]), range(batch.shape[1])), batch[:, :, 2]), axis=1)
+        discounted_return = np.sum(np.multiply(np.power(discount_factor*np.ones(batch.shape[1]), range(batch.shape[1])), batch[:, :, 2]), axis=1)
         gradient_est_timestep = np.array(list(np.sum(np.multiply((batch[:, 0:t+1, 1] - param * batch[:, 0:t+1, 0]), batch[:, 0:t+1, 0]) / variance_action, axis=1) for t in range(episode_length))).T
 
         episode_informations = np.matrix([total_return, discounted_return])
@@ -223,7 +223,7 @@ def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initi
         baseline_den = np.sum(gradient_est_timestep**2, axis=0)
         baseline = np.sum(np.multiply(gradient_est_timestep**2, np.multiply(np.power(discount_factor * np.ones(batch.shape[1]), range(batch.shape[1])), batch[:, :, 2])), axis=0) / baseline_den
 
-        gradient = 1/batch_size * np.sum(np.sum(np.multiply(gradient_est_timestep, np.multiply(np.power(discount_factor * np.ones(batch.shape[1]), range(batch.shape[1])), batch[:, :, 2]) - baseline), axis=1))
+        gradient = 1/batch_size * np.sum( np.sum( np.multiply( gradient_est_timestep, np.subtract( np.multiply( np.power( discount_factor * np.ones(batch.shape[1]), range(batch.shape[1]) ), batch[:, :, 2] ), baseline ) ), axis=1))
         # print(baseline, gradient, param)
         param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
         #param = param + 0.01 * gradient

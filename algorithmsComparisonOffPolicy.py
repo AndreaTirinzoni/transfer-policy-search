@@ -1,4 +1,5 @@
 import gym
+import envs
 import numpy as np
 import algorithmPolicySearch as alg
 from matplotlib import pyplot as plt

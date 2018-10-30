@@ -21,15 +21,6 @@ References
 
 """
 
-
-#classic_control
-from gym.envs.registration import register
-register(
-    id='LQG1D-v0',
-    entry_point='ifqi.envs.lqg1d:LQG1D'
-)
-
-
 class LQG1D(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
