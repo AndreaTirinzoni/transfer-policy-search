@@ -160,7 +160,7 @@ mean_initial_param = -0.1
 variance_initial_param = 0
 variance_action = 0.1
 num_episodes = 5000
-batch_size = 50
+batch_size = 25
 num_batch = num_episodes//batch_size
 discount_factor = 0.99
 
@@ -175,7 +175,7 @@ policy_gpomdp = np.zeros((runs, num_batch))
 
 for i_run in range(runs):
     # Apply different algorithms to learn optimal policy
-    np.random.seed(2000+5*i_run)
+    #np.random.seed(2000+5*i_run)
     initial_param = np.random.normal(mean_initial_param, m.sqrt(variance_initial_param))
     print(i_run)
 
@@ -205,17 +205,17 @@ stats_opt = optimalPolicy(env, num_episodes, batch_size, discount_factor) # Opti
 mean_alg1 = np.mean(reward_reinforce, axis=0)
 mean_alg2 = np.mean(reward_reinforce_baseline, axis=0)
 mean_alg3 = np.mean(reward_gpomdp, axis=0)
-var_alg1 = np.std(reward_reinforce, axis=0)
-var_alg2 = np.std(reward_reinforce_baseline, axis=0)
-var_alg3 = np.std(reward_gpomdp, axis=0)
+var_alg1 = np.std(reward_reinforce, axis=0) / (m.sqrt(runs))
+var_alg2 = np.std(reward_reinforce_baseline, axis=0) / (m.sqrt(runs))
+var_alg3 = np.std(reward_gpomdp, axis=0) / (m.sqrt(runs))
 
 
 mean_pol1 = np.mean(policy_reinforce, axis=0)
 mean_pol2 = np.mean(policy_reinforce_baseline, axis=0)
 mean_pol3 = np.mean(policy_gpomdp, axis=0)
-var_pol1 = np.std(policy_reinforce, axis=0)
-var_pol2 = np.std(policy_reinforce_baseline, axis=0)
-var_pol3 = np.std(policy_gpomdp, axis=0)
+var_pol1 = np.std(policy_reinforce, axis=0) / (m.sqrt(runs))
+var_pol2 = np.std(policy_reinforce_baseline, axis=0) / (m.sqrt(runs))
+var_pol3 = np.std(policy_gpomdp, axis=0) / (m.sqrt(runs))
 
 x = range(num_batch)
 

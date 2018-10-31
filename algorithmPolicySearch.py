@@ -38,7 +38,7 @@ def createBatch(env, batch_size, episode_length, param, variance_action):
     return batch
 
 
-def adam(params, grad, t, m_t, v_t, alpha=0.001, beta_1=0.9, beta_2=0.999, eps=1e-8):
+def adam(params, grad, t, m_t, v_t, alpha=0.01, beta_1=0.9, beta_2=0.999, eps=1e-8):
     """
     Applies a gradient step to the given parameters based on ADAM update rule
     :param params: a numpy array of parameters
@@ -91,6 +91,8 @@ def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, in
         episode_disc_rewards=np.zeros(num_batch),
         policy_parameter=np.zeros(num_batch))
 
+    discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
+
     for i_batch in range(num_batch):
 
         stats.policy_parameter[i_batch] = param
@@ -99,13 +101,13 @@ def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, in
 
         # The return after this timestep
         total_return = np.sum(batch[:, :, 2], axis=1)
-        discounted_return = np.sum(np.multiply(np.power(discount_factor*np.ones(batch.shape[1]), range(batch.shape[1])), batch[:, :, 2]), axis=1)
-        gradient_est = np.sum(np.multiply((batch[:, :, 1] - param * batch[:, :, 0]), batch[:, :, 0]) / variance_action, axis=1)
+        discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
+        gradient_est = np.sum((batch[:, :, 1] - param * batch[:, :, 0]) * batch[:, :, 0] / variance_action, axis=1)
         episode_informations = np.matrix([gradient_est, total_return, discounted_return]).T
 
 
         gradient = np.asscalar(1/batch_size * np.dot(episode_informations[:,0].T, episode_informations[:,2]))
-        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t)
         #param = param + 0.01 * gradient
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
@@ -147,6 +149,8 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_le
         episode_disc_rewards=np.zeros(num_batch),
         policy_parameter=np.zeros(num_batch))
 
+    discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
+
     for i_batch in range(num_batch):
         episode_informations = np.zeros((batch_size, 3))
         stats.policy_parameter[i_batch] = param
@@ -158,15 +162,15 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_le
 
         # The return after this timestep
         total_return = np.sum(batch[:, :, 2], axis=1)
-        discounted_return = np.sum(np.multiply(np.power(discount_factor*np.ones(batch.shape[1]), range(batch.shape[1])), batch[:, :, 2]), axis=1)
-        gradient_est = np.sum(np.multiply((batch[:, :, 1] - param * batch[:, :, 0]), batch[:, :, 0]) / variance_action, axis=1)
+        discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
+        gradient_est = np.sum(((batch[:, :, 1] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action, axis=1)
         episode_informations = np.matrix([gradient_est, total_return, discounted_return]).T
 
         baseline = np.dot(np.squeeze(np.asarray(episode_informations[:,0]))**2, np.squeeze(np.asarray(episode_informations[:,2])))/np.sum(np.squeeze(np.asarray(episode_informations[:,0]))**2)
         # baseline = 0
         # Update parameters
         gradient = np.asscalar(1/batch_size * np.dot(episode_informations[:,0].T, episode_informations[:,2]-baseline))
-        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t)
         #param = param + 0.01 * gradient
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
@@ -207,6 +211,8 @@ def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initi
         episode_disc_rewards=np.zeros(num_batch),
         policy_parameter=np.zeros(num_batch))
 
+    discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
+
     for i_batch in range(num_batch):
         stats.policy_parameter[i_batch] = param
 
@@ -214,18 +220,18 @@ def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initi
 
         # The return after this timestep
         total_return = np.sum(batch[:, :, 2], axis=1)
-        discounted_return = np.sum(np.multiply(np.power(discount_factor*np.ones(batch.shape[1]), range(batch.shape[1])), batch[:, :, 2]), axis=1)
-        gradient_est_timestep = np.array(list(np.sum(np.multiply((batch[:, 0:t+1, 1] - param * batch[:, 0:t+1, 0]), batch[:, 0:t+1, 0]) / variance_action, axis=1) for t in range(episode_length))).T
+        discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
+        gradient_est_timestep = np.array(list(np.sum(((batch[:, 0:t+1, 1] - param * batch[:, 0:t+1, 0]) * batch[:, 0:t+1, 0]) / variance_action, axis=1) for t in range(episode_length))).T
 
-        episode_informations = np.matrix([total_return, discounted_return])
+        episode_informations = np.matrix([total_return, discounted_return]).T
         #estimate = 0
 
         baseline_den = np.sum(gradient_est_timestep**2, axis=0)
-        baseline = np.sum(np.multiply(gradient_est_timestep**2, np.multiply(np.power(discount_factor * np.ones(batch.shape[1]), range(batch.shape[1])), batch[:, :, 2])), axis=0) / baseline_den
+        baseline = np.sum((gradient_est_timestep**2) * discount_factor_timestep * batch[:, :, 2], axis=0) / baseline_den
 
-        gradient = 1/batch_size * np.sum( np.sum( np.multiply( gradient_est_timestep, np.subtract( np.multiply( np.power( discount_factor * np.ones(batch.shape[1]), range(batch.shape[1]) ), batch[:, :, 2] ), baseline ) ), axis=1))
+        gradient = 1/batch_size * np.sum(np.sum(gradient_est_timestep * discount_factor_timestep * (batch[:, :, 2] - baseline), axis=1))
         # print(baseline, gradient, param)
-        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t)
         #param = param + 0.01 * gradient
         tot_reward_batch = np.mean(episode_informations[:,0])
         discounted_reward_batch = np.mean(episode_informations[:,1])
