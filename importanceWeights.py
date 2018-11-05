@@ -114,6 +114,8 @@ def computeGradientsSourceTargetTimestep(param, source_task, variance_action):
 
     return gradient_off_policy
 
+#Compute weights of different estimators
+
 def computeImportanceWeightsSourceTargetPerDecision(policy_param, env_param, source_param, variance_action, source_task):
     """
         Compute the per decision importance weights considering policy and transition model
@@ -166,25 +168,64 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
     n = n_src + n_def
     param_indices = np.concatenate(([0], np.cumsum(np.delete(episodes_per_config, -1))))
     param_policy_src = source_param[param_indices, 1][np.newaxis, np.newaxis, :]#policy parameter of source not repeated
-    state_t = np.ones((source_task.shape[0], episode_length, param_policy_src.shape))
-    state_t1 = np.ones((source_task.shape[0], episode_length, param_policy_src.shape))
-    action_t = np.ones((source_task.shape[0], episode_length, param_policy_src.shape))
-    variance_env = np.ones((source_task.shape[0], episode_length, param_policy_src.shape))
-    A = np.ones((source_task.shape[0], episode_length, param_policy_src.shape))
-    B = np.ones((source_task.shape[0], episode_length, param_policy_src.shape))
-    for t in range(param_policy_src):
+    state_t = np.ones((source_task.shape[0], episode_length, param_policy_src.shape[2]))
+    state_t1 = np.ones((source_task.shape[0], episode_length, param_policy_src.shape[2]))
+    action_t = np.ones((source_task.shape[0], episode_length, param_policy_src.shape[2]))
+    variance_env = source_param[:, 4] # variance of the model transition
+    A = source_param[param_indices, 2][np.newaxis, np.newaxis, :] # environment parameter A of src
+    B = source_param[param_indices, 3][np.newaxis, np.newaxis, :] # environment parameter B of src
+    for t in range(param_policy_src.shape[2]):
         state_t[:, :, t] = np.delete(source_task[:, 0::3], -1, axis=1)# state t
         state_t1[:, :, t] = source_task[:, 3::3] # state t+1
         action_t[:, :, t] = source_task[:, 1::3] # action t
-        variance_env[:, :, t] = source_param[:, 4] # variance of the model transition
-        A[:, :, t] = source_param[param_indices, 2][np.newaxis, np.newaxis, :] # environment parameter A of src
-        B[:, :, t] = source_param[param_indices, 3][np.newaxis, np.newaxis, :] # environment parameter B of src
 
-    policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t - policy_param*state_t)**2/(2*variance_action)), axis = 1)
-    multiple_component_policy = np.sum(np.multiply(np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t - param_policy_src * state_t).T)**2/(2*variance_action)), axis=1), episodes_per_config/n, axis=2), axis=2)
+    policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t[:, :, 0] - policy_param*state_t[:, :, 0])**2/(2*variance_action)), axis = 1)
+    multiple_component_policy = np.dot(np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t - param_policy_src * state_t).T)**2/(2*variance_action)), axis=1).T, episodes_per_config/n)
     policy_src = n_src/n * multiple_component_policy + n_def/n * policy_tgt
-    model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(((-(state_t1 - env_param * state_t - (B * action_t.T).T).T **2) / (2*variance_env)).T).T, axis = 1)
-    multiple_component_model = np.sum(np.multiply(np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(((-(state_t1 - (A * state_t.T).T - (B * action_t.T).T).T **2) / (2*variance_env)).T).T, axis=2), episodes_per_config/n, axis=2), axis=2)
+    model_tgt = np.cumprod((1/np.sqrt(2*m.pi*variance_env) * (np.exp((-(state_t1[:, :, 0] - env_param * state_t[:, :, 0] - (B * action_t)[:, :, 0]) **2).T / (2*variance_env)).T).T).T, axis = 1)
+    multiple_component_model = np.dot(np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp((-(state_t1 - (A * state_t) - (B * action_t)).T **2) / (2*variance_env)), axis=1).T, episodes_per_config/n)
+    model_src =  n_src/n * multiple_component_model + n_def/n * model_tgt
+
+    weights = policy_tgt / policy_src * model_tgt / model_src
+
+    return weights
+
+def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_param, source_param, variance_action, source_task, episodes_per_config, batch_size, episode_length):
+    """
+        Compute the multiple importance weights considering policy and transition model
+
+        Args:
+            env: OpenAI environment
+            param: current policy parameter
+            source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
+            variance_action: variance of the action's distribution
+            source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
+            episode_length: length of the episodes
+
+        Returns:
+            Returns the weights of the importance sampling
+    """
+    n_src = np.sum(episodes_per_config)
+    n_def = batch_size
+    n = n_src + n_def
+    param_indices = np.concatenate(([0], np.cumsum(np.delete(episodes_per_config, -1))))
+    param_policy_src = source_param[param_indices, 1][np.newaxis, np.newaxis, :]#policy parameter of source not repeated
+    state_t = np.ones((source_task.shape[0], episode_length, param_policy_src.shape[2]))
+    state_t1 = np.ones((source_task.shape[0], episode_length, param_policy_src.shape[2]))
+    action_t = np.ones((source_task.shape[0], episode_length, param_policy_src.shape[2]))
+    variance_env = source_param[:, 4] # variance of the model transition
+    A = source_param[param_indices, 2][np.newaxis, np.newaxis, :] # environment parameter A of src
+    B = source_param[param_indices, 3][np.newaxis, np.newaxis, :] # environment parameter B of src
+    for t in range(param_policy_src.shape[2]):
+        state_t[:, :, t] = np.delete(source_task[:, 0::3], -1, axis=1)# state t
+        state_t1[:, :, t] = source_task[:, 3::3] # state t+1
+        action_t[:, :, t] = source_task[:, 1::3] # action t
+
+    policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t[:, :, 0] - policy_param*state_t[:, :, 0])**2/(2*variance_action)), axis = 1)
+    multiple_component_policy = np.dot(np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t - param_policy_src * state_t).T)**2/(2*variance_action)), axis=1).T, episodes_per_config/n)
+    policy_src = n_src/n * multiple_component_policy + n_def/n * policy_tgt
+    model_tgt = np.prod((1/np.sqrt(2*m.pi*variance_env) * (np.exp((-(state_t1[:, :, 0] - env_param * state_t[:, :, 0] - (B * action_t)[:, :, 0]) **2).T / (2*variance_env)).T).T).T, axis = 1)
+    multiple_component_model = np.dot(np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp((-(state_t1 - (A * state_t) - (B * action_t)).T **2) / (2*variance_env)), axis=1).T, episodes_per_config/n)
     model_src =  n_src/n * multiple_component_model + n_def/n * model_tgt
 
     weights = policy_tgt / policy_src * model_tgt / model_src
@@ -222,6 +263,8 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_param, 
     weights = np.prod(policy_tgt / policy_src * model_tgt / model_src, axis = 1)
 
     return weights
+
+# Compute the update of the algorithms using different estimators
 
 def offPolicyUpdateImportanceSamplingPerDec(env, param, source_param, episodes_per_config, source_task, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor):
     """
@@ -410,6 +453,69 @@ def offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes
     episodes_per_config = np.concatenate((episodes_per_config, [batch_size]))
     return source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch
 
+def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, episodes_per_config, source_task, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor):
+    """
+    Compute the gradient update of the policy parameter using importance sampling
+    :param env: OpenAI environment
+    :param param: current policy parameter
+    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
+    :param episodes_per_config: number of episodes for every policy_parameter - env_parameter
+    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
+    :param variance_action: variance of the action's distribution
+    :param episode_length: length of the episodes
+    :param batch_size: size of the batch
+    :param t: parameter of ADAM
+    :param m_t: parameter of ADAM
+    :param v_t: parameter of ADAM
+    :param discount_factor: the discout factor
+    :return:
+    Returns all informations related to the update, the new sorce parameter, source tasks, new parameter ...
+    """
+    #Compute gradients of the source task
+    gradient_off_policy = computeGradientsSourceTargetTimestep(param, source_task, variance_action)
+    #Compute importance weights_source_target of source task
+    weights_source_target = computeMultipleImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, episodes_per_config, batch_size, episode_length)
+    num_episodes_target = batch_size
+    # Create new parameters and new tasks associated to episodes, used tu update the source_param and source_task later
+    source_param_new = np.ones((num_episodes_target, 5))
+    source_task_new = np.ones((num_episodes_target, episode_length*3+1))
+    # Iterate for every episode in batch
+
+    batch = createBatch(env, batch_size, episode_length, param, variance_action) # [state, action, reward, next_state]
+
+    discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
+    # The return after this timestep
+    total_return = np.sum(batch[:, :, 2], axis=1)
+    discounted_return_timestep = (discount_factor_timestep * batch[:, :, 2])
+    gradient_est_timestep = ((batch[:, :, 1] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action
+    episode_informations = np.matrix([np.sum(gradient_est_timestep, axis=1), total_return, np.sum(discounted_return_timestep, axis=1)]).T
+
+    source_param_new[:, 0] = np.sum(discounted_return_timestep, axis=1)
+    source_param_new[:, 1] = param
+    source_param_new[:, 2] = env.A
+    source_param_new[:, 3] = env.B
+    source_param_new[:, 4] = env.sigma_noise**2
+
+    #Update the parameters
+    N =  source_task.shape[0] + batch_size
+    weights_source_target_update = np.concatenate([weights_source_target, np.ones((num_episodes_target, episode_length))], axis=0) # are the weights used for computing ESS
+    gradient_off_policy_update = np.concatenate([gradient_off_policy, gradient_est_timestep], axis=0)
+    discounted_rewards_all = np.concatenate([source_task[:,2::3], discounted_return_timestep], axis=0)
+    gradient = 1/N * np.sum(np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis = 1), axis=0)
+    param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+    #param = param + 0.01 * gradient
+    #Compute rewards of batch
+    tot_reward_batch = np.mean(episode_informations[:,1])
+    discounted_reward_batch = np.mean(episode_informations[:,2])
+
+    # Concatenate new episodes to source tasks
+    source_param = np.concatenate((source_param, source_param_new), axis=0)
+    source_task = np.concatenate((source_task, source_task_new), axis=0)
+    episodes_per_config = np.concatenate((episodes_per_config, [batch_size]))
+    return source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch
+
+# Algorithm off policy using different estimators
+
 def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch):
     """
         Perform transfer from source tasks, using REINFORCE with IS
@@ -523,6 +629,7 @@ def offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source
         policy_parameter=np.zeros(num_batch))
 
     for i_batch in range(num_batch):
+        print(i_batch)
         stats.policy_parameter[i_batch] = param
         [source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch] = offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes_per_config, source_task, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor)
         # Update statistics
