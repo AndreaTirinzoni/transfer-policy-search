@@ -1,6 +1,7 @@
 import gym
 import envs
 import numpy as np
+import math as m
 
 def createBatch(env, batch_size, episode_length, param, variance_action):
     """
@@ -57,7 +58,7 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
     """
     policy_param = np.linspace(policy_param_min, policy_param_max, 20)
     env_param = np.linspace(env_param_min, env_param_max, 40)
-    i_task = 0
+    i_episode = 0
     episodes_per_configuration = np.zeros(policy_param.shape[0]*env_param.shape[0])
     i_configuration = 0
     episode_per_param = batch_size
@@ -67,29 +68,32 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
     source_param = np.zeros((length_source_task, 5))
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
+
     for i_policy_param in range(policy_param.shape[0]):
+
         for i_env_param in range(env_param.shape[0]):
 
             #env.setA(env_param[i_env_param])
 
             # Reset the environment and pick the first action
-            batch = createBatch(env, batch_size, episode_length, param, variance_action) # [state, action, reward, next_state]
+            batch = createBatch(env, episode_per_param, episode_length, policy_param[i_policy_param], variance_action) # [state, action, reward, next_state]
 
             #  Go through the episode and compute estimators
 
             discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
 
             #I populate the source task
-            source_task[:, 0::3] = np.concatenate((batch[:, :, 0], [batch[:, -1, 3]]))
-            source_task[:, 1::3] = batch[:, 1]
-            source_task[:, 2::3] = episode[:, 2]
+            source_task[i_episode:i_episode+episode_per_param, 0::3] = np.concatenate((batch[:, :, 0], np.matrix(batch[:, -1, 3]).T), axis=1)
+            source_task[i_episode:i_episode+episode_per_param, 1::3] = batch[:, :, 1]
+            source_task[i_episode:i_episode+episode_per_param, 2::3] = batch[:, :, 2]
 
             #I populate the source parameters
-            source_param[:, 0] = discounted_return
-            source_param[:, 1] = policy_param[i_policy_param]
-            source_param[:, 2] = env.A
-            source_param[:, 3] = env.B
-            source_param[:, 4] = env.sigma_noise**2
+            source_param[i_episode:i_episode+episode_per_param, 0] = discounted_return
+            source_param[i_episode:i_episode+episode_per_param, 1] = policy_param[i_policy_param]
+            source_param[i_episode:i_episode+episode_per_param, 2] = env.A
+            source_param[i_episode:i_episode+episode_per_param, 3] = env.B
+            source_param[i_episode:i_episode+episode_per_param, 4] = env.sigma_noise**2
+            i_episode += episode_per_param
 
             episodes_per_configuration[i_configuration] = episode_per_param
             i_configuration += 1

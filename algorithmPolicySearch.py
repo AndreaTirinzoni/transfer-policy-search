@@ -221,8 +221,9 @@ def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initi
         # The return after this timestep
         total_return = np.sum(batch[:, :, 2], axis=1)
         discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
-        gradient_est_timestep = np.array(list(np.sum(((batch[:, 0:t+1, 1] - param * batch[:, 0:t+1, 0]) * batch[:, 0:t+1, 0]) / variance_action, axis=1) for t in range(episode_length))).T
+        #gradient_est_timestep = np.array(list(np.sum(((batch[:, 0:t+1, 1] - param * batch[:, 0:t+1, 0]) * batch[:, 0:t+1, 0]) / variance_action, axis=1) for t in range(episode_length))).T
 
+        gradient_est_timestep = np.cumsum(((batch[:, :, 1] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action, axis=1)
         episode_informations = np.matrix([total_return, discounted_return]).T
         #estimate = 0
 
