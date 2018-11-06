@@ -5,6 +5,7 @@ import gym
 from gym import spaces
 from gym.utils import seeding
 import numpy as np
+import math as m
 
 """
 Linear quadratic gaussian regulator task.
@@ -34,7 +35,7 @@ class LQG1D(gym.Env):
         self.discrete_reward = discrete_reward
         self.max_pos = 10.0
         self.max_action = 8.0
-        self.sigma_noise = 0.1
+        self.sigma_noise = m.sqrt(0.1)
         self.A = np.array([1]).reshape((1, 1))
         self.B = np.array([1]).reshape((1, 1))
         self.Q = np.array([0.9]).reshape((1, 1))

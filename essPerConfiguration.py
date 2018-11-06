@@ -12,10 +12,9 @@ def essPerTarget(variance_action, env_param_min, env_param_max, policy_param_min
     :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
     :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
     :param episode_length: lenght of the episodes
-    :return:
-
-    A matrix containing ESS for every env_parameter - policy_parameter combination w.r.t the source task dataset
+    :return: A matrix containing ESS for every env_parameter - policy_parameter combination w.r.t the source task dataset
     """
+
     policy_param = np.linspace(policy_param_min, policy_param_max, 40)
     env_param = np.linspace(env_param_min, env_param_max, 160)
     ess = np.zeros((env_param.shape[0], policy_param.shape[0]))

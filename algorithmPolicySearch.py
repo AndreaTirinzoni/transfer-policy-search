@@ -6,15 +6,15 @@ BatchStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards"
 
 def createBatch(env, batch_size, episode_length, param, variance_action):
     """
-    The function creates a new episode
-
-    Args:
-        env: OpenAI environment
-        episode_length: length of the episode
-        batch_sizelength: size of the batch
-        param: policy parameter
-        state: initial state
+    Create a batch of episodes
+    :param env: OpenAI environment
+    :param batch_size: size of the batch
+    :param episode_length: length of the episode
+    :param param: policy parameter
+    :param variance_action: variance of the action's distribution
+    :return: A tensor containing [num episodes, timestep, informations] where informations stays for: [state, action, reward, next_state]
     """
+
     batch = np.zeros((batch_size, episode_length, 4)) # [state, action, reward, next_state]
     for i_batch in range(batch_size):
         state = env.reset()
@@ -37,7 +37,6 @@ def createBatch(env, batch_size, episode_length, param, variance_action):
 
     return batch
 
-
 def adam(params, grad, t, m_t, v_t, alpha=0.01, beta_1=0.9, beta_2=0.999, eps=1e-8):
     """
     Applies a gradient step to the given parameters based on ADAM update rule
@@ -50,7 +49,7 @@ def adam(params, grad, t, m_t, v_t, alpha=0.01, beta_1=0.9, beta_2=0.999, eps=1e
     :param beta_1: decay of first order momentum
     :param beta_2: decay of second order momentum
     :param eps: small constant
-    :return: the updated parameters, iteration number, first order momentum, and second order momentum
+    :return: The updated parameters, iteration number, first order momentum, and second order momentum
     """
 
     t += 1
@@ -60,23 +59,19 @@ def adam(params, grad, t, m_t, v_t, alpha=0.01, beta_1=0.9, beta_2=0.999, eps=1e
     v_t_hat = v_t / (1 - beta_2 ** t)
     return params - alpha * m_t_hat / (np.sqrt(v_t_hat) + eps), t, m_t, v_t
 
-
 def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action):
     """
-    REINFORCE (Monte Carlo Policy Gradient) Algorithm. Optimizes the policy
-    function approximator using policy gradient.
-
-    Args:
-        env: OpenAI environment.
-        num_episodes: Number of episodes to run for
-        batch_size: Number of episodes for each batch
-        discount_factor: Time-discount factor
-        mean_initial_param: mean initial policy parameter
-        variance_initial_param: variance initial policy parameter
-
-    Returns:
-        An BatchStats object with two numpy arrays for episode_disc_reward and episode_rewards related to the batch.
+    REINFORCE (Monte Carlo Policy Gradient) Algorithm. Optimizes the policy function approximator using ADAM
+    :param env: OpenAI environment
+    :param num_episodes: number of episodes to run for
+    :param batch_size: number of episodes for each batch
+    :param discount_factor: time-discount factor
+    :param episode_length: mean initial policy parameter
+    :param initial_param: initial policy parameter
+    :param variance_action: variance of the action's distribution
+    :return: A BatchStats object with two numpy arrays for episode_disc_reward and episode_rewards related to the batch
     """
+
     param = initial_param
     # Adam initial params
     m_t = 0
@@ -118,22 +113,17 @@ def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, in
 
     return stats
 
-
 def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action):
     """
-    REINFORCE with baseline (Monte Carlo Policy Gradient) Algorithm. Optimizes the policy
-    function approximator using policy gradient.
-
-    Args:
-        env: OpenAI environment.
-        num_episodes: Number of episodes to run for
-        batch_size: Number of episodes for each batch
-        discount_factor: Time-discount factor
-        mean_initial_param: mean initial policy parameter
-        variance_initial_param: variance initial policy parameter
-
-    Returns:
-        An BarchStats object with two numpy arrays for episode_disc_reward and episode_rewards.
+    REINFORCE with BASELINE (Monte Carlo Policy Gradient) Algorithm. Optimizes the policy function approximator using ADAM
+    :param env: OpenAI environment
+    :param num_episodes: number of episodes to run for
+    :param batch_size: number of episodes for each batch
+    :param discount_factor: time-discount factor
+    :param episode_length: mean initial policy parameter
+    :param initial_param: initial policy parameter
+    :param variance_action: variance of the action's distribution
+    :return: A BatchStats object with two numpy arrays for episode_disc_reward and episode_rewards related to the batch
     """
     param = initial_param
     # Adam initial params
@@ -180,23 +170,19 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_le
         #print(state, action, reward, param)
     return stats
 
-
 def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action):
     """
-    G(PO)MDP (Policy Gradient) Algorithm. Optimizes the policy
-    function approximator using policy gradient.
-
-    Args:
-        env: OpenAI environment.
-        num_episodes: Number of episodes to run for
-        batch_size: Number of episodes for each batch
-        discount_factor: Time-discount factor
-        mean_initial_param: mean initial policy parameter
-        variance_initial_param: variance initial policy parameter
-
-    Returns:
-        An BatchStats object with two numpy arrays for episode_disc_reward and episode_rewards.
+    G(PO)MDP (Policy Gradient) Algorithm. Optimizes the policy function approximator using ADAM
+    :param env: OpenAI environment
+    :param num_episodes: number of episodes to run for
+    :param batch_size: number of episodes for each batch
+    :param discount_factor: time-discount factor
+    :param episode_length: mean initial policy parameter
+    :param initial_param: initial policy parameter
+    :param variance_action: variance of the action's distribution
+    :return: A BatchStats object with two numpy arrays for episode_disc_reward and episode_rewards related to the batch
     """
+
     param = initial_param
     # Adam initial params
     m_t = 0

@@ -10,18 +10,18 @@ from utils import plot
 def optimalPolicy(env, num_episodes, batch_size, discount_factor, variance_action):
     """
     Optimal policy (uses Riccati equation)
-
-    Args:
-        env: OpenAI environment.
-        num_episodes: Number of episodes to run for
-
-    Returns:
-        An EpisodeStats object with two numpy arrays for episode_disc_reward and episode_rewards.
+    :param env: OpenAI environment
+    :param num_episodes: Number of episodes to run for
+    :param discount_factor: the discount factor
+    :param batch_size: size of the batch
+    :param episode_length: length of each episode
+    :return: A BatchStats object with two numpy arrays for episode_disc_reward and episode_rewards
     """
+
     # Iterate for all batch
     num_batch = num_episodes//batch_size
     # Keeps track of useful statistics#
-    stats = EpisodeStats(
+    stats = BatchStats(
         episode_total_rewards=np.zeros(num_batch),
         episode_disc_rewards=np.zeros(num_batch),
         policy_parameter=np.zeros(num_batch))
@@ -47,7 +47,7 @@ def optimalPolicy(env, num_episodes, batch_size, discount_factor, variance_actio
 
     return stats
 
-EpisodeStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards", "policy_parameter"])
+BatchStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards", "policy_parameter"])
 
 # Inizialize environment and parameters
 env = gym.make('LQG1D-v0')

@@ -5,15 +5,15 @@ import math as m
 
 def createBatch(env, batch_size, episode_length, param, variance_action):
     """
-    The function creates a new episode
-
-    Args:
-        env: OpenAI environment
-        episode_length: length of the episode
-        batch_sizelength: size of the batch
-        param: policy parameter
-        state: initial state
+    Create a batch of episodes
+    :param env: OpenAI environment
+    :param batch_size: size of the batch
+    :param episode_length: length of the episode
+    :param param: policy parameter
+    :param variance_action: variance of the action's distribution
+    :return: A tensor containing [num episodes, timestep, informations] where informations stays for: [state, action, reward, next_state]
     """
+
     batch = np.zeros((batch_size, episode_length, 4)) # [state, action, reward, next_state]
     for i_batch in range(batch_size):
         state = env.reset()
@@ -38,24 +38,21 @@ def createBatch(env, batch_size, episode_length, param, variance_action):
 
 def sourceTaskCreation(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max):
     """
-    Creates the source dataset for IS
-
-    Args:
-        env: OpenAI environment.
-        batch_size: Number of episodes for each batch
-        discount_factor: Time-discount factor
-        source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
-        source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
-        env_param_min: the minimum value of the environment parameter in our source_task
-        env_param_max: the maximum value of the environment parameter in our source_task
-        policy_param_min: the minimum value of the policy parameter in our source_task
-        policy_param_max: the maximum value of the policyparameter in our source_task
-
-    Returns:
-        A data structure containing all informations about [state, action reward] in all time steps.
-        A data structure containing the parameters for all episode contained in source_task.
-        A data structure containing the number of episodes per environment_parameter - policy_parameter configuration
+    Creates a source dataset
+    :param env: OpenAI environment
+    :param episode_length: length of each episode
+    :param batch_size: size of every batch
+    :param discount_factor: the discount factor
+    :param variance_action: the variance of the action's distribution
+    :param env_param_min: the minimum value of the environment's parameter
+    :param env_param_max: the maximum value of the environment's parameter
+    :param policy_param_min: the minimum value of the policy's parameter
+    :param policy_param_max: the maximum value of the policy's parameter
+    :return:A data structure containing all informations about the episodes,
+            a data structure containing informations about the parameters of
+            the episodes and a vector containing the number of episodes for every configuration
     """
+
     policy_param = np.linspace(policy_param_min, policy_param_max, 20)
     env_param = np.linspace(env_param_min, env_param_max, 40)
     i_episode = 0
