@@ -391,8 +391,6 @@ def offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes
     :param discount_factor: the discout factor
     :return: Returns all informations related to the update, the new sorce parameter, source tasks, new parameter ...
     """
-    #Compute gradients of the source task
-    gradient_off_policy = np.sum(computeGradientsSourceTargetTimestep(param, source_task, variance_action), axis=1)
 
     #Compute importance weights_source_target of source task
     # num_episodes_target = m.ceil((batch_size - 2*np.sum(weights_source_target) - m.sqrt(batch_size*(batch_size+4*(np.dot(weights_source_target, weights_source_target)-np.sum(weights_source_target)))))/2)
@@ -408,8 +406,6 @@ def offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes
     # The return after this timestep
     total_return = np.sum(batch[:, :, 2], axis=1)
     discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
-    gradient_est = np.sum(np.multiply((batch[:, :, 1] - param * batch[:, :, 0]), batch[:, :, 0]) / variance_action, axis=1)
-    episode_informations = np.matrix([gradient_est, total_return, discounted_return]).T
 
     source_param_new[:, 0] = discounted_return
     source_param_new[:, 1] = param
@@ -423,17 +419,18 @@ def offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes
     episodes_per_config = np.concatenate((episodes_per_config, [batch_size]))
 
     #Update the parameters
-    N =  batch_size + num_episodes_target
+    N =  source_task.shape[0] + num_episodes_target
 
+    #Compute gradients of the source task
     weights_source_target_update = computeMultipleImportanceWeightsSourceTarget(param, env.A, source_param, variance_action, source_task, episodes_per_config, batch_size, episode_length)
-    gradient_off_policy_update = np.concatenate([gradient_off_policy, np.squeeze(np.asarray(episode_informations[:,0]))], axis=0)
-    discounted_rewards_all = np.concatenate([source_param[:,0], np.squeeze(np.asarray(episode_informations[:,2]))], axis=0)
+    gradient_off_policy_update = np.sum(computeGradientsSourceTargetTimestep(param, source_task, variance_action), axis=1)
+    discounted_rewards_all = source_param[:,0]
     gradient = 1/N * np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis=0)
     param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     #param = param + 0.01 * gradient
     #Compute rewards of batch
-    tot_reward_batch = np.mean(episode_informations[:,1])
-    discounted_reward_batch = np.mean(episode_informations[:,2])
+    tot_reward_batch = np.mean(total_return)
+    discounted_reward_batch = np.mean(discounted_return)
 
     return source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch
 
@@ -456,7 +453,6 @@ def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, ep
     Returns all informations related to the update, the new sorce parameter, source tasks, new parameter ...
     """
     #Compute gradients of the source task
-    gradient_off_policy = computeGradientsSourceTargetTimestep(param, source_task, variance_action)
     num_episodes_target = batch_size
     # Create new parameters and new tasks associated to episodes, used tu update the source_param and source_task later
     source_param_new = np.ones((num_episodes_target, 5))
@@ -469,8 +465,6 @@ def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, ep
     # The return after this timestep
     total_return = np.sum(batch[:, :, 2], axis=1)
     discounted_return_timestep = (discount_factor_timestep * batch[:, :, 2])
-    gradient_est_timestep = ((batch[:, :, 1] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action
-    episode_informations = np.matrix([np.sum(gradient_est_timestep, axis=1), total_return, np.sum(discounted_return_timestep, axis=1)]).T
 
     source_param_new[:, 0] = np.sum(discounted_return_timestep, axis=1)
     source_param_new[:, 1] = param
@@ -487,14 +481,14 @@ def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, ep
     N =  source_task.shape[0] + batch_size
     #Compute importance weights_source_target of source task
     weights_source_target_update = computeMultipleImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, episodes_per_config, batch_size, episode_length)
-    gradient_off_policy_update = np.concatenate([gradient_off_policy, gradient_est_timestep], axis=0)
+    gradient_off_policy_update = computeGradientsSourceTargetTimestep(param, source_task, variance_action)
     discounted_rewards_all = np.concatenate([discount_factor_timestep * source_task[:,2::3], discounted_return_timestep], axis=0)
     gradient = 1/N * np.sum(np.sum((weights_source_target_update * np.cumsum(gradient_off_policy_update)) * discounted_rewards_all, axis = 1), axis=0)
     param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     #param = param + 0.01 * gradient
     #Compute rewards of batch
-    tot_reward_batch = np.mean(episode_informations[:,1])
-    discounted_reward_batch = np.mean(episode_informations[:,2])
+    tot_reward_batch = np.mean(total_return)
+    discounted_reward_batch = np.mean(np.sum(discounted_return_timestep, axis=1))
 
     return source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch
 
@@ -644,3 +638,40 @@ def offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, sour
         stats.episode_total_rewards[i_batch] = tot_reward_batch
         stats.episode_disc_rewards[i_batch] = discounted_reward_batch
     return stats
+
+def offPolicyMultipleImpor(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch):
+    """
+    Perform transfer from source tasks, using REINFORCE with PD-MIS
+    :param env: OpenAI environment
+    :param batch_size: size of the batch
+    :param discount_factor: the discout factor
+    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
+    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
+    :param episodes_per_config: vector containing the number of episodes for every policy_parameter - env_parameter configuration
+    :param variance_action: variance of the action's distribution
+    :param episode_length: length of the episodes
+    :param initial_param: initial policy parameter
+    :param num_batch: number of batch of the algorithm
+    :return: Return a BatchStats object
+    """
+
+    param = initial_param
+    # Adam initial params
+    m_t = 0
+    v_t = 0
+    t = 0
+
+    # Keeps track of useful statistics#
+    stats = BatchStats(
+        episode_total_rewards=np.zeros(num_batch),
+        episode_disc_rewards=np.zeros(num_batch),
+        policy_parameter=np.zeros(num_batch))
+
+    for i_batch in range(num_batch):
+        stats.policy_parameter[i_batch] = param
+        [source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch] = offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, episodes_per_config, source_task, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor)
+        # Update statistics
+        stats.episode_total_rewards[i_batch] = tot_reward_batch
+        stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+    return stats
+
