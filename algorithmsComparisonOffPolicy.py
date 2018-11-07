@@ -13,8 +13,8 @@ mean_initial_param = -0.1
 episode_length = 20
 variance_initial_param = 0
 variance_action = 0.1
-num_episodes = 500
-batch_size = 10
+num_episodes = 10000
+batch_size = 50
 num_batch = num_episodes//batch_size
 discount_factor = 0.99
 runs = 5
@@ -50,14 +50,14 @@ for i_run in range(runs):
 
     #discounted_reward_off_policy_importance_sampling[i_run,:] = off_policy_importance_sampling.episode_disc_rewards
     #discounted_reward_off_policy_importance_sampling_pd[i_run,:] = off_policy_importance_sampling_pd.episode_disc_rewards
-    discounted_reward_off_policy_multiple_importance_sampling[i_run,:] = off_policy_multiple_importance_sampling.episode_disc_rewards
-    #discounted_reward_off_policy_multiple_importance_sampling_pd[i_run,:] = off_policy_multiple_importance_sampling_pd.episode_disc_rewards
+    #discounted_reward_off_policy_multiple_importance_sampling[i_run,:] = off_policy_multiple_importance_sampling.episode_disc_rewards
+    discounted_reward_off_policy_multiple_importance_sampling_pd[i_run,:] = off_policy_multiple_importance_sampling_pd.episode_disc_rewards
     #discounted_reward_reinforce[i_run, :] = reinforce.episode_disc_rewards
 
     #policy_param_off_policy_importance_sampling[i_run,:] = off_policy_importance_sampling.policy_parameter
     #policy_param_off_policy_importance_sampling_pd[i_run,:] = off_policy_importance_sampling_pd.policy_parameter
-    policy_param_off_policy_multiple_importance_sampling[i_run,:] = off_policy_multiple_importance_sampling.policy_parameter
-    #policy_param_off_policy_multiple_importance_sampling_pd[i_run,:] = off_policy_multiple_importance_sampling_pd.policy_parameter
+    #policy_param_off_policy_multiple_importance_sampling[i_run,:] = off_policy_multiple_importance_sampling.policy_parameter
+    policy_param_off_policy_multiple_importance_sampling_pd[i_run,:] = off_policy_multiple_importance_sampling_pd.policy_parameter
     #policy_param_reinforce[i_run, :] = reinforce.policy_parameter
 
 # discounted_reward_off_policy = np.genfromtxt('discounted_reward_off_policy_importance_sampling.csv', delimiter=',')

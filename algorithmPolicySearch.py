@@ -84,7 +84,8 @@ def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, in
     stats = BatchStats(
         episode_total_rewards=np.zeros(num_batch),
         episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch))
+        policy_parameter=np.zeros(num_batch),
+        gradient=np.zeros(num_batch))
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
@@ -109,6 +110,8 @@ def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, in
         # Update statistics
         stats.episode_total_rewards[i_batch] = tot_reward_batch
         stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.gradient[i_batch] = gradient
+
         #print(state, action, reward, param)
 
     return stats
@@ -137,7 +140,8 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_le
     stats = BatchStats(
         episode_total_rewards=np.zeros(num_batch),
         episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch))
+        policy_parameter=np.zeros(num_batch),
+        gradient=np.zeros(num_batch))
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
@@ -167,6 +171,8 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_le
         # Update statistics
         stats.episode_total_rewards[i_batch] = tot_reward_batch
         stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.gradient[i_batch] = gradient
+
         #print(state, action, reward, param)
     return stats
 
@@ -195,7 +201,8 @@ def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initi
     stats = BatchStats(
         episode_total_rewards=np.zeros(num_batch),
         episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch))
+        policy_parameter=np.zeros(num_batch),
+        gradient=np.zeros(num_batch))
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
@@ -225,5 +232,6 @@ def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initi
         # Update statistics
         stats.episode_total_rewards[i_batch] = tot_reward_batch
         stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.gradient[i_batch] = gradient
 
     return stats

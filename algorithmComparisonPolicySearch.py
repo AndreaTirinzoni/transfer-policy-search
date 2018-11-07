@@ -60,7 +60,7 @@ batch_size = 10
 num_batch = num_episodes//batch_size
 discount_factor = 0.99
 
-runs = 30
+runs = 10
 
 reward_reinforce = np.zeros((runs, num_batch))
 reward_reinforce_baseline = np.zeros((runs, num_batch))
