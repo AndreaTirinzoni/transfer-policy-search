@@ -2,7 +2,7 @@ import numpy as np
 from collections import namedtuple
 import math as m
 
-BatchStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards", "policy_parameter"])
+BatchStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards", "policy_parameter", "gradient"])
 
 def createBatch(env, batch_size, episode_length, param, variance_action):
     """
