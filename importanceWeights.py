@@ -376,7 +376,7 @@ def offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_con
     #Compute rewards of batch
     tot_reward_batch = np.mean(total_return)
     discounted_reward_batch = np.mean(discounted_return)
-    ess = np.min(np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2, axis=0)
+    ess = np.max(np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2, axis=0)
 
     # Concatenate new episodes to source tasks
     source_param = np.concatenate((source_param, source_param_new), axis=0)
@@ -510,7 +510,7 @@ def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, ep
     #Compute rewards of batch
     tot_reward_batch = np.mean(total_return)
     discounted_reward_batch = np.mean(np.sum(discounted_return_timestep, axis=1))
-    ess = np.min(np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2, axis=0)
+    ess = np.max(np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2, axis=0)
 
     return source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions
 
