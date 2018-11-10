@@ -5,7 +5,7 @@ import algorithmPolicySearch as alg
 
 BatchStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards", "policy_parameter", "gradient", "ess"])
 
-def optimalPolicy(env, num_episodes, discount_factor, batch_size, episode_length):
+def optimalPolicy(env, num_episodes, batch_size, discount_factor, variance_action, episode_length):
     """
     Optimal policy (uses Riccati equation)
     :param env: OpenAI environment
@@ -26,42 +26,25 @@ def optimalPolicy(env, num_episodes, discount_factor, batch_size, episode_length
         gradient=np.zeros(num_batch),
         ess=np.zeros(num_batch))
     K = env.computeOptimalK()
+
+    discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
+
     for i_batch in range(num_batch):
-        episode_informations = np.zeros((batch_size, 3))
-        # Iterate for every episode in batch
-        for i_episode in range(batch_size):
-            state = env.reset()
-            episode = np.zeros((episode_length, 4))
-            total_return = 0
-            discounted_return = 0
-            gradient_est = 0
 
-            for t in range(episode_length):
-                #env.render()
-                # Take a step
-                action = K * state
-                next_state, reward, done, _ = env.step(action)
-                episode[t,:] = [state, action, reward, next_state]
+        batch = alg.createBatch(env, batch_size, episode_length, K, variance_action) # [state, action, reward, next_state]
 
-                if done:
-                    break
+        # The return after this timestep
+        total_return = np.sum(batch[:, :, 2], axis=1)
+        discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
 
-                state = next_state
+        tot_reward_batch = np.mean(total_return)
+        discounted_reward_batch = np.mean(discounted_return)
 
-            for t in range(episode.shape[0]):
-                # The return after this timestep
-                total_return += episode[t, 2]
-                discounted_return += discount_factor ** t * episode[t, 2]
-            episode_informations[i_episode,:] = [gradient_est, total_return, discounted_return]
-
-        tot_reward_batch = np.mean(episode_informations[:,1])
-        discounted_reward_batch = np.mean(episode_informations[:,2])
         # Update statistics
+        stats.policy_parameter[i_batch] = K
         stats.episode_total_rewards[i_batch] = tot_reward_batch
         stats.episode_disc_rewards[i_batch] = discounted_reward_batch
-        stats.policy_parameter[i_batch] = K
 
-        #print(state, action, reward, param)
     return stats
 
 def createBatch(env, batch_size, episode_length, param, variance_action):
@@ -803,6 +786,7 @@ def offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, sour
         ess=np.zeros(num_batch))
 
     for i_batch in range(num_batch):
+        print(i_batch)
         stats.policy_parameter[i_batch] = param
         [source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions] = offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, episodes_per_config, source_task, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor)
         # Update statistics
