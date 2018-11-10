@@ -22,7 +22,9 @@ def optimalPolicy(env, num_episodes, discount_factor, batch_size, episode_length
     stats = BatchStats(
         episode_total_rewards=np.zeros(num_batch),
         episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch))
+        policy_parameter=np.zeros(num_batch),
+        gradient=np.zeros(num_batch),
+        ess=np.zeros(num_batch))
     K = env.computeOptimalK()
     for i_batch in range(num_batch):
         episode_informations = np.zeros((batch_size, 3))
@@ -381,7 +383,7 @@ def offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_con
     source_task_new[:, 2::3] = batch[:, :, 2]
 
     #Update the parameters
-    N =  source_task.shape[0] + num_episodes_target
+    N = source_task.shape[0] + num_episodes_target
     weights_source_target_update = np.concatenate([weights_source_target, np.ones(num_episodes_target)], axis=0) # are the weights used for computing ESS
     gradient_off_policy_update = np.concatenate([gradient_off_policy, np.squeeze(np.asarray(gradient_est))], axis=0)
     discounted_rewards_all = np.concatenate([source_param[:,0], np.squeeze(np.asarray(discounted_return))], axis=0)

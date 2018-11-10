@@ -60,7 +60,7 @@ batch_size = 10
 num_batch = num_episodes//batch_size
 discount_factor = 0.99
 
-runs = 10
+runs = 20
 
 reward_reinforce = np.zeros((runs, num_batch))
 reward_reinforce_baseline = np.zeros((runs, num_batch))
@@ -112,7 +112,7 @@ mean_pol_opt = np.mean(policy_optimal, axis=0)
 var_pol1 = np.std(policy_reinforce, axis=0) / (m.sqrt(runs))
 var_pol2 = np.std(policy_reinforce_baseline, axis=0) / (m.sqrt(runs))
 var_pol3 = np.std(policy_gpomdp, axis=0) / (m.sqrt(runs))
-var_opt = np.zeros(num_batch)
+var_pol_opt = np.zeros(num_batch)
 
 x = range(num_batch)
 

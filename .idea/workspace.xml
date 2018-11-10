@@ -3,14 +3,18 @@
   <component name="ChangeListManager">
     <list default="true" id="4263835c-fd92-417b-afad-0a299f6d3721" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/transfer-policy-search-master.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/transfer-policy-search-master.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Policy parameter transfer policy search.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/Policy parameter transfer policy search.pdf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AlgorithmComparison_parameters.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/AlgorithmComparison_rewards.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/IS rewards.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Policy parameter policy search.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/Policy parameter policy search.pdf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Policy parameter transfer policy search.pdf" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Rewards policy search.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/Rewards policy search.pdf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Rewards transfer policy search.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/Rewards transfer policy search.pdf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/algorithmComparisonPolicySearch.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithmComparisonPolicySearch.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithmPolicySearch.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithmPolicySearch.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/algorithmsComparisonOffPolicy.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithmsComparisonOffPolicy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/envs/lqg1d.py" beforeDir="false" afterPath="$PROJECT_DIR$/envs/lqg1d.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/importanceWeights.py" beforeDir="false" afterPath="$PROJECT_DIR$/importanceWeights.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -23,14 +27,14 @@
     <session id="-1699641374">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="12" />
+          <entry key="project.closed" value="14" />
           <entry key="project.open.time.0" value="1" />
           <entry key="project.open.time.2" value="1" />
-          <entry key="project.open.time.3" value="3" />
+          <entry key="project.open.time.3" value="4" />
           <entry key="project.open.time.4" value="5" />
-          <entry key="project.open.time.5" value="1" />
+          <entry key="project.open.time.5" value="2" />
           <entry key="project.open.time.6" value="1" />
-          <entry key="project.opened" value="13" />
+          <entry key="project.opened" value="15" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -58,14 +62,67 @@
       </usages-collector>
       <usages-collector id="statistics.vcs.git.usages" />
     </session>
+    <session id="132096698">
+      <usages-collector id="statistics.lifecycle.project">
+        <counts>
+          <entry key="project.closed" value="1" />
+          <entry key="project.open.time.4" value="1" />
+          <entry key="project.open.time.5" value="1" />
+          <entry key="project.opened" value="2" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.edit">
+        <counts>
+          <entry key="py" value="28" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.edit">
+        <counts>
+          <entry key="Python" value="28" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.open" />
+      <usages-collector id="statistics.vcs.git.usages" />
+    </session>
+    <session id="211049904">
+      <usages-collector id="statistics.lifecycle.project">
+        <counts>
+          <entry key="project.closed" value="1" />
+          <entry key="project.open.time.3" value="1" />
+          <entry key="project.open.time.4" value="1" />
+          <entry key="project.opened" value="2" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.edit">
+        <counts>
+          <entry key="py" value="161" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.edit">
+        <counts>
+          <entry key="Python" value="161" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.open">
+        <counts>
+          <entry key="Python" value="1" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.vcs.git.usages" />
+      <usages-collector id="statistics.file.extensions.open">
+        <counts>
+          <entry key="py" value="1" />
+        </counts>
+      </usages-collector>
+    </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/algorithmsComparisonOffPolicy.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="199">
-              <caret line="47" selection-start-line="47" selection-end-line="47" />
+            <state relative-caret-position="432">
+              <caret line="177" column="23" selection-start-line="177" selection-start-column="23" selection-end-line="177" selection-end-column="23" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -73,25 +130,13 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/importanceWeights.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="6000">
-              <caret line="454" column="40" selection-start-line="454" selection-start-column="40" selection-end-line="454" selection-end-column="40" />
+            <state relative-caret-position="462">
+              <caret line="25" selection-start-line="25" selection-end-line="25" />
               <folding>
                 <element signature="e#0#16#0" expanded="true" />
-                <element signature="e#299#2422#0" />
-                <element signature="e#2502#3591#0" />
-                <element signature="e#3676#4253#0" />
-                <element signature="e#4412#6092#0" />
-                <element signature="e#6220#7989#0" />
-                <element signature="e#29827#33243#0" />
-                <element signature="e#33474#35201#0" />
-                <element signature="e#35383#37119#0" />
-                <element signature="e#37966#39170#0" />
-                <element signature="e#39905#41116#0" />
-                <element signature="e#41204#42958#0" />
-                <marker date="1541631287604" expanded="true" signature="12020:12021" ph="..." />
               </folding>
             </state>
           </provider>
@@ -100,8 +145,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/essPerConfiguration.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="309">
-              <caret line="23" column="144" lean-forward="true" selection-start-line="23" selection-start-column="47" selection-end-line="23" selection-end-column="144" />
+            <state relative-caret-position="462">
+              <caret line="23" column="144" selection-start-line="23" selection-start-column="47" selection-end-line="23" selection-end-column="144" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -112,11 +157,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/sourceTaskCreation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1380">
-              <caret line="72" column="13" selection-start-line="72" selection-start-column="13" selection-end-line="72" selection-end-column="13" />
-              <folding>
-                <element signature="e#0#10#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="42">
+              <caret line="2" column="18" selection-start-line="2" selection-start-column="18" selection-end-line="2" selection-end-column="18" />
             </state>
           </provider>
         </entry>
@@ -124,8 +166,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/algorithmComparisonPolicySearch.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="209">
-              <caret line="26" column="44" selection-start-line="26" selection-start-column="44" selection-end-line="26" selection-end-column="44" />
+            <state relative-caret-position="399">
+              <caret line="25" column="49" selection-start-line="25" selection-start-column="49" selection-end-line="25" selection-end-column="49" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -136,7 +178,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/algorithmPolicySearch.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2669">
+            <state relative-caret-position="1785">
               <caret line="87" column="36" selection-start-line="87" selection-start-column="36" selection-end-line="87" selection-end-column="36" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
@@ -174,15 +216,15 @@
     </option>
   </component>
   <component name="ProjectFrameBounds" fullScreen="true">
+    <option name="y" value="23" />
     <option name="width" value="1440" />
-    <option name="height" value="900" />
+    <option name="height" value="826" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Course" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -194,10 +236,12 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Course" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors.Language Defaults" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -305,9 +349,9 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.algorithmsComparisonOffPolicy" />
-        <item itemvalue="Python.sourceTaskCreation" />
         <item itemvalue="Python.algorithmComparison" />
         <item itemvalue="Python.algorithmPolicySearch" />
+        <item itemvalue="Python.sourceTaskCreation" />
       </list>
     </recent_temporary>
   </component>
@@ -322,8 +366,8 @@
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" weight="0.15783133" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.4" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.22494173" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -357,12 +401,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>387</line>
+          <line>389</line>
           <option name="timeStamp" value="26" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>521</line>
+          <line>523</line>
           <option name="timeStamp" value="27" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -374,57 +418,11 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/sourceTaskCreation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1380">
-          <caret line="72" column="13" selection-start-line="72" selection-start-column="13" selection-end-line="72" selection-end-column="13" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/essPerConfiguration.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="309">
-          <caret line="23" column="144" lean-forward="true" selection-start-line="23" selection-start-column="47" selection-end-line="23" selection-end-column="144" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/algorithmPolicySearch.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2669">
-          <caret line="87" column="36" selection-start-line="87" selection-start-column="36" selection-end-line="87" selection-end-column="36" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/algorithmComparisonPolicySearch.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="209">
-          <caret line="26" column="44" selection-start-line="26" selection-start-column="44" selection-end-line="26" selection-end-column="44" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/anaconda/lib/python3.6/site-packages/numpy/core/numeric.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="237">
-          <caret line="189" selection-start-line="189" selection-end-line="189" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$USER_HOME$/anaconda/lib/python3.6/site-packages/numpy/core/numeric.py" />
     <entry file="file://$PROJECT_DIR$/algorithmsComparisonOffPolicy.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="199">
-          <caret line="47" selection-start-line="47" selection-end-line="47" />
+        <state relative-caret-position="432">
+          <caret line="177" column="23" selection-start-line="177" selection-start-column="23" selection-end-line="177" selection-end-column="23" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
@@ -433,22 +431,47 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/importanceWeights.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="6000">
-          <caret line="454" column="40" selection-start-line="454" selection-start-column="40" selection-end-line="454" selection-end-column="40" />
+        <state relative-caret-position="462">
+          <caret line="25" selection-start-line="25" selection-end-line="25" />
           <folding>
             <element signature="e#0#16#0" expanded="true" />
-            <element signature="e#299#2422#0" />
-            <element signature="e#2502#3591#0" />
-            <element signature="e#3676#4253#0" />
-            <element signature="e#4412#6092#0" />
-            <element signature="e#6220#7989#0" />
-            <element signature="e#29827#33243#0" />
-            <element signature="e#33474#35201#0" />
-            <element signature="e#35383#37119#0" />
-            <element signature="e#37966#39170#0" />
-            <element signature="e#39905#41116#0" />
-            <element signature="e#41204#42958#0" />
-            <marker date="1541631287604" expanded="true" signature="12020:12021" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/essPerConfiguration.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="462">
+          <caret line="23" column="144" selection-start-line="23" selection-start-column="47" selection-end-line="23" selection-end-column="144" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sourceTaskCreation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="42">
+          <caret line="2" column="18" selection-start-line="2" selection-start-column="18" selection-end-line="2" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithmComparisonPolicySearch.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="399">
+          <caret line="25" column="49" selection-start-line="25" selection-start-column="49" selection-end-line="25" selection-end-column="49" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithmPolicySearch.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1785">
+          <caret line="87" column="36" selection-start-line="87" selection-start-column="36" selection-end-line="87" selection-end-column="36" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
           </folding>
         </state>
       </provider>
