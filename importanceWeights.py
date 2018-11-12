@@ -109,21 +109,21 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_param, 
     :return: Returns the weights of the importance sampling estimator
     """
 
-    param_policy_src = source_param[:, 1] #policy parameter of source
+    param_policy_src = source_param[:, 1][:, np.newaxis] #policy parameter of source
     state_t = np.delete(source_task[:, 0::3], -1, axis=1)# state t
     state_t1 = source_task[:, 3::3] # state t+1
     action_t = source_task[:, 1::3] # action t
-    variance_env = source_param[:, 4] # variance of the model transition
-    A = source_param[:, 2] # environment parameter A of src
-    B = source_param[:, 3] # environment parameter B of src
+    variance_env = source_param[:, 4][:, np.newaxis] # variance of the model transition
+    A = source_param[:, 2][:, np.newaxis] # environment parameter A of src
+    B = source_param[:, 3][:, np.newaxis] # environment parameter B of src
 
-    policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t - policy_param*state_t)**2/(2*variance_action))
-    policy_src = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t - (param_policy_src * state_t.T).T)**2/(2*variance_action))
+    policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t - policy_param * state_t)**2)/(2*variance_action)), axis=1)
+    policy_src = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t - param_policy_src * state_t)**2)/(2*variance_action)), axis=1)
 
-    model_tgt = (1/np.sqrt(2*m.pi*variance_env) * np.exp(((-(state_t1 - env_param * state_t - (B * action_t.T).T).T **2) / (2*variance_env)).T).T).T
-    model_src = (1/np.sqrt(2*m.pi*variance_env) * np.exp(((-(state_t1 - (A * state_t.T).T - (B * action_t.T).T).T **2) / (2*variance_env)).T).T).T
+    model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - env_param * state_t - B * action_t) **2) / (2*variance_env)), axis=1)
+    model_src = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - A * state_t - B * action_t) **2) / (2*variance_env)), axis=1)
 
-    weights = np.prod(policy_tgt / policy_src * model_tgt / model_src, axis = 1)
+    weights = policy_tgt / policy_src * model_tgt / model_src
 
     return weights
 
@@ -138,19 +138,19 @@ def computeImportanceWeightsSourceTargetPerDecision(policy_param, env_param, sou
     :return: Returns the weights of the per-decision importance sampling estimator
     """
 
-    param_policy_src = source_param[:, 1] #policy parameter of source
+    param_policy_src = source_param[:, 1][:, np.newaxis] #policy parameter of source
     state_t = np.delete(source_task[:, 0::3], -1, axis=1)# state t
     state_t1 = source_task[:, 3::3] # state t+1
     action_t = source_task[:, 1::3] # action t
-    variance_env = source_param[:, 4] # variance of the model transition
-    A = source_param[:, 2] # environment parameter A of src
-    B = source_param[:, 3] # environment parameter B of src
+    variance_env = source_param[:, 4][:, np.newaxis] # variance of the model transition
+    A = source_param[:, 2][:, np.newaxis] # environment parameter A of src
+    B = source_param[:, 3][:, np.newaxis] # environment parameter B of src
 
-    policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t - policy_param*state_t)**2/(2*variance_action)), axis=1)
-    policy_src = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t - (param_policy_src * state_t.T).T)**2 / (2*variance_action)), axis=1)
+    policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t - policy_param * state_t)**2)/(2*variance_action)), axis=1)
+    policy_src = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t - param_policy_src * state_t)**2)/(2*variance_action)), axis=1)
 
-    model_tgt = np.cumprod((1/np.sqrt(2*m.pi*variance_env) * np.exp(((-(state_t1 - env_param * state_t - (B * action_t.T).T).T **2) / (2*variance_env)).T).T).T, axis=1)
-    model_src = np.cumprod((1/np.sqrt(2*m.pi*variance_env) * np.exp(((-(state_t1 - (A * state_t.T).T - (B * action_t.T).T).T **2) / (2*variance_env)).T).T).T, axis=1)
+    model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - env_param * state_t - B * action_t) **2) / (2*variance_env)), axis=1)
+    model_src = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - A * state_t - B * action_t) **2) / (2*variance_env)), axis=1)
 
     weights = policy_tgt / policy_src * model_tgt / model_src
 
@@ -184,19 +184,19 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
     state_t = np.repeat(np.delete(source_task[:, 0::3], -1, axis=1)[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t
     state_t1 = np.repeat(source_task[:, 3::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t+1
     action_t = np.repeat(source_task[:, 1::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # action t
-    variance_env = source_param[:, 4] # variance of the model transition
+    variance_env = source_param[:, 4][:, np.newaxis, np.newaxis] # variance of the model transition
 
-    policy_src_new_traj = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t[evaluated_trajectories:, :, :] - param_policy_src * state_t[evaluated_trajectories:, :, :]).T)**2/(2*variance_action)), axis=1).T
-    model_src_new_traj = np.prod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:]) * np.exp((-(state_t1[evaluated_trajectories:, :, :] - (A * state_t[evaluated_trajectories:, :, :]) - (B * action_t[evaluated_trajectories:, :, :])).T **2) / (2*variance_env[evaluated_trajectories:])), axis=1).T
+    policy_src_new_traj = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t[evaluated_trajectories:, :, :] - param_policy_src * state_t[evaluated_trajectories:, :, :])**2)/(2*variance_action)), axis=1)
+    model_src_new_traj = np.prod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, :, :]) * np.exp(-((state_t1[evaluated_trajectories:, :, :] - A * state_t[evaluated_trajectories:, :, :] - B * action_t[evaluated_trajectories:, :, :]) **2) / (2*variance_env[evaluated_trajectories:, :, :])), axis=1)
 
-    policy_src_new_param = np.prod((1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t[0:evaluated_trajectories, :, 0] - param_policy_src[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0]).T)**2/(2*variance_action))).T, axis=1)
-    model_src_new_param = np.prod((1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories]) * np.exp((-(state_t1[0:evaluated_trajectories, :, 0] - (A[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0]) - (B[0:evaluated_trajectories, :, -1] * action_t[0:evaluated_trajectories, :, 0])).T **2) / (2*variance_env[0:evaluated_trajectories]))).T, axis=1)
+    policy_src_new_param = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t[0:evaluated_trajectories, :, 0] - param_policy_src[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0])**2)/(2*variance_action)), axis=1)
+    model_src_new_param = np.prod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, :, 0]) * np.exp(-((state_t1[0:evaluated_trajectories, :, 0] - A[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0] - B[0:evaluated_trajectories, :, -1] * action_t[0:evaluated_trajectories, :, 0]) **2) / (2*variance_env[0:evaluated_trajectories, :, 0])), axis=1)
 
     src_distributions = np.concatenate((src_distributions, np.matrix(policy_src_new_param * model_src_new_param).T), axis=1)
     src_distributions = np.concatenate((src_distributions, np.matrix(policy_src_new_traj * model_src_new_traj)), axis=0)
 
-    policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t[:, :, 0] - policy_param*state_t[:, :, 0])**2/(2*variance_action)), axis = 1)
-    model_tgt = np.prod((1/np.sqrt(2*m.pi*variance_env) * (np.exp((-(state_t1[:, :, 0] - env_param * state_t[:, :, 0] - (B[:, :, -1] * action_t)[:, :, 0]) **2).T / (2*variance_env)).T).T).T, axis = 1)
+    policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t[:, :, 0] - policy_param*state_t[:, :, 0])**2)/(2*variance_action)), axis = 1)
+    model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, :, 0]) * np.exp(-((state_t1[:, :, 0] - env_param * state_t[:, :, 0] - B[:, :, -1] * action_t[:, :, 0]) **2) / (2*variance_env[:, :, 0])), axis = 1)
 
     mis_denominator = np.dot(episodes_per_config/n, src_distributions.T).T
 
@@ -232,19 +232,19 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
     state_t = np.repeat(np.delete(source_task[:, 0::3], -1, axis=1)[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t
     state_t1 = np.repeat(source_task[:, 3::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t+1
     action_t = np.repeat(source_task[:, 1::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # action t
-    variance_env = source_param[:, 4] # variance of the model transition
+    variance_env = source_param[:, 4][:, np.newaxis, np.newaxis] # variance of the model transition
 
-    policy_src_new_traj = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t[evaluated_trajectories:, :, :] - param_policy_src * state_t[evaluated_trajectories:, :, :]).T)**2/(2*variance_action)), axis=1).T
-    model_src_new_traj = np.cumprod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:]) * np.exp((-(state_t1[evaluated_trajectories:, :, :] - (A * state_t[evaluated_trajectories:, :, :]) - (B * action_t[evaluated_trajectories:, :, :])).T **2) / (2*variance_env[evaluated_trajectories:])), axis=1).T
+    policy_src_new_traj = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t[evaluated_trajectories:, :, :] - param_policy_src * state_t[evaluated_trajectories:, :, :])**2)/(2*variance_action)), axis=1)
+    model_src_new_traj = np.cumprod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, :, :]) * np.exp(-((state_t1[evaluated_trajectories:, :, :] - A * state_t[evaluated_trajectories:, :, :] - B * action_t[evaluated_trajectories:, :, :]) **2) / (2*variance_env[evaluated_trajectories:, :, :])), axis=1)
 
-    policy_src_new_param = np.cumprod((1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t[0:evaluated_trajectories, :, 0] - param_policy_src[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0]).T)**2/(2*variance_action))).T, axis=1)
-    model_src_new_param = np.cumprod((1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories])[:, np.newaxis] * np.exp((-(state_t1[0:evaluated_trajectories, :, 0] - (A[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0]) - (B[0:evaluated_trajectories, :, -1] * action_t[0:evaluated_trajectories, :, 0])).T **2) / (2*variance_env[0:evaluated_trajectories])).T), axis=1)
+    policy_src_new_param = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t[0:evaluated_trajectories, :, 0] - param_policy_src[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0])**2)/(2*variance_action)), axis=1)
+    model_src_new_param = np.cumprod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, :, 0]) * np.exp(-((state_t1[0:evaluated_trajectories, :, 0] - A[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0] - B[0:evaluated_trajectories, :, -1] * action_t[0:evaluated_trajectories, :, 0]) **2) / (2*variance_env[0:evaluated_trajectories, :, 0])), axis=1)
 
     src_distributions = np.concatenate((src_distributions, (policy_src_new_param * model_src_new_param)[:, :, np.newaxis]), axis=2)
     src_distributions = np.concatenate((src_distributions, (policy_src_new_traj * model_src_new_traj)), axis=0)
 
     policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t[:, :, 0] - policy_param*state_t[:, :, 0])**2/(2*variance_action)), axis = 1)
-    model_tgt = np.cumprod((1/np.sqrt(2*m.pi*variance_env) * (np.exp((-(state_t1[:, :, 0] - env_param * state_t[:, :, 0] - (B[:, :, -1] * action_t)[:, :, 0]) **2).T / (2*variance_env)).T).T).T, axis = 1)
+    model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, :, 0]) * np.exp(-((state_t1[:, :, 0] - env_param * state_t[:, :, 0] - (B[:, :, -1] * action_t)[:, :, 0]) **2) / (2*variance_env[:, :, 0])), axis = 1)
 
     mis_denominator = np.sum(episodes_per_config/n * src_distributions, axis=2)
 
@@ -304,6 +304,7 @@ def offPolicyUpdateImportanceSamplingPerDec(env, param, source_param, episodes_p
     #Update the parameters
     N =  source_task.shape[0] + batch_size
     weights_source_target_update = np.concatenate([weights_source_target, np.ones((num_episodes_target, episode_length))], axis=0) # are the weights used for computing ESS
+    weights_source_target_update[np.isnan(weights_source_target_update)] = 0
     gradient_off_policy_update = np.concatenate([gradient_off_policy, gradient_est_timestep], axis=0)
     discounted_rewards_all = np.concatenate([discount_factor_timestep * source_task[:,2::3], discounted_return_timestep], axis=0)
     gradient = 1/N * np.sum(np.sum(weights_source_target_update * gradient_off_policy_update * discounted_rewards_all, axis = 1))
@@ -312,7 +313,7 @@ def offPolicyUpdateImportanceSamplingPerDec(env, param, source_param, episodes_p
     #Compute rewards of batch
     tot_reward_batch = np.mean(total_return)
     discounted_reward_batch = np.mean(discounted_return)
-    ess = np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2
+    ess = np.min(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
     # Concatenate new episodes to source tasks
     source_param = np.concatenate((source_param, source_param_new), axis=0)
     source_task = np.concatenate((source_task, source_task_new), axis=0)
@@ -368,6 +369,7 @@ def offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_con
     #Update the parameters
     N = source_task.shape[0] + num_episodes_target
     weights_source_target_update = np.concatenate([weights_source_target, np.ones(num_episodes_target)], axis=0) # are the weights used for computing ESS
+    weights_source_target_update[np.isnan(weights_source_target_update)] = 0
     gradient_off_policy_update = np.concatenate([gradient_off_policy, np.squeeze(np.asarray(gradient_est))], axis=0)
     discounted_rewards_all = np.concatenate([source_param[:,0], np.squeeze(np.asarray(discounted_return))], axis=0)
     gradient = 1/N * np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis=0)
@@ -376,7 +378,7 @@ def offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_con
     #Compute rewards of batch
     tot_reward_batch = np.mean(total_return)
     discounted_reward_batch = np.mean(discounted_return)
-    ess = np.max(np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2, axis=0)
+    ess = np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2
 
     # Concatenate new episodes to source tasks
     source_param = np.concatenate((source_param, source_param_new), axis=0)
@@ -438,6 +440,7 @@ def offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes
 
     #Compute gradients of the source task
     [weights_source_target_update, src_distributions] = computeMultipleImportanceWeightsSourceTarget(param, env.A, source_param, variance_action, source_task, episodes_per_config, src_distributions)
+    weights_source_target_update[np.isnan(weights_source_target_update)] = 0
     gradient_off_policy_update = np.sum(computeGradientsSourceTargetTimestep(param, source_task, variance_action), axis=1)
     discounted_rewards_all = source_param[:,0]
     gradient = 1/N * np.sum((np.squeeze(np.array(weights_source_target_update)) * gradient_off_policy_update) * discounted_rewards_all)
@@ -502,6 +505,7 @@ def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, ep
     N =  source_task.shape[0]
     #Compute importance weights_source_target of source task
     [weights_source_target_update, src_distributions] = computeMultipleImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, episodes_per_config, src_distributions)
+    weights_source_target_update[np.isnan(weights_source_target_update)] = 0
     gradient_off_policy_update = np.cumsum(computeGradientsSourceTargetTimestep(param, source_task, variance_action), axis=1)
     discounted_rewards_all = discount_factor_timestep * source_task[:,2::3]
     gradient = 1/N * np.sum(np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis = 1), axis=0)
@@ -510,7 +514,7 @@ def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, ep
     #Compute rewards of batch
     tot_reward_batch = np.mean(total_return)
     discounted_reward_batch = np.mean(np.sum(discounted_return_timestep, axis=1))
-    ess = np.max(np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2, axis=0)
+    ess = np.min(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
 
     return source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions
 
@@ -669,7 +673,7 @@ def computeMultipleImportanceWeightsSourceDistributions(source_param, variance_a
     param_indices = np.concatenate(([0], np.cumsum(np.delete(episodes_per_config, -1))))
 
     param_policy_src = source_param[param_indices, 1][np.newaxis, np.newaxis, :]#policy parameter of source not repeated
-    variance_env = source_param[:, 4] # variance of the model transition
+    variance_env = source_param[:, 4][:, np.newaxis, np.newaxis] # variance of the model transition
     A = source_param[param_indices, 2][np.newaxis, np.newaxis, :] # environment parameter A of src
     B = source_param[param_indices, 3][np.newaxis, np.newaxis, :] # environment parameter B of src
 
@@ -677,9 +681,9 @@ def computeMultipleImportanceWeightsSourceDistributions(source_param, variance_a
     state_t1 = np.repeat(source_task[:, 3::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t+1
     action_t = np.repeat(source_task[:, 1::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # action t
 
-    src_distributions_policy = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t - param_policy_src * state_t).T)**2/(2*variance_action)), axis=1).T
+    src_distributions_policy = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t - param_policy_src * state_t)**2)/(2*variance_action)), axis=1)
 
-    src_distributions_model = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp((-(state_t1 - (A * state_t) - (B * action_t)).T **2) / (2*variance_env)), axis=1).T
+    src_distributions_model = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - A * state_t - B * action_t) **2) / (2*variance_env)), axis=1)
 
     return src_distributions_model * src_distributions_policy
 
@@ -739,7 +743,7 @@ def computePerDecisionMultipleImportanceWeightsSourceDistributions(source_param,
     param_indices = np.concatenate(([0], np.cumsum(np.delete(episodes_per_config, -1))))
 
     param_policy_src = source_param[param_indices, 1][np.newaxis, np.newaxis, :]#policy parameter of source not repeated
-    variance_env = source_param[:, 4] # variance of the model transition
+    variance_env = source_param[:, 4][:, np.newaxis, np.newaxis]# variance of the model transition
     A = source_param[param_indices, 2][np.newaxis, np.newaxis, :] # environment parameter A of src
     B = source_param[param_indices, 3][np.newaxis, np.newaxis, :] # environment parameter B of src
 
@@ -747,10 +751,9 @@ def computePerDecisionMultipleImportanceWeightsSourceDistributions(source_param,
     state_t1 = np.repeat(source_task[:, 3::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t+1
     action_t = np.repeat(source_task[:, 1::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # action t
 
-    src_distributions_policy = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t - param_policy_src * state_t).T)**2/(2*variance_action)), axis=1).T
+    src_distributions_policy = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t - param_policy_src * state_t)**2)/(2*variance_action)), axis=1)
 
-    src_distributions_model = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp((-(state_t1 - (A * state_t) - (B * action_t)).T **2) / (2*variance_env)), axis=1).T
-
+    src_distributions_model = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - A * state_t - B * action_t) **2) / (2*variance_env)), axis=1)
 
     return src_distributions_model * src_distributions_policy
 

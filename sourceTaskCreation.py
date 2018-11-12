@@ -19,7 +19,6 @@ def createBatch(env, batch_size, episode_length, param, variance_action):
         state = env.reset()
 
         for t in range(episode_length):
-            #env.render()
             # Take a step
             mean_action = param*state
             action = np.random.normal(mean_action, m.sqrt(variance_action))
