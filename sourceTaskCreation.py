@@ -70,7 +70,7 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
 
         for i_env_param in range(env_param.shape[0]):
 
-            #env.setA(env_param[i_env_param])
+            env.setA(env_param[i_env_param])
 
             # Reset the environment and pick the first action
             batch = createBatch(env, episode_per_param, episode_length, policy_param[i_policy_param], variance_action) # [state, action, reward, next_state]
