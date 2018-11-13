@@ -243,7 +243,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
     src_distributions = np.concatenate((src_distributions, (policy_src_new_param * model_src_new_param)[:, :, np.newaxis]), axis=2)
     src_distributions = np.concatenate((src_distributions, (policy_src_new_traj * model_src_new_traj)), axis=0)
 
-    policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-(action_t[:, :, 0] - policy_param*state_t[:, :, 0])**2/(2*variance_action)), axis = 1)
+    policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t[:, :, 0] - policy_param*state_t[:, :, 0])**2)/(2*variance_action)), axis = 1)
     model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, :, 0]) * np.exp(-((state_t1[:, :, 0] - env_param * state_t[:, :, 0] - (B[:, :, -1] * action_t)[:, :, 0]) **2) / (2*variance_env[:, :, 0])), axis = 1)
 
     mis_denominator = np.sum(episodes_per_config/n * src_distributions, axis=2)
@@ -720,7 +720,7 @@ def offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source
         ess=np.zeros(num_batch))
 
     for i_batch in range(num_batch):
-        print(i_batch)
+        print("Batch: " + str(i_batch))
         stats.policy_parameter[i_batch] = param
         [source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions] = offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes_per_config, source_task, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor)
         # Update statistics
@@ -751,9 +751,9 @@ def computePerDecisionMultipleImportanceWeightsSourceDistributions(source_param,
     state_t1 = np.repeat(source_task[:, 3::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t+1
     action_t = np.repeat(source_task[:, 1::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # action t
 
-    src_distributions_policy = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t - param_policy_src * state_t)**2)/(2*variance_action)), axis=1)
+    src_distributions_policy = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((action_t - param_policy_src * state_t)**2)/(2*variance_action)), axis=1)
 
-    src_distributions_model = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - A * state_t - B * action_t) **2) / (2*variance_env)), axis=1)
+    src_distributions_model = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - A * state_t - B * action_t) **2) / (2*variance_env)), axis=1)
 
     return src_distributions_model * src_distributions_policy
 
@@ -789,7 +789,7 @@ def offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, sour
         ess=np.zeros(num_batch))
 
     for i_batch in range(num_batch):
-        print(i_batch)
+        print("Batch: " + str(i_batch))
         stats.policy_parameter[i_batch] = param
         [source_param, source_task, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions] = offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, episodes_per_config, source_task, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor)
         # Update statistics
