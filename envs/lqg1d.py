@@ -69,8 +69,8 @@ class LQG1D(gym.Env):
 
         self.state = np.array(xn.ravel())
 
-        # We return the unclipped state as the last argument (to be used for computing the importance weights only)
-        return self.get_state(), -np.asscalar(cost), False, np.array(xn_unclipped.ravel())
+        # We return the unclipped state and the clipped action as the last argument (to be used for computing the importance weights only)
+        return self.get_state(), -np.asscalar(cost), False, np.array(xn_unclipped.ravel()), u
 
     def reset(self, state=None):
         if state is None:

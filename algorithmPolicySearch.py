@@ -12,23 +12,21 @@ def createBatch(env, batch_size, episode_length, param, variance_action):
     :param episode_length: length of the episode
     :param param: policy parameter
     :param variance_action: variance of the action's distribution
-    :return: A tensor containing [num episodes, timestep, informations] where informations stays for: [state, action, reward, next_state]
+    :return: A tensor containing [num episodes, timestep, informations] where informations stays for: [state, action, reward, next_state, unclipped_state, unclipped_action]
     """
 
-    batch = np.zeros((batch_size, episode_length, 4)) # [state, action, reward, next_state]
+    batch = np.zeros((batch_size, episode_length, 6)) # [state, action, reward, next_state]
     for i_batch in range(batch_size):
         state = env.reset()
 
         for t in range(episode_length):
-            #env.render()
             # Take a step
             mean_action = param*state
             action = np.random.normal(mean_action, m.sqrt(variance_action))
-            next_state, reward, done, _ = env.step(action)
+            next_state, reward, done, unclipped_state, clipped_action = env.step(action)
             # Keep track of the transition
 
-            #print(state, action, reward, param)
-            batch[i_batch, t, :] = [state, action, reward, next_state]
+            batch[i_batch, t, :] = [state, clipped_action, reward, next_state, unclipped_state, action]
 
             if done:
                 break

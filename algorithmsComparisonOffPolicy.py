@@ -3,8 +3,6 @@ import envs
 import numpy as np
 import algorithmPolicySearch as alg
 import importanceWeights as iw
-import math as m
-from utils import plot
 
 np.set_printoptions(precision=4)
 env = gym.make('LQG1D-v0')
@@ -23,6 +21,8 @@ print("Loading files")
 source_task = np.genfromtxt('source_task.csv', delimiter=',')
 episodes_per_config = np.genfromtxt('episodes_per_config.csv', delimiter=',').astype(int)
 source_param = np.genfromtxt('source_param.csv', delimiter=',')
+next_states_unclipped = np.genfromtxt('next_states_unclipped.csv', delimiter=',')
+actions_unclipped = np.genfromtxt('actions_unclipped.csv', delimiter=',')
 
 discounted_reward_off_policy_importance_sampling = np.zeros((runs, num_batch))
 discounted_reward_off_policy_importance_sampling_pd = np.zeros((runs, num_batch))
@@ -53,34 +53,34 @@ for i_run in range(runs):
     print("Run: " + str(i_run))
     initial_param = np.random.normal(mean_initial_param, variance_initial_param)
 
-    off_policy_importance_sampling = iw.offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
-    off_policy_importance_sampling_pd = iw.offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
+    off_policy_importance_sampling = iw.offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_unclipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
+    off_policy_importance_sampling_pd = iw.offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_unclipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
     reinforce = alg.reinforce(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action)
-    #off_policy_multiple_importance_sampling = iw.offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
-    #off_policy_multiple_importance_sampling_pd = iw.offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, source_task, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
+    off_policy_multiple_importance_sampling = iw.offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_unclipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
+    off_policy_multiple_importance_sampling_pd = iw.offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_unclipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
 
     discounted_reward_off_policy_importance_sampling[i_run,:] = off_policy_importance_sampling.episode_disc_rewards
     discounted_reward_off_policy_importance_sampling_pd[i_run,:] = off_policy_importance_sampling_pd.episode_disc_rewards
-    #discounted_reward_off_policy_multiple_importance_sampling[i_run,:] = off_policy_multiple_importance_sampling.episode_disc_rewards
-    #discounted_reward_off_policy_multiple_importance_sampling_pd[i_run,:] = off_policy_multiple_importance_sampling_pd.episode_disc_rewards
+    discounted_reward_off_policy_multiple_importance_sampling[i_run,:] = off_policy_multiple_importance_sampling.episode_disc_rewards
+    discounted_reward_off_policy_multiple_importance_sampling_pd[i_run,:] = off_policy_multiple_importance_sampling_pd.episode_disc_rewards
     discounted_reward_reinforce[i_run, :] = reinforce.episode_disc_rewards
 
     policy_param_off_policy_importance_sampling[i_run,:] = off_policy_importance_sampling.policy_parameter
     policy_param_off_policy_importance_sampling_pd[i_run,:] = off_policy_importance_sampling_pd.policy_parameter
-    #policy_param_off_policy_multiple_importance_sampling[i_run,:] = off_policy_multiple_importance_sampling.policy_parameter
-    #policy_param_off_policy_multiple_importance_sampling_pd[i_run,:] = off_policy_multiple_importance_sampling_pd.policy_parameter
+    policy_param_off_policy_multiple_importance_sampling[i_run,:] = off_policy_multiple_importance_sampling.policy_parameter
+    policy_param_off_policy_multiple_importance_sampling_pd[i_run,:] = off_policy_multiple_importance_sampling_pd.policy_parameter
     policy_param_reinforce[i_run, :] = reinforce.policy_parameter
 
     gradient_off_policy_importance_sampling[i_run,:] = off_policy_importance_sampling.gradient
     gradient_off_policy_importance_sampling_pd[i_run,:] = off_policy_importance_sampling_pd.gradient
-    #gradient_off_policy_multiple_importance_sampling[i_run,:] = off_policy_multiple_importance_sampling.gradient
-    #gradient_off_policy_multiple_importance_sampling_pd[i_run,:] = off_policy_multiple_importance_sampling_pd.gradient
+    gradient_off_policy_multiple_importance_sampling[i_run,:] = off_policy_multiple_importance_sampling.gradient
+    gradient_off_policy_multiple_importance_sampling_pd[i_run,:] = off_policy_multiple_importance_sampling_pd.gradient
     gradient_reinforce[i_run, :] = reinforce.gradient
 
     ess_off_policy_importance_sampling[i_run,:] = off_policy_importance_sampling.ess
     ess_off_policy_importance_sampling_pd[i_run,:] = off_policy_importance_sampling_pd.ess
-    #ess_off_policy_multiple_importance_sampling[i_run,:] = off_policy_multiple_importance_sampling.ess
-    #ess_off_policy_multiple_importance_sampling_pd[i_run,:] = off_policy_multiple_importance_sampling_pd.ess
+    ess_off_policy_multiple_importance_sampling[i_run,:] = off_policy_multiple_importance_sampling.ess
+    ess_off_policy_multiple_importance_sampling_pd[i_run,:] = off_policy_multiple_importance_sampling_pd.ess
 
 print("Saving files")
 np.savetxt("discounted_reward_off_policy_importance_sampling.csv", discounted_reward_off_policy_importance_sampling, delimiter=",")
