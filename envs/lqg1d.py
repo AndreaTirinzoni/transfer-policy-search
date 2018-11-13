@@ -28,11 +28,10 @@ class LQG1D(gym.Env):
         'video.frames_per_second': 30
     }
 
-    def __init__(self, discrete_reward=False):
-        self.horizon = 100
+    def __init__(self):
+        self.horizon = 20
         self.gamma = 0.99
 
-        self.discrete_reward = discrete_reward
         self.max_pos = 10.0
         self.max_action = 8.0
         self.sigma_noise = 0.1
@@ -49,8 +48,6 @@ class LQG1D(gym.Env):
                                        shape=(1,))
         self.observation_space = spaces.Box(low=-high, high=high)
 
-        self.initial_states = np.array([[1, 2, 5, 7, 10]]).T
-
         # initialize state
         self.seed()
         self.reset()
@@ -61,21 +58,16 @@ class LQG1D(gym.Env):
 
     def setB(self, B):
         self.B = B
-        return A
+        return B
 
     def step(self, action, render=False):
         u = np.clip(action, -self.max_action, self.max_action)
         noise = self.np_random.randn() * self.sigma_noise
-        xn = np.dot(self.A, self.state) + np.dot(self.B, u) + noise
-        cost = np.dot(self.state,
-                      np.dot(self.Q, self.state)) + \
-            np.dot(u, np.dot(self.R, u))
+        xn = np.clip(np.dot(self.A, self.state) + np.dot(self.B, u) + noise, -self.max_pos, self.max_pos)
+        cost = np.dot(self.state, np.dot(self.Q, self.state)) + np.dot(u, np.dot(self.R, u))
 
         self.state = np.array(xn.ravel())
-        if self.discrete_reward:
-            if abs(self.state[0]) <= 2 and abs(u) <= 2:
-                return self.get_state(), 0, False, {}
-            return self.get_state(), -1, False, {}
+
         return self.get_state(), -np.asscalar(cost), False, {}
 
     def reset(self, state=None):
@@ -267,65 +259,3 @@ class LQG1D(gym.Env):
                                 np.dot(self.B.T, np.dot(P, self.B))))
         Qfun = np.asscalar(Qfun) / n_random_xn
         return Qfun
-
-        # TODO check following code
-
-        # def computeM(self, K):
-        #     kb = np.dot(K, self.B.T)
-        #     size = self.A.shape[1] ** 2;
-        #     AT = self.A.T
-        #     return np.eye(size) - self.gamma * (np.kron(AT, AT) - np.kron(AT, kb) - np.kron(kb, AT) + np.kron(kb, kb))
-        #
-        # def computeL(self, K):
-        #     return self.Q + np.dot(K, np.dot(self.R, K.T))
-        #
-        # def to_vec(self, m):
-        #     n_dim = self.A.shape[1]
-        #     v = m.reshape(n_dim * n_dim, 1)
-        #     return v
-        #
-        # def to_mat(self, v):
-        #     n_dim = self.A.shape[1]
-        #     M = v.reshape(n_dim, n_dim)
-        #     return M
-        #
-        # def computeJ(self, k, Sigma, n_random_x0=100):
-        #     J = 0
-        #     K = k
-        #     if len(k.shape) == 1:
-        #         K = np.diag(k)
-        #     P = self.computeP(K)
-        #     for i in range(n_random_x0):
-        #         self.reset()
-        #         x0 = self.state
-        #         v = np.asscalar(x0.T * P * x0 + np.trace(
-        #             np.dot(Sigma, (self.R + np.dot(self.gamma, np.dot(self.B.T, np.dot(P, self.B)))))) / (1.0 - self.gamma))
-        #         J += -v
-        #     J /= n_random_x0
-        #
-        #     return J
-        #
-        # def solveRiccati(self, k):
-        #     K = k
-        #     if len(k.shape) == 1:
-        #         K = np.diag(k)
-        #     return self.computeP(K)
-        #
-        # def riccatiRHS(self, k, P, r):
-        #     K = k
-        #     if len(k.shape) == 1:
-        #         K = np.diag(k)
-        #     return self.Q + self.gamma * (np.dot(self.A.T, np.dot(self.P, self.A))
-        #                                   - np.dot(K, np.dot(self.B.T, np.dot(self.P, self.A)))
-        #                                   - np.dot(self.A.T, np.dot(self.P, np.dot(self.B, K.T)))
-        #                                   + np.dot(K, np.dot(self.B.T, np.dot(self.P, np.dot(self.B, K.T))))) \
-        #            + np.dot(K, np.dot(self.R, K.T))
-        #
-        # def computeP(self, K):
-        #     L = self.computeL(K)
-        #     M = self.computeM(K)
-        #
-        #     vecP = np.linalg.solve(M, self.to_vec(L))
-        #
-        #     P = self.to_mat(vecP)
-        #     return P
