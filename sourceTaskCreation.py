@@ -105,7 +105,7 @@ num_episodes=1000
 batch_size = 10
 discount_factor = 0.99
 env_param_min = 0.5
-env_param_max = 2
+env_param_max = 1.5
 policy_param_min = -1
 policy_param_max = 0
 
