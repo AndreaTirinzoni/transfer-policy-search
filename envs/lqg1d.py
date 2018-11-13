@@ -34,7 +34,7 @@ class LQG1D(gym.Env):
 
         self.max_pos = 10.0
         self.max_action = 8.0
-        self.sigma_noise = 0.1
+        self.sigma_noise = 0.3
         self.A = np.array([1]).reshape((1, 1))
         self.B = np.array([1]).reshape((1, 1))
         self.Q = np.array([0.9]).reshape((1, 1))
@@ -63,12 +63,14 @@ class LQG1D(gym.Env):
     def step(self, action, render=False):
         u = np.clip(action, -self.max_action, self.max_action)
         noise = self.np_random.randn() * self.sigma_noise
-        xn = np.clip(np.dot(self.A, self.state) + np.dot(self.B, u) + noise, -self.max_pos, self.max_pos)
+        xn_unclipped = np.dot(self.A, self.state) + np.dot(self.B, u) + noise
+        xn = np.clip(xn_unclipped, -self.max_pos, self.max_pos)
         cost = np.dot(self.state, np.dot(self.Q, self.state)) + np.dot(u, np.dot(self.R, u))
 
         self.state = np.array(xn.ravel())
 
-        return self.get_state(), -np.asscalar(cost), False, {}
+        # We return the unclipped state as the last argument (to be used for computing the importance weights only)
+        return self.get_state(), -np.asscalar(cost), False, xn_unclipped.ravel()
 
     def reset(self, state=None):
         if state is None:
