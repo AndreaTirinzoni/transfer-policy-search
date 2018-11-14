@@ -108,7 +108,7 @@ episode_length = 20
 variance_action = 0.1
 np.random.seed(2000)
 num_episodes=1000
-batch_size = 10
+batch_size = 3
 discount_factor = 0.99
 env_param_min = 0.5
 env_param_max = 1.5
