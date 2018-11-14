@@ -62,7 +62,7 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
     # Every line is a task, every task has [discounted_return, policy_parameter, A, B, variance, parameter_configuration id] where A and B are the evironment params
     source_param = np.zeros((length_source_task, 5))
     next_states_unclipped = np.zeros((length_source_task, episode_length))
-    actions_unclipped = np.zeros((length_source_task, episode_length))
+    actions_clipped = np.zeros((length_source_task, episode_length))
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
@@ -81,12 +81,12 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
 
             #I populate the source task
             source_task[i_episode:i_episode+episode_per_param, 0::3] = np.concatenate((batch[:, :, 0], np.matrix(batch[:, -1, 3]).T), axis=1)
-            source_task[i_episode:i_episode+episode_per_param, 1::3] = batch[:, :, 1]
+            source_task[i_episode:i_episode+episode_per_param, 1::3] = batch[:, :, 5]
             source_task[i_episode:i_episode+episode_per_param, 2::3] = batch[:, :, 2]
 
             #unclipped next_states and actions
             next_states_unclipped[i_episode:i_episode+episode_per_param, :] = batch[:, :, 4]
-            actions_unclipped[i_episode:i_episode+episode_per_param, :] = batch[:, :, 5]
+            actions_clipped[i_episode:i_episode+episode_per_param, :] = batch[:, :, 1]
 
             #I populate the source parameters
             source_param[i_episode:i_episode+episode_per_param, 0] = discounted_return
@@ -101,7 +101,7 @@ def sourceTaskCreation(env, episode_length, batch_size, discount_factor, varianc
             i_configuration += 1
 
 
-    return source_task, source_param, episodes_per_configuration.astype(int), next_states_unclipped, actions_unclipped
+    return source_task, source_param, episodes_per_configuration.astype(int), next_states_unclipped, actions_clipped
 
 env = gym.make('LQG1D-v0')
 episode_length = 20
@@ -115,10 +115,10 @@ env_param_max = 1.5
 policy_param_min = -1
 policy_param_max = 0
 
-[source_task, source_param, episodes_per_config, next_states_unclipped, actions_unclipped] = sourceTaskCreation(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max)
+[source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = sourceTaskCreation(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max)
 
 np.savetxt("source_task.csv", source_task, delimiter=",")
 np.savetxt("source_param.csv", source_param, delimiter=",")
 np.savetxt("episodes_per_config.csv", episodes_per_config, delimiter=",")
 np.savetxt("next_states_unclipped.csv", next_states_unclipped, delimiter=",")
-np.savetxt("actions_unclipped.csv", actions_unclipped, delimiter=",")
+np.savetxt("actions_clipped.csv", actions_clipped, delimiter=",")
