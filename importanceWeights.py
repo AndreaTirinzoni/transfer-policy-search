@@ -391,8 +391,8 @@ def offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_con
     N = source_task.shape[0] + num_episodes_target
     weights_source_target_update = np.concatenate([weights_source_target, np.ones(num_episodes_target)], axis=0) # are the weights used for computing ESS
     weights_source_target_update[np.isnan(weights_source_target_update)] = 0
-    gradient_off_policy_update = np.concatenate([gradient_off_policy, np.squeeze(np.asarray(gradient_est))], axis=0)
-    discounted_rewards_all = np.concatenate([source_param[:,0], np.squeeze(np.asarray(discounted_return))], axis=0)
+    gradient_off_policy_update = np.concatenate([gradient_off_policy, np.asarray(gradient_est)], axis=0)
+    discounted_rewards_all = np.concatenate([source_param[:,0], np.asarray(discounted_return)], axis=0)
     gradient = 1/N * np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis=0)
     param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     #param = param + 0.01 * gradient
