@@ -579,7 +579,7 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, n
     m_t = 0
     v_t = 0
     t = 0
-
+    print("IS")	
     # Keeps track of useful statistics#
     stats = BatchStats(
         episode_total_rewards=np.zeros(num_batch),
@@ -621,7 +621,7 @@ def offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task,
     m_t = 0
     v_t = 0
     t = 0
-
+    print("PD-IS")
     # Keeps track of useful statistics#
     stats = BatchStats(
         episode_total_rewards=np.zeros(num_batch),
@@ -705,7 +705,6 @@ def offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source
         ess=np.zeros(num_batch))
 
     for i_batch in range(num_batch):
-        print("Batch: " + str(i_batch))
         stats.policy_parameter[i_batch] = param
         [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions] = offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor)
         # Update statistics
@@ -779,7 +778,6 @@ def offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, sour
         ess=np.zeros(num_batch))
 
     for i_batch in range(num_batch):
-        print("Batch: " + str(i_batch))
         stats.policy_parameter[i_batch] = param
         [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions] = offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor)
         # Update statistics

@@ -108,7 +108,7 @@ episode_length = 20
 variance_action = 0.1
 np.random.seed(2000)
 num_episodes=1000
-batch_size = 3
+batch_size = 10
 discount_factor = 0.99
 env_param_min = 0.5
 env_param_max = 1.5
@@ -117,8 +117,8 @@ policy_param_max = 0
 
 [source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = sourceTaskCreation(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max)
 
-np.savetxt("./1800e-1b-5r/source_task.csv", source_task, delimiter=",")
-np.savetxt("./1800e-1b-5r/source_param.csv", source_param, delimiter=",")
-np.savetxt("./1800e-1b-5r/episodes_per_config.csv", episodes_per_config, delimiter=",")
-np.savetxt("./1800e-1b-5r/next_states_unclipped.csv", next_states_unclipped, delimiter=",")
-np.savetxt("./1800e-1b-5r/actions_clipped.csv", actions_clipped, delimiter=",")
+np.savetxt("./20run/source_task.csv", source_task, delimiter=",")
+np.savetxt("./20run/source_param.csv", source_param, delimiter=",")
+np.savetxt("./20run/episodes_per_config.csv", episodes_per_config, delimiter=",")
+np.savetxt("./20run/next_states_unclipped.csv", next_states_unclipped, delimiter=",")
+np.savetxt("./20run/actions_clipped.csv", actions_clipped, delimiter=",")
