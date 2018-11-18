@@ -70,7 +70,7 @@ episode_length = 20
 variance_initial_param = 0
 variance_action = 0.1
 batch_size = 0
-num_batch = 150
+num_batch = 1800
 discount_factor = 0.99
 runs = 10
 
@@ -149,38 +149,38 @@ for i_run in range(runs):
     ess_off_policy_multiple_importance_sampling_cv_pd[i_run,:] = results[i_run][6].ess
 
 print("Saving files")
-np.savetxt("./parallelAll10b/discounted_reward_off_policy_importance_sampling.csv", discounted_reward_off_policy_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll10b/discounted_reward_off_policy_importance_sampling_pd.csv", discounted_reward_off_policy_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll10b/discounted_reward_off_policy_multiple_importance_sampling.csv", discounted_reward_off_policy_multiple_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll10b/discounted_reward_off_policy_multiple_importance_sampling_cv.csv", discounted_reward_off_policy_multiple_importance_sampling_cv, delimiter=",")
-np.savetxt("./parallelAll10b/discounted_reward_off_policy_multiple_importance_sampling_pd.csv", discounted_reward_off_policy_multiple_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll10b/discounted_reward_off_policy_multiple_importance_sampling_cv_pd.csv", discounted_reward_off_policy_multiple_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll10b/discounted_reward_reinforce.csv", discounted_reward_reinforce, delimiter=",")
+np.savetxt("./parallelAll0b/discounted_reward_off_policy_importance_sampling.csv", discounted_reward_off_policy_importance_sampling, delimiter=",")
+np.savetxt("./parallelAll0b/discounted_reward_off_policy_importance_sampling_pd.csv", discounted_reward_off_policy_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAll0b/discounted_reward_off_policy_multiple_importance_sampling.csv", discounted_reward_off_policy_multiple_importance_sampling, delimiter=",")
+np.savetxt("./parallelAll0b/discounted_reward_off_policy_multiple_importance_sampling_cv.csv", discounted_reward_off_policy_multiple_importance_sampling_cv, delimiter=",")
+np.savetxt("./parallelAll0b/discounted_reward_off_policy_multiple_importance_sampling_pd.csv", discounted_reward_off_policy_multiple_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAll0b/discounted_reward_off_policy_multiple_importance_sampling_cv_pd.csv", discounted_reward_off_policy_multiple_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAll0b/discounted_reward_reinforce.csv", discounted_reward_reinforce, delimiter=",")
 
-np.savetxt("./parallelAll10b/policy_param_off_policy_importance_sampling.csv", policy_param_off_policy_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll10b/policy_param_off_policy_importance_sampling_pd.csv", policy_param_off_policy_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll10b/policy_param_off_policy_multiple_importance_sampling.csv", policy_param_off_policy_multiple_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll10b/policy_param_off_policy_multiple_importance_sampling_cv.csv", policy_param_off_policy_multiple_importance_sampling_cv, delimiter=",")
-np.savetxt("./parallelAll10b/policy_param_off_policy_multiple_importance_sampling_pd.csv", policy_param_off_policy_multiple_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll10b/policy_param_off_policy_multiple_importance_sampling_cv_pd.csv", policy_param_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
-np.savetxt("./parallelAll10b/policy_param_reinforce.csv", policy_param_reinforce, delimiter=",")
+np.savetxt("./parallelAll0b/policy_param_off_policy_importance_sampling.csv", policy_param_off_policy_importance_sampling, delimiter=",")
+np.savetxt("./parallelAll0b/policy_param_off_policy_importance_sampling_pd.csv", policy_param_off_policy_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAll0b/policy_param_off_policy_multiple_importance_sampling.csv", policy_param_off_policy_multiple_importance_sampling, delimiter=",")
+np.savetxt("./parallelAll0b/policy_param_off_policy_multiple_importance_sampling_cv.csv", policy_param_off_policy_multiple_importance_sampling_cv, delimiter=",")
+np.savetxt("./parallelAll0b/policy_param_off_policy_multiple_importance_sampling_pd.csv", policy_param_off_policy_multiple_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAll0b/policy_param_off_policy_multiple_importance_sampling_cv_pd.csv", policy_param_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
+np.savetxt("./parallelAll0b/policy_param_reinforce.csv", policy_param_reinforce, delimiter=",")
 
-np.savetxt("./parallelAll10b/gradient_off_policy_importance_sampling.csv", gradient_off_policy_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll10b/gradient_off_policy_importance_sampling_pd.csv", gradient_off_policy_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll10b/gradient_off_policy_multiple_importance_sampling.csv", gradient_off_policy_multiple_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll10b/gradient_off_policy_multiple_importance_sampling_cv.csv", gradient_off_policy_multiple_importance_sampling_cv, delimiter=",")
-np.savetxt("./parallelAll10b/gradient_off_policy_multiple_importance_sampling_pd.csv", gradient_off_policy_multiple_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll10b/gradient_off_policy_multiple_importance_sampling_cv_pd.csv", gradient_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
-np.savetxt("./parallelAll10b/gradient_reinforce.csv", gradient_reinforce, delimiter=",")
+np.savetxt("./parallelAll0b/gradient_off_policy_importance_sampling.csv", gradient_off_policy_importance_sampling, delimiter=",")
+np.savetxt("./parallelAll0b/gradient_off_policy_importance_sampling_pd.csv", gradient_off_policy_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAll0b/gradient_off_policy_multiple_importance_sampling.csv", gradient_off_policy_multiple_importance_sampling, delimiter=",")
+np.savetxt("./parallelAll0b/gradient_off_policy_multiple_importance_sampling_cv.csv", gradient_off_policy_multiple_importance_sampling_cv, delimiter=",")
+np.savetxt("./parallelAll0b/gradient_off_policy_multiple_importance_sampling_pd.csv", gradient_off_policy_multiple_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAll0b/gradient_off_policy_multiple_importance_sampling_cv_pd.csv", gradient_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
+np.savetxt("./parallelAll0b/gradient_reinforce.csv", gradient_reinforce, delimiter=",")
 
-np.savetxt("./parallelAll10b/ess_off_policy_importance_sampling.csv", ess_off_policy_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll10b/ess_off_policy_importance_sampling_pd.csv", ess_off_policy_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll10b/ess_off_policy_multiple_importance_sampling.csv", ess_off_policy_multiple_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll10b/ess_off_policy_multiple_importance_sampling_cv.csv", ess_off_policy_multiple_importance_sampling_cv, delimiter=",")
-np.savetxt("./parallelAll10b/ess_off_policy_multiple_importance_sampling_pd.csv", ess_off_policy_multiple_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll10b/ess_off_policy_multiple_importance_sampling_cv_pd.csv", ess_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
+np.savetxt("./parallelAll0b/ess_off_policy_importance_sampling.csv", ess_off_policy_importance_sampling, delimiter=",")
+np.savetxt("./parallelAll0b/ess_off_policy_importance_sampling_pd.csv", ess_off_policy_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAll0b/ess_off_policy_multiple_importance_sampling.csv", ess_off_policy_multiple_importance_sampling, delimiter=",")
+np.savetxt("./parallelAll0b/ess_off_policy_multiple_importance_sampling_cv.csv", ess_off_policy_multiple_importance_sampling_cv, delimiter=",")
+np.savetxt("./parallelAll0b/ess_off_policy_multiple_importance_sampling_pd.csv", ess_off_policy_multiple_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAll0b/ess_off_policy_multiple_importance_sampling_cv_pd.csv", ess_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
 
-stats_opt = iw.optimalPolicy(env, num_batch, batch_size, discount_factor, variance_action, episode_length) # Optimal policy
+stats_opt = iw.optimalPolicy(env, num_batch, 10, discount_factor, variance_action, episode_length) # Optimal policy
 
-np.savetxt("./parallelAll10b/discounted_reward_optimal.csv", stats_opt.episode_disc_rewards, delimiter=",")
-np.savetxt("./parallelAll10b/policy_param_optimal.csv", stats_opt.policy_parameter, delimiter=",")
+np.savetxt("./parallelAll0/discounted_reward_optimal.csv", stats_opt.episode_disc_rewards, delimiter=",")
+np.savetxt("./parallelAll0/policy_param_optimal.csv", stats_opt.policy_parameter, delimiter=",")
