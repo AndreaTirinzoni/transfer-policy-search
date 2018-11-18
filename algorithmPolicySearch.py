@@ -57,11 +57,11 @@ def adam(params, grad, t, m_t, v_t, alpha=0.01, beta_1=0.9, beta_2=0.999, eps=1e
     v_t_hat = v_t / (1 - beta_2 ** t)
     return params - alpha * m_t_hat / (np.sqrt(v_t_hat) + eps), t, m_t, v_t
 
-def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action):
+def reinforce(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action):
     """
     REINFORCE (Monte Carlo Policy Gradient) Algorithm. Optimizes the policy function approximator using ADAM
     :param env: OpenAI environment
-    :param num_episodes: number of episodes to run for
+    :param num_batch: number of batch
     :param batch_size: number of episodes for each batch
     :param discount_factor: time-discount factor
     :param episode_length: mean initial policy parameter
@@ -76,8 +76,6 @@ def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, in
     v_t = 0
     t = 0
 
-    # Iterate for all batch
-    num_batch = num_episodes//batch_size
     # Keeps track of useful statistics#
     stats = BatchStats(
         episode_total_rewards=np.zeros(num_batch),
@@ -114,11 +112,11 @@ def reinforce(env, num_episodes, batch_size, discount_factor, episode_length, in
 
     return stats
 
-def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action):
+def reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action):
     """
     REINFORCE with BASELINE (Monte Carlo Policy Gradient) Algorithm. Optimizes the policy function approximator using ADAM
     :param env: OpenAI environment
-    :param num_episodes: number of episodes to run for
+    :param num_batch: number of batch
     :param batch_size: number of episodes for each batch
     :param discount_factor: time-discount factor
     :param episode_length: mean initial policy parameter
@@ -174,11 +172,11 @@ def reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_le
         #print(state, action, reward, param)
     return stats
 
-def gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action):
+def gpomdp(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action):
     """
     G(PO)MDP (Policy Gradient) Algorithm. Optimizes the policy function approximator using ADAM
     :param env: OpenAI environment
-    :param num_episodes: number of episodes to run for
+    :param num_batch: number of batch to run for
     :param batch_size: number of episodes for each batch
     :param discount_factor: time-discount factor
     :param episode_length: mean initial policy parameter
