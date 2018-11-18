@@ -69,8 +69,8 @@ mean_initial_param = -0.1
 episode_length = 20
 variance_initial_param = 0
 variance_action = 0.1
-batch_size = 0
-num_batch = 1800
+batch_size = 10
+num_batch = 200
 discount_factor = 0.99
 runs = 10
 
@@ -113,7 +113,7 @@ policy_param_max = 0
 
 seeds = [np.random.randint(1000000) for _ in range(runs)]
 
-results = Parallel(n_jobs=1)(delayed(simulation)(env, batch_size, discount_factor, variance_action, episode_length, mean_initial_param, variance_initial_param, num_batch, seed, episodes_per_configuration, env_param_min, env_param_max, policy_param_min, policy_param_max) for seed in seeds)
+results = Parallel(n_jobs=10)(delayed(simulation)(env, batch_size, discount_factor, variance_action, episode_length, mean_initial_param, variance_initial_param, num_batch, seed, episodes_per_configuration, env_param_min, env_param_max, policy_param_min, policy_param_max) for seed in seeds)
 
 for i_run in range(runs):
 

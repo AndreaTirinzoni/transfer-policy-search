@@ -640,7 +640,7 @@ def offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions
 
-def regressionFitting(y, y_avg, x):
+def regressionFittingZeroBatch(y, y_avg, x):
     """
     Fit a regression with the control variates
     :param y: the target
@@ -651,6 +651,20 @@ def regressionFitting(y, y_avg, x):
     x_avg = np.mean(x, axis=0)
     beta = np.matmul(np.linalg.inv(np.matmul((x[:, 1:]-x_avg[1:]).T, (x[:, 1:]-x_avg[1:]))), np.matmul((x[:, 1:]-x_avg[1:]).T, (y-y_avg)).T)
     error = y_avg - np.dot(x_avg[1:], beta)
+
+    return error
+
+def regressionFitting(y, y_avg, x):
+    """
+    Fit a regression with the control variates
+    :param y: the target
+    :param y_avg: the average of the target
+    :param x: the parameters
+    :return: returns the error of the fitted regression
+    """
+    x_avg = np.mean(x, axis=0)
+    beta = np.matmul(np.linalg.inv(np.matmul((x[:, 1:]-x_avg[:, 1:]).T, (x[:, 1:]-x_avg[:, 1:]))), np.matmul((x[:, 1:]-x_avg[:, 1:]).T, (y-y_avg)).T)
+    error = y_avg - np.dot(x_avg[:, 1:], beta)
 
     return error
 
@@ -722,7 +736,11 @@ def offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episod
     gradient_estimation_average = 1/N * np.sum(gradient_estimation)
 
     #Fitting the regression
-    gradient = regressionFitting(gradient_estimation, gradient_estimation_average, control_variates)
+    if num_episodes_target==0:
+        gradient = regressionFittingZeroBatch(gradient_estimation, gradient_estimation_average, control_variates)
+
+    else:
+        gradient = regressionFitting(gradient_estimation, gradient_estimation_average, control_variates)
 
     #Update the parameter
     param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
@@ -891,7 +909,7 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, 
     gradient_estimation_average = 1/N * np.sum(gradient_estimation, axis=0)
 
     #Fitting the regression
-    gradient = regressionFitting(gradient_estimation, gradient_estimation_average, control_variates)
+    gradient = regressionFittingZeroBatch(gradient_estimation, gradient_estimation_average, control_variates) #always the same, only the MIS with CV changes format of the x_avg array
 
     #Update the parameter
     param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
