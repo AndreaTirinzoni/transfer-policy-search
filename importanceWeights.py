@@ -90,7 +90,7 @@ def computeGradientsSourceTargetTimestep(param, source_task, variance_action):
     state_t = np.delete(source_task[:, 0::3], -1, axis=1)# state t
     action_t = source_task[:, 1::3] # action t
 
-    gradient_off_policy = (action_t - param * state_t) * state_t / variance_action
+    gradient_off_policy = (action_t - np.asscalar(np.asarray(param)) * state_t) * state_t / variance_action
 
     return gradient_off_policy
 
@@ -250,8 +250,8 @@ def computeMultipleImportanceWeightsSourceTargetCv(policy_param, env_param, sour
     policy_src_new_param = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[0:evaluated_trajectories, :, 0] - param_policy_src[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0])**2)/(2*variance_action)), axis=1)
     model_src_new_param = np.prod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, :, 0]) * np.exp(-((state_t1[0:evaluated_trajectories, :, 0] - A[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0] - B[0:evaluated_trajectories, :, -1] * clipped_actions_t[0:evaluated_trajectories, :, 0]) **2) / (2*variance_env[0:evaluated_trajectories, :, 0])), axis=1)
 
-    policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - np.asscalar(policy_param)*state_t[:, :, 0])**2)/(2*variance_action)), axis = 1)
-    model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, :, 0]) * np.exp(-((state_t1[:, :, 0] - np.asscalar(env_param) * state_t[:, :, 0] - B[:, :, -1] * clipped_actions_t[:, :, 0]) **2) / (2*variance_env[:, :, 0])), axis = 1)
+    policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - np.asscalar(np.asarray(policy_param))*state_t[:, :, 0])**2)/(2*variance_action)), axis = 1)
+    model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, :, 0]) * np.exp(-((state_t1[:, :, 0] - np.asscalar(np.asarray(env_param)) * state_t[:, :, 0] - B[:, :, -1] * clipped_actions_t[:, :, 0]) **2) / (2*variance_env[:, :, 0])), axis = 1)
 
     if source_task.shape[0]!=src_distributions.shape[0]:
         src_distributions = np.concatenate((src_distributions, np.matrix(policy_src_new_param * model_src_new_param).T), axis=1)
@@ -649,8 +649,8 @@ def regressionFittingZeroBatch(y, y_avg, x):
     :return: returns the error of the fitted regression
     """
     x_avg = np.mean(x, axis=0)
-    beta = np.matmul(np.linalg.inv(np.matmul((x[:, 1:]-x_avg[1:]).T, (x[:, 1:]-x_avg[1:]))), np.matmul((x[:, 1:]-x_avg[1:]).T, (y-y_avg)).T)
-    error = y_avg - np.dot(x_avg[1:], beta)
+    beta = np.matmul(np.linalg.inv(np.matmul((x[:, :-1]-x_avg[:-1]).T, (x[:, :-1]-x_avg[:-1]))), np.matmul((x[:, :-1]-x_avg[:-1]).T, (y-y_avg)).T)
+    error = y_avg - np.dot(x_avg[:-1], beta)
 
     return error
 
@@ -663,8 +663,8 @@ def regressionFitting(y, y_avg, x):
     :return: returns the error of the fitted regression
     """
     x_avg = np.mean(x, axis=0)
-    beta = np.matmul(np.linalg.inv(np.matmul((x[:, 1:]-x_avg[:, 1:]).T, (x[:, 1:]-x_avg[:, 1:]))), np.matmul((x[:, 1:]-x_avg[:, 1:]).T, (y-y_avg)).T)
-    error = y_avg - np.dot(x_avg[:, 1:], beta)
+    beta = np.matmul(np.linalg.inv(np.matmul((x[:, :-1]-x_avg[:, :-1]).T, (x[:, :-1]-x_avg[:, :-1]))), np.matmul((x[:, :-1]-x_avg[:, :-1]).T, (y-y_avg)).T)
+    error = y_avg - np.dot(x_avg[:, :-1], beta)
 
     return error
 

@@ -182,5 +182,5 @@ np.savetxt("./parallelAll10b/ess_off_policy_multiple_importance_sampling_cv_pd.c
 
 stats_opt = iw.optimalPolicy(env, num_batch, 10, discount_factor, variance_action, episode_length) # Optimal policy
 
-np.savetxt("./parallelAll10/discounted_reward_optimal.csv", stats_opt.episode_disc_rewards, delimiter=",")
-np.savetxt("./parallelAll10/policy_param_optimal.csv", stats_opt.policy_parameter, delimiter=",")
+np.savetxt("./parallelAll10b/discounted_reward_optimal.csv", stats_opt.episode_disc_rewards, delimiter=",")
+np.savetxt("./parallelAll10b/policy_param_optimal.csv", stats_opt.policy_parameter, delimiter=",")
