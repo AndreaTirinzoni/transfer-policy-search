@@ -33,13 +33,13 @@ def simulation(env, batch_size, discount_factor, variance_action, episode_length
     :return: A BatchStats object
     """
 
+    np.random.seed(seed)
+    initial_param = np.random.normal(mean_initial_param, m.sqrt(variance_initial_param))
+
     print("Creating source task")
     [source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = stc.sourceTaskCreation(episode_length, episodes_per_configuration, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max)
 
     print("Learning policy")
-    np.random.seed(seed)
-    initial_param = np.random.normal(mean_initial_param, m.sqrt(variance_initial_param))
-
     print("IS")
     off_policy_importance_sampling = iw.offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
 
@@ -49,11 +49,11 @@ def simulation(env, batch_size, discount_factor, variance_action, episode_length
     print("REINFORCE")
     reinforce = alg.reinforce(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action)
 
-    print("MIS")
-    off_policy_multiple_importance_sampling = iw.offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
-
-    print("MIS-CV")
-    off_policy_multiple_importance_sampling_cv = iw.offPolicyMultipleImportanceSamplingCv(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
+    # print("MIS")
+    # off_policy_multiple_importance_sampling = iw.offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
+    #
+    # print("MIS-CV")
+    # off_policy_multiple_importance_sampling_cv = iw.offPolicyMultipleImportanceSamplingCv(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
 
     # print("MIS-CV-BASELINE")
     # off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyMultipleImportanceSamplingCvBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
@@ -67,8 +67,8 @@ def simulation(env, batch_size, discount_factor, variance_action, episode_length
     # print("PD-MIS-CV-BASELINE")
     # off_policy_multiple_importance_sampling_cv_pd_baseline = iw.offPolicyMultipleImportanceSamplingCvPdBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
 
-    return returnPickledStats([off_policy_importance_sampling, off_policy_importance_sampling_pd, reinforce, off_policy_multiple_importance_sampling, off_policy_multiple_importance_sampling_cv])
-    """, off_policy_multiple_importance_sampling_cv_baseline, off_policy_multiple_importance_sampling_pd, off_policy_multiple_importance_sampling_cv_pd, off_policy_multiple_importance_sampling_cv_pd_baseline]"""
+    return returnPickledStats([off_policy_importance_sampling, off_policy_importance_sampling_pd])
+    """, reinforce, off_policy_multiple_importance_sampling, off_policy_multiple_importance_sampling_cv]), off_policy_multiple_importance_sampling_cv_baseline, off_policy_multiple_importance_sampling_pd, off_policy_multiple_importance_sampling_cv_pd, off_policy_multiple_importance_sampling_cv_pd_baseline]"""
 
 
 np.set_printoptions(precision=4)
@@ -81,7 +81,7 @@ variance_action = 0.1
 batch_size = 5
 num_batch = 150
 discount_factor = 0.99
-runs = 4
+runs = 6
 
 discounted_reward_off_policy_importance_sampling = np.zeros((runs, num_batch))
 discounted_reward_off_policy_importance_sampling_pd = np.zeros((runs, num_batch))
@@ -130,10 +130,10 @@ policy_param_max = 0
 
 seeds = [np.random.randint(1000000) for _ in range(runs)]
 
-results = Parallel(n_jobs=4)(delayed(simulation)(env, batch_size, discount_factor, variance_action, episode_length, mean_initial_param, variance_initial_param, num_batch, seed, episodes_per_configuration, env_param_min, env_param_max, policy_param_min, policy_param_max) for seed in seeds)
+results = Parallel(n_jobs=2)(delayed(simulation)(env, batch_size, discount_factor, variance_action, episode_length, mean_initial_param, variance_initial_param, num_batch, seed, episodes_per_configuration, env_param_min, env_param_max, policy_param_min, policy_param_max) for seed in seeds)
 
 for i_run in range(runs):
-
+    print(results[i_run][0].episode_disc_rewards)
     discounted_reward_off_policy_importance_sampling[i_run,:] = results[i_run][0].episode_disc_rewards
     discounted_reward_off_policy_importance_sampling_pd[i_run,:] = results[i_run][1].episode_disc_rewards
     discounted_reward_reinforce[i_run, :] = results[i_run][2].episode_disc_rewards
