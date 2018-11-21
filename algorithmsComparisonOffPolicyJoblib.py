@@ -47,7 +47,7 @@ def simulation(env, batch_size, discount_factor, variance_action, episode_length
     off_policy_importance_sampling_pd = iw.offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
 
     print("REINFORCE")
-    reinforce = alg.reinforce(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action)
+    #reinforce = alg.reinforce(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action)
 
     # print("MIS")
     # off_policy_multiple_importance_sampling = iw.offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
@@ -67,7 +67,7 @@ def simulation(env, batch_size, discount_factor, variance_action, episode_length
     # print("PD-MIS-CV-BASELINE")
     # off_policy_multiple_importance_sampling_cv_pd_baseline = iw.offPolicyMultipleImportanceSamplingCvPdBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch)
 
-    return returnPickledStats([off_policy_importance_sampling, off_policy_importance_sampling_pd])
+    return [off_policy_importance_sampling, off_policy_importance_sampling_pd]
     """, reinforce, off_policy_multiple_importance_sampling, off_policy_multiple_importance_sampling_cv]), off_policy_multiple_importance_sampling_cv_baseline, off_policy_multiple_importance_sampling_pd, off_policy_multiple_importance_sampling_cv_pd, off_policy_multiple_importance_sampling_cv_pd_baseline]"""
 
 

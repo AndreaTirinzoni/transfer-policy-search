@@ -57,7 +57,7 @@ def adam(params, grad, t, m_t, v_t, alpha=0.01, beta_1=0.9, beta_2=0.999, eps=1e
     v_t_hat = v_t / (1 - beta_2 ** t)
     return params - alpha * m_t_hat / (np.sqrt(v_t_hat) + eps), t, m_t, v_t
 
-def reinforce(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action):
+def reinforce(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, learning_rate):
     """
     REINFORCE (Monte Carlo Policy Gradient) Algorithm. Optimizes the policy function approximator using ADAM
     :param env: OpenAI environment
@@ -67,6 +67,7 @@ def reinforce(env, num_batch, batch_size, discount_factor, episode_length, initi
     :param episode_length: mean initial policy parameter
     :param initial_param: initial policy parameter
     :param variance_action: variance of the action's distribution
+    :param learning_rate: learning rate of the update rule
     :return: A BatchStats object with two numpy arrays for episode_disc_reward and episode_rewards related to the batch
     """
 
@@ -94,13 +95,13 @@ def reinforce(env, num_batch, batch_size, discount_factor, episode_length, initi
         # The return after this timestep
         total_return = np.sum(batch[:, :, 2], axis=1)
         discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
-        gradient_est = np.sum((batch[:, :, 1] - param * batch[:, :, 0]) * batch[:, :, 0] / variance_action, axis=1)
+        gradient_est = np.sum((batch[:, :, 5] - param * batch[:, :, 0]) * batch[:, :, 0] / variance_action, axis=1)
         episode_informations = np.matrix([gradient_est, total_return, discounted_return]).T
 
 
         gradient = np.asscalar(1/batch_size * np.dot(episode_informations[:,0].T, episode_informations[:,2]))
-        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t)
-        #param = param + 0.01 * gradient
+        #param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t)
+        param = param + learning_rate * gradient
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
         # Update statistics
@@ -112,7 +113,7 @@ def reinforce(env, num_batch, batch_size, discount_factor, episode_length, initi
 
     return stats
 
-def reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action):
+def reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, learning_rate):
     """
     REINFORCE with BASELINE (Monte Carlo Policy Gradient) Algorithm. Optimizes the policy function approximator using ADAM
     :param env: OpenAI environment
@@ -122,6 +123,7 @@ def reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_lengt
     :param episode_length: mean initial policy parameter
     :param initial_param: initial policy parameter
     :param variance_action: variance of the action's distribution
+    :param learning_rate: learning rate of the update rule
     :return: A BatchStats object with two numpy arrays for episode_disc_reward and episode_rewards related to the batch
     """
     param = initial_param
@@ -130,8 +132,6 @@ def reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_lengt
     v_t = 0
     t = 0
 
-    # Iterate for all batch
-    num_batch = num_episodes//batch_size
     # Keeps track of useful statistics#
     stats = BatchStats(
         episode_total_rewards=np.zeros(num_batch),
@@ -153,15 +153,15 @@ def reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_lengt
         # The return after this timestep
         total_return = np.sum(batch[:, :, 2], axis=1)
         discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
-        gradient_est = np.sum(((batch[:, :, 1] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action, axis=1)
+        gradient_est = np.sum(((batch[:, :, 5] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action, axis=1)
         episode_informations = np.matrix([gradient_est, total_return, discounted_return]).T
 
         baseline = np.dot(np.squeeze(np.asarray(episode_informations[:,0]))**2, np.squeeze(np.asarray(episode_informations[:,2])))/np.sum(np.squeeze(np.asarray(episode_informations[:,0]))**2)
-        # baseline = 0
+
         # Update parameters
         gradient = np.asscalar(1/batch_size * np.dot(episode_informations[:,0].T, episode_informations[:,2]-baseline))
-        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t)
-        #param = param + 0.01 * gradient
+        #param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t)
+        param = param + learning_rate * gradient
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
         # Update statistics
@@ -169,10 +169,9 @@ def reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_lengt
         stats.episode_disc_rewards[i_batch] = discounted_reward_batch
         stats.gradient[i_batch] = gradient
 
-        #print(state, action, reward, param)
     return stats
 
-def gpomdp(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action):
+def gpomdp(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, learning_rate):
     """
     G(PO)MDP (Policy Gradient) Algorithm. Optimizes the policy function approximator using ADAM
     :param env: OpenAI environment
@@ -182,6 +181,7 @@ def gpomdp(env, num_batch, batch_size, discount_factor, episode_length, initial_
     :param episode_length: mean initial policy parameter
     :param initial_param: initial policy parameter
     :param variance_action: variance of the action's distribution
+    :param learning_rate: learning rate of the update rule
     :return: A BatchStats object with two numpy arrays for episode_disc_reward and episode_rewards related to the batch
     """
 
@@ -191,8 +191,6 @@ def gpomdp(env, num_batch, batch_size, discount_factor, episode_length, initial_
     v_t = 0
     t = 0
 
-    # Iterate for all batch
-    num_batch = num_episodes//batch_size
     # Keeps track of useful statistics#
     stats = BatchStats(
         episode_total_rewards=np.zeros(num_batch),
@@ -212,7 +210,7 @@ def gpomdp(env, num_batch, batch_size, discount_factor, episode_length, initial_
         discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
         #gradient_est_timestep = np.array(list(np.sum(((batch[:, 0:t+1, 1] - param * batch[:, 0:t+1, 0]) * batch[:, 0:t+1, 0]) / variance_action, axis=1) for t in range(episode_length))).T
 
-        gradient_est_timestep = np.cumsum(((batch[:, :, 1] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action, axis=1)
+        gradient_est_timestep = np.cumsum(((batch[:, :, 5] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action, axis=1)
         episode_informations = np.matrix([total_return, discounted_return]).T
         #estimate = 0
 
@@ -221,8 +219,8 @@ def gpomdp(env, num_batch, batch_size, discount_factor, episode_length, initial_
 
         gradient = 1/batch_size * np.sum(np.sum(gradient_est_timestep * discount_factor_timestep * (batch[:, :, 2] - baseline), axis=1))
         # print(baseline, gradient, param)
-        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t)
-        #param = param + 0.01 * gradient
+        #param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t)
+        param = param + learning_rate * gradient
         tot_reward_batch = np.mean(episode_informations[:,0])
         discounted_reward_batch = np.mean(episode_informations[:,1])
         # Update statistics

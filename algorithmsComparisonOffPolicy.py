@@ -15,7 +15,7 @@ episode_length = 20
 variance_initial_param = 0
 variance_action = 0.1
 batch_size = 10
-num_batch = 100
+num_batch = 200
 discount_factor = 0.99
 runs = 10
 

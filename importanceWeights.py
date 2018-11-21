@@ -3,7 +3,15 @@ import numpy as np
 from collections import namedtuple
 import algorithmPolicySearch as alg
 
-BatchStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards", "policy_parameter", "gradient", "ess"])
+class BatchStats:
+
+    def __init__(self, num_batch):
+
+        self.episode_total_rewards = np.zeros(num_batch)
+        self.episode_disc_rewards = np.zeros(num_batch)
+        self.policy_parameter = np.zeros(num_batch)
+        self.gradient = np.zeros(num_batch)
+        self.ess = np.zeros(num_batch)
 
 def optimalPolicy(env, num_batch, batch_size, discount_factor, variance_action, episode_length):
     """
@@ -17,12 +25,7 @@ def optimalPolicy(env, num_batch, batch_size, discount_factor, variance_action, 
     """
 
     # Keeps track of useful statistics#
-    stats = BatchStats(
-        episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch),
-        gradient=np.zeros(num_batch),
-        ess=np.zeros(num_batch))
+    stats = BatchStats(num_batch)
     K = env.computeOptimalK()
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
@@ -430,7 +433,7 @@ def offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_con
         # The return after this timestep
         total_return = np.sum(batch[:, :, 2], axis=1)
         discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
-        gradient_est = np.sum(((batch[:, :, 1] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action, axis=1)
+        gradient_est = np.sum(((batch[:, :, 5] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action, axis=1)
 
         source_param_new[:, 0] = discounted_return
         source_param_new[:, 1] = param
@@ -518,7 +521,7 @@ def offPolicyUpdateImportanceSamplingPerDec(env, param, source_param, episodes_p
         total_return = np.sum(batch[:, :, 2], axis=1)
         discounted_return_timestep = discount_factor_timestep * batch[:, :, 2]
         discounted_return = np.sum(discounted_return_timestep, axis=1)
-        gradient_est_timestep = np.cumsum(((batch[:, :, 1] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action, axis=1)
+        gradient_est_timestep = np.cumsum(((batch[:, :, 5] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action, axis=1)
 
         source_param_new[:, 0] = discounted_return
         source_param_new[:, 1] = param
@@ -963,13 +966,9 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, n
     m_t = 0
     v_t = 0
     t = 0
-    # Keeps track of useful statistics#
-    stats = BatchStats(
-        episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch),
-        gradient=np.zeros(num_batch),
-        ess=np.zeros(num_batch))
+
+    # Keep track of useful statistics#
+    stats = BatchStats(num_batch)
 
     for i_batch in range(num_batch):
 
@@ -1007,13 +1006,9 @@ def offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task,
     m_t = 0
     v_t = 0
     t = 0
-    # Keeps track of useful statistics#
-    stats = BatchStats(
-        episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch),
-        gradient=np.zeros(num_batch),
-        ess=np.zeros(num_batch))
+
+    # Keep track of useful statistics#
+    stats = BatchStats(num_batch)
 
     for i_batch in range(num_batch):
 
@@ -1083,13 +1078,9 @@ def offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source
     t = 0
 
     src_distributions = computeMultipleImportanceWeightsSourceDistributions(source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config)
-    # Keeps track of useful statistics#
-    stats = BatchStats(
-        episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch),
-        gradient=np.zeros(num_batch),
-        ess=np.zeros(num_batch))
+
+    # Keep track of useful statistics#
+    stats = BatchStats(num_batch)
 
     for i_batch in range(num_batch):
 
@@ -1129,13 +1120,9 @@ def offPolicyMultipleImportanceSamplingCv(env, batch_size, discount_factor, sour
     baseline = 0
 
     src_distributions = computeMultipleImportanceWeightsSourceDistributions(source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config)
-    # Keeps track of useful statistics#
-    stats = BatchStats(
-        episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch),
-        gradient=np.zeros(num_batch),
-        ess=np.zeros(num_batch))
+
+    # Keep track of useful statistics#
+    stats = BatchStats(num_batch)
 
     for i_batch in range(num_batch):
 
@@ -1176,13 +1163,9 @@ def offPolicyMultipleImportanceSamplingCvBaseline(env, batch_size, discount_fact
     baseline = 1
 
     src_distributions = computeMultipleImportanceWeightsSourceDistributions(source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config)
-    # Keeps track of useful statistics#
-    stats = BatchStats(
-        episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch),
-        gradient=np.zeros(num_batch),
-        ess=np.zeros(num_batch))
+
+    # Keep track of useful statistics#
+    stats = BatchStats(num_batch)
 
     for i_batch in range(num_batch):
 
@@ -1252,13 +1235,9 @@ def offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, sour
     t = 0
 
     src_distributions = computePerDecisionMultipleImportanceWeightsSourceDistributions(source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config)
-    # Keeps track of useful statistics#
-    stats = BatchStats(
-        episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch),
-        gradient=np.zeros(num_batch),
-        ess=np.zeros(num_batch))
+
+    # Keep track of useful statistics#
+    stats = BatchStats(num_batch)
 
     for i_batch in range(num_batch):
 
@@ -1298,13 +1277,9 @@ def offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, so
     baseline = 0
 
     src_distributions = computePerDecisionMultipleImportanceWeightsSourceDistributions(source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config)
-    # Keeps track of useful statistics#
-    stats = BatchStats(
-        episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch),
-        gradient=np.zeros(num_batch),
-        ess=np.zeros(num_batch))
+
+    # Keep track of useful statistics#
+    stats = BatchStats(num_batch)
 
     for i_batch in range(num_batch):
 
@@ -1345,13 +1320,9 @@ def offPolicyMultipleImportanceSamplingCvPdBaseline(env, batch_size, discount_fa
     baseline = 1
 
     src_distributions = computePerDecisionMultipleImportanceWeightsSourceDistributions(source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config)
-    # Keeps track of useful statistics#
-    stats = BatchStats(
-        episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch),
-        gradient=np.zeros(num_batch),
-        ess=np.zeros(num_batch))
+
+    # Keep track of useful statistics#
+    stats = BatchStats(num_batch)
 
     for i_batch in range(num_batch):
 

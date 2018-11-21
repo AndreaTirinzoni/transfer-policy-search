@@ -7,7 +7,7 @@ import math as m
 from utils import plot
 
 
-def optimalPolicy(env, num_episodes, batch_size, discount_factor, variance_action):
+def optimalPolicy(env, num_batch, batch_size, discount_factor, variance_action):
     """
     Optimal policy (uses Riccati equation)
     :param env: OpenAI environment
@@ -18,8 +18,6 @@ def optimalPolicy(env, num_episodes, batch_size, discount_factor, variance_actio
     :return: A BatchStats object with two numpy arrays for episode_disc_reward and episode_rewards
     """
 
-    # Iterate for all batch
-    num_batch = num_episodes//batch_size
     # Keeps track of useful statistics#
     stats = BatchStats(
         episode_total_rewards=np.zeros(num_batch),
@@ -55,12 +53,12 @@ episode_length = 20
 mean_initial_param = -0.1
 variance_initial_param = 0
 variance_action = 0.1
-num_episodes = 2000
 batch_size = 10
-num_batch = num_episodes//batch_size
+num_batch = 300
 discount_factor = 0.99
+learning_rate = 10e-5
 
-runs = 20
+runs = 10
 
 reward_reinforce = np.zeros((runs, num_batch))
 reward_reinforce_baseline = np.zeros((runs, num_batch))
@@ -73,24 +71,24 @@ policy_optimal = np.zeros((runs, num_batch))
 
 print("Learning policy")
 for i_run in range(runs):
+
     # Apply different algorithms to learn optimal policy
-    #np.random.seed(2000+5*i_run)
     initial_param = np.random.normal(mean_initial_param, m.sqrt(variance_initial_param))
     print(i_run)
 
-    reinforce = alg.reinforce(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action) # apply REINFORCE for estimating gradient
+    reinforce = alg.reinforce(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, learning_rate) # apply REINFORCE for estimating gradient
     reward_reinforce[i_run,:] = reinforce.episode_disc_rewards
     policy_reinforce[i_run,:] = reinforce.policy_parameter
 
-    reinforce_baseline = alg.reinforceBaseline(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action) # apply REINFORCE with baseline for estimating gradient
+    reinforce_baseline = alg.reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, learning_rate) # apply REINFORCE with baseline for estimating gradient
     reward_reinforce_baseline[i_run,:] = reinforce_baseline.episode_disc_rewards
     policy_reinforce_baseline[i_run,:] = reinforce_baseline.policy_parameter
 
-    gpomdp = alg.gpomdp(env, num_episodes, batch_size, discount_factor, episode_length, initial_param, variance_action) # apply G(PO)MDP for estimating gradient
+    gpomdp = alg.gpomdp(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, learning_rate) # apply G(PO)MDP for estimating gradient
     reward_gpomdp[i_run,:] = gpomdp.episode_disc_rewards
     policy_gpomdp[i_run,:] = gpomdp.policy_parameter
 
-    optimal = optimalPolicy(env, num_episodes, batch_size, discount_factor, variance_action) # Optimal policy
+    optimal = optimalPolicy(env, num_batch, batch_size, discount_factor, variance_action) # Optimal policy
     reward_optimal[i_run,:] = optimal.episode_disc_rewards
     policy_optimal[i_run,:] = optimal.policy_parameter
 
@@ -116,8 +114,8 @@ var_pol_opt = np.zeros(num_batch)
 
 x = range(num_batch)
 
-plot.plot_curves([x, x, x, x] , [mean_alg1, mean_alg2, mean_alg3, mean_opt], [var_alg1, var_alg2, var_alg3, var_opt], title = "Rewards over batches", x_label = "Batch", y_label = "Discounted reward", names = ["REINFORCE", "REINFORCE with baseline", "G(PO)MDP", "Optimal policy"], file_name = "Rewards policy search")
-plot.plot_curves([x, x, x, x] , [mean_pol1, mean_pol2, mean_pol3, mean_pol_opt], [var_pol1, var_pol2, var_pol3, var_pol_opt], title = "Policy parameter over batches", x_label = "Batch", y_label = "Policy parameter", names = ["REINFORCE", "REINFORCE with baseline", "G(PO)MDP", "Optimal policy"], file_name = "Policy parameter policy search")
+plot.plot_curves([x, x, x, x], [mean_alg1, mean_alg2, mean_alg3, mean_opt], [var_alg1, var_alg2, var_alg3, var_opt], title = "Rewards over batches", x_label = "Batch", y_label = "Discounted reward", names = ["REINFORCE", "REINFORCE with baseline", "G(PO)MDP", "Optimal policy"], file_name = "Rewards policy search")
+plot.plot_curves([x, x, x, x], [mean_pol1, mean_pol2, mean_pol3, mean_pol_opt], [var_pol1, var_pol2, var_pol3, var_pol_opt], title = "Policy parameter over batches", x_label = "Batch", y_label = "Policy parameter", names = ["REINFORCE", "REINFORCE with baseline", "G(PO)MDP", "Optimal policy"], file_name = "Policy parameter policy search")
 
 print("Saving files")
 np.savetxt("discounted_reward_reinforce.csv", reward_reinforce, delimiter=",")
