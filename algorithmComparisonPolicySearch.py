@@ -6,6 +6,15 @@ import algorithmPolicySearch as alg
 import math as m
 from utils import plot
 
+class BatchStats:
+
+    def __init__(self, num_batch):
+
+        self.episode_total_rewards = np.zeros(num_batch)
+        self.episode_disc_rewards = np.zeros(num_batch)
+        self.policy_parameter = np.zeros(num_batch)
+        self.gradient = np.zeros(num_batch)
+        self.ess = np.zeros(num_batch)
 
 def optimalPolicy(env, num_batch, batch_size, discount_factor, variance_action):
     """
@@ -18,11 +27,9 @@ def optimalPolicy(env, num_batch, batch_size, discount_factor, variance_action):
     :return: A BatchStats object with two numpy arrays for episode_disc_reward and episode_rewards
     """
 
-    # Keeps track of useful statistics#
-    stats = BatchStats(
-        episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch))
+    # Keep track of useful statistics
+
+    stats = BatchStats(num_batch)
     K = env.computeOptimalK()
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
@@ -45,8 +52,6 @@ def optimalPolicy(env, num_batch, batch_size, discount_factor, variance_action):
 
     return stats
 
-BatchStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards", "policy_parameter"])
-
 # Inizialize environment and parameters
 env = gym.make('LQG1D-v0')
 episode_length = 20
@@ -54,11 +59,11 @@ mean_initial_param = -0.1
 variance_initial_param = 0
 variance_action = 0.1
 batch_size = 10
-num_batch = 300
+num_batch = 200
 discount_factor = 0.99
-learning_rate = 10e-5
+learning_rate = 10e-6
 
-runs = 10
+runs = 30
 
 reward_reinforce = np.zeros((runs, num_batch))
 reward_reinforce_baseline = np.zeros((runs, num_batch))

@@ -2,7 +2,15 @@ import numpy as np
 from collections import namedtuple
 import math as m
 
-BatchStats = namedtuple("Stats",["episode_total_rewards", "episode_disc_rewards", "policy_parameter", "gradient"])
+class BatchStats:
+
+    def __init__(self, num_batch):
+
+        self.episode_total_rewards = np.zeros(num_batch)
+        self.episode_disc_rewards = np.zeros(num_batch)
+        self.policy_parameter = np.zeros(num_batch)
+        self.gradient = np.zeros(num_batch)
+        self.ess = np.zeros(num_batch)
 
 def createBatch(env, batch_size, episode_length, param, variance_action):
     """
@@ -77,12 +85,8 @@ def reinforce(env, num_batch, batch_size, discount_factor, episode_length, initi
     v_t = 0
     t = 0
 
-    # Keeps track of useful statistics#
-    stats = BatchStats(
-        episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch),
-        gradient=np.zeros(num_batch))
+    # Keep track of useful statistics#
+    stats = BatchStats(num_batch)
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
@@ -132,12 +136,9 @@ def reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_lengt
     v_t = 0
     t = 0
 
-    # Keeps track of useful statistics#
-    stats = BatchStats(
-        episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch),
-        gradient=np.zeros(num_batch))
+    # Keep track of useful statistics#
+
+    stats = BatchStats(num_batch)
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
@@ -191,12 +192,9 @@ def gpomdp(env, num_batch, batch_size, discount_factor, episode_length, initial_
     v_t = 0
     t = 0
 
-    # Keeps track of useful statistics#
-    stats = BatchStats(
-        episode_total_rewards=np.zeros(num_batch),
-        episode_disc_rewards=np.zeros(num_batch),
-        policy_parameter=np.zeros(num_batch),
-        gradient=np.zeros(num_batch))
+    # Keep track of useful statistics#
+
+    stats = BatchStats(num_batch)
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
