@@ -40,35 +40,34 @@ def simulation(env, batch_size, discount_factor, variance_action, episode_length
     print("Learning policy")
 
     print("IS")
-    off_policy_importance_sampling = iw.offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate)
+    off_policy_importance_sampling = iw.offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min)
 
     print("PD-IS")
-    off_policy_importance_sampling_pd = iw.offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate)
+    off_policy_importance_sampling_pd = iw.offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min)
 
     print("REINFORCE")
     reinforce = alg.reinforce(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, learning_rate)
 
     print("MIS")
-    off_policy_multiple_importance_sampling = iw.offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate)
+    off_policy_multiple_importance_sampling = iw.offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min)
 
     print("MIS-CV")
-    off_policy_multiple_importance_sampling_cv = iw.offPolicyMultipleImportanceSamplingCv(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate)
+    off_policy_multiple_importance_sampling_cv = iw.offPolicyMultipleImportanceSamplingCv(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min)
 
     print("MIS-CV-BASELINE")
-    off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyMultipleImportanceSamplingCvBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate)
+    off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyMultipleImportanceSamplingCvBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min)
 
     print("PD-MIS")
-    off_policy_multiple_importance_sampling_pd = iw.offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate)
+    off_policy_multiple_importance_sampling_pd = iw.offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min)
 
     print("PD-MIS-CV")
-    off_policy_multiple_importance_sampling_cv_pd = iw.offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate)
+    off_policy_multiple_importance_sampling_cv_pd = iw.offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min)
 
     print("PD-MIS-CV-BASELINE-APPROXIMATED")
-    off_policy_multiple_importance_sampling_cv_pd_baseline_approximated = iw.offPolicyMultipleImportanceSamplingCvPdBaselineApproximated(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate)
-
+    off_policy_multiple_importance_sampling_cv_pd_baseline_approximated = iw.offPolicyMultipleImportanceSamplingCvPdBaselineApproximated(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min)
 
     print("PD-MIS-CV-BASELINE")
-    off_policy_multiple_importance_sampling_cv_pd_baseline = iw.offPolicyMultipleImportanceSamplingCvPdBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate)
+    off_policy_multiple_importance_sampling_cv_pd_baseline = iw.offPolicyMultipleImportanceSamplingCvPdBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min)
 
     return [off_policy_importance_sampling, off_policy_importance_sampling_pd, reinforce, off_policy_multiple_importance_sampling,
             off_policy_multiple_importance_sampling_cv, off_policy_multiple_importance_sampling_cv_baseline, off_policy_multiple_importance_sampling_pd,
@@ -82,10 +81,11 @@ mean_initial_param = -0.1
 episode_length = 20
 variance_initial_param = 0
 variance_action = 0.1
-batch_size = 5
-num_batch = 150
+batch_size = 10
+ess_min = 50
+num_batch = 100
 discount_factor = 0.99
-runs = 5
+runs = 9
 learning_rate = 10e-6
 
 discounted_reward_off_policy_importance_sampling = np.zeros((runs, num_batch))
@@ -131,6 +131,16 @@ ess_off_policy_multiple_importance_sampling_cv_pd = np.zeros((runs, num_batch))
 ess_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated = np.zeros((runs, num_batch))
 ess_off_policy_multiple_importance_sampling_cv_pd_baseline = np.zeros((runs, num_batch))
 
+n_def_off_policy_importance_sampling = np.zeros((runs, num_batch))
+n_def_off_policy_importance_sampling_pd = np.zeros((runs, num_batch))
+n_def_off_policy_multiple_importance_sampling = np.zeros((runs, num_batch))
+n_def_off_policy_multiple_importance_sampling_cv = np.zeros((runs, num_batch))
+n_def_off_policy_multiple_importance_sampling_cv_baseline = np.zeros((runs, num_batch))
+n_def_off_policy_multiple_importance_sampling_pd = np.zeros((runs, num_batch))
+n_def_off_policy_multiple_importance_sampling_cv_pd = np.zeros((runs, num_batch))
+n_def_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated = np.zeros((runs, num_batch))
+n_def_off_policy_multiple_importance_sampling_cv_pd_baseline = np.zeros((runs, num_batch))
+
 episodes_per_configuration = 10
 env_param_min = 0.5
 env_param_max = 1.5
@@ -139,7 +149,7 @@ policy_param_max = 0
 
 seeds = [np.random.randint(1000000) for _ in range(runs)]
 
-results = Parallel(n_jobs=5)(delayed(simulation)(env, batch_size, discount_factor, variance_action, episode_length, mean_initial_param, variance_initial_param, num_batch, learning_rate, seed, episodes_per_configuration, env_param_min, env_param_max, policy_param_min, policy_param_max) for seed in seeds)
+results = Parallel(n_jobs=3)(delayed(simulation)(env, batch_size, discount_factor, variance_action, episode_length, mean_initial_param, variance_initial_param, num_batch, learning_rate, seed, episodes_per_configuration, env_param_min, env_param_max, policy_param_min, policy_param_max) for seed in seeds)
 
 for i_run in range(runs):
 
@@ -187,50 +197,60 @@ for i_run in range(runs):
     ess_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run,:] = results[i_run][9].ess
 
 print("Saving files")
-np.savetxt("./parallelAll5b/discounted_reward_off_policy_importance_sampling.csv", discounted_reward_off_policy_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll5b/discounted_reward_off_policy_importance_sampling_pd.csv", discounted_reward_off_policy_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll5b/discounted_reward_off_policy_multiple_importance_sampling.csv", discounted_reward_off_policy_multiple_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll5b/discounted_reward_off_policy_multiple_importance_sampling_cv.csv", discounted_reward_off_policy_multiple_importance_sampling_cv, delimiter=",")
-np.savetxt("./parallelAll5b/discounted_reward_off_policy_multiple_importance_sampling_cv_baseline.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
-np.savetxt("./parallelAll5b/discounted_reward_off_policy_multiple_importance_sampling_pd.csv", discounted_reward_off_policy_multiple_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll5b/discounted_reward_off_policy_multiple_importance_sampling_cv_pd.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
-np.savetxt("./parallelAll5b/discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
-np.savetxt("./parallelAll5b/discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
-np.savetxt("./parallelAll5b/discounted_reward_reinforce.csv", discounted_reward_reinforce, delimiter=",")
+np.savetxt("./parallelAllAdaptive/discounted_reward_off_policy_importance_sampling.csv", discounted_reward_off_policy_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllAdaptive/discounted_reward_off_policy_importance_sampling_pd.csv", discounted_reward_off_policy_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllAdaptive/discounted_reward_off_policy_multiple_importance_sampling.csv", discounted_reward_off_policy_multiple_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllAdaptive/discounted_reward_off_policy_multiple_importance_sampling_cv.csv", discounted_reward_off_policy_multiple_importance_sampling_cv, delimiter=",")
+np.savetxt("./parallelAllAdaptive/discounted_reward_off_policy_multiple_importance_sampling_cv_baseline.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
+np.savetxt("./parallelAllAdaptive/discounted_reward_off_policy_multiple_importance_sampling_pd.csv", discounted_reward_off_policy_multiple_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllAdaptive/discounted_reward_off_policy_multiple_importance_sampling_cv_pd.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
+np.savetxt("./parallelAllAdaptive/discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
+np.savetxt("./parallelAllAdaptive/discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
+np.savetxt("./parallelAllAdaptive/discounted_reward_reinforce.csv", discounted_reward_reinforce, delimiter=",")
 
-np.savetxt("./parallelAll5b/policy_param_off_policy_importance_sampling.csv", policy_param_off_policy_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll5b/policy_param_off_policy_importance_sampling_pd.csv", policy_param_off_policy_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll5b/policy_param_off_policy_multiple_importance_sampling.csv", policy_param_off_policy_multiple_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll5b/policy_param_off_policy_multiple_importance_sampling_cv.csv", policy_param_off_policy_multiple_importance_sampling_cv, delimiter=",")
-np.savetxt("./parallelAll5b/policy_param_off_policy_multiple_importance_sampling_cv_baseline.csv", policy_param_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
-np.savetxt("./parallelAll5b/policy_param_off_policy_multiple_importance_sampling_pd.csv", policy_param_off_policy_multiple_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll5b/policy_param_off_policy_multiple_importance_sampling_cv_pd.csv", policy_param_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
-np.savetxt("./parallelAll5b/policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
-np.savetxt("./parallelAll5b/policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
-np.savetxt("./parallelAll5b/policy_param_reinforce.csv", policy_param_reinforce, delimiter=",")
+np.savetxt("./parallelAllAdaptive/policy_param_off_policy_importance_sampling.csv", policy_param_off_policy_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllAdaptive/policy_param_off_policy_importance_sampling_pd.csv", policy_param_off_policy_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllAdaptive/policy_param_off_policy_multiple_importance_sampling.csv", policy_param_off_policy_multiple_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllAdaptive/policy_param_off_policy_multiple_importance_sampling_cv.csv", policy_param_off_policy_multiple_importance_sampling_cv, delimiter=",")
+np.savetxt("./parallelAllAdaptive/policy_param_off_policy_multiple_importance_sampling_cv_baseline.csv", policy_param_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
+np.savetxt("./parallelAllAdaptive/policy_param_off_policy_multiple_importance_sampling_pd.csv", policy_param_off_policy_multiple_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllAdaptive/policy_param_off_policy_multiple_importance_sampling_cv_pd.csv", policy_param_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
+np.savetxt("./parallelAllAdaptive/policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
+np.savetxt("./parallelAllAdaptive/policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
+np.savetxt("./parallelAllAdaptive/policy_param_reinforce.csv", policy_param_reinforce, delimiter=",")
 
-np.savetxt("./parallelAll5b/gradient_off_policy_importance_sampling.csv", gradient_off_policy_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll5b/gradient_off_policy_importance_sampling_pd.csv", gradient_off_policy_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll5b/gradient_off_policy_multiple_importance_sampling.csv", gradient_off_policy_multiple_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll5b/gradient_off_policy_multiple_importance_sampling_cv.csv", gradient_off_policy_multiple_importance_sampling_cv, delimiter=",")
-np.savetxt("./parallelAll5b/gradient_off_policy_multiple_importance_sampling_cv_baseline.csv", gradient_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
-np.savetxt("./parallelAll5b/gradient_off_policy_multiple_importance_sampling_pd.csv", gradient_off_policy_multiple_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll5b/gradient_off_policy_multiple_importance_sampling_cv_pd.csv", gradient_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
-np.savetxt("./parallelAll5b/gradient_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", gradient_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
-np.savetxt("./parallelAll5b/gradient_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", gradient_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
-np.savetxt("./parallelAll5b/gradient_reinforce.csv", gradient_reinforce, delimiter=",")
+np.savetxt("./parallelAllAdaptive/gradient_off_policy_importance_sampling.csv", gradient_off_policy_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllAdaptive/gradient_off_policy_importance_sampling_pd.csv", gradient_off_policy_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllAdaptive/gradient_off_policy_multiple_importance_sampling.csv", gradient_off_policy_multiple_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllAdaptive/gradient_off_policy_multiple_importance_sampling_cv.csv", gradient_off_policy_multiple_importance_sampling_cv, delimiter=",")
+np.savetxt("./parallelAllAdaptive/gradient_off_policy_multiple_importance_sampling_cv_baseline.csv", gradient_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
+np.savetxt("./parallelAllAdaptive/gradient_off_policy_multiple_importance_sampling_pd.csv", gradient_off_policy_multiple_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllAdaptive/gradient_off_policy_multiple_importance_sampling_cv_pd.csv", gradient_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
+np.savetxt("./parallelAllAdaptive/gradient_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", gradient_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
+np.savetxt("./parallelAllAdaptive/gradient_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", gradient_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
+np.savetxt("./parallelAllAdaptive/gradient_reinforce.csv", gradient_reinforce, delimiter=",")
 
-np.savetxt("./parallelAll5b/ess_off_policy_importance_sampling.csv", ess_off_policy_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll5b/ess_off_policy_importance_sampling_pd.csv", ess_off_policy_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll5b/ess_off_policy_multiple_importance_sampling.csv", ess_off_policy_multiple_importance_sampling, delimiter=",")
-np.savetxt("./parallelAll5b/ess_off_policy_multiple_importance_sampling_cv.csv", ess_off_policy_multiple_importance_sampling_cv, delimiter=",")
-np.savetxt("./parallelAll5b/ess_off_policy_multiple_importance_sampling_cv_baseline.csv", ess_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
-np.savetxt("./parallelAll5b/ess_off_policy_multiple_importance_sampling_pd.csv", ess_off_policy_multiple_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAll5b/ess_off_policy_multiple_importance_sampling_cv_pd.csv", ess_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
-np.savetxt("./parallelAll5b/ess_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", ess_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
-np.savetxt("./parallelAll5b/ess_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", ess_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
+np.savetxt("./parallelAllAdaptive/ess_off_policy_importance_sampling.csv", ess_off_policy_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllAdaptive/ess_off_policy_importance_sampling_pd.csv", ess_off_policy_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllAdaptive/ess_off_policy_multiple_importance_sampling.csv", ess_off_policy_multiple_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllAdaptive/ess_off_policy_multiple_importance_sampling_cv.csv", ess_off_policy_multiple_importance_sampling_cv, delimiter=",")
+np.savetxt("./parallelAllAdaptive/ess_off_policy_multiple_importance_sampling_cv_baseline.csv", ess_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
+np.savetxt("./parallelAllAdaptive/ess_off_policy_multiple_importance_sampling_pd.csv", ess_off_policy_multiple_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllAdaptive/ess_off_policy_multiple_importance_sampling_cv_pd.csv", ess_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
+np.savetxt("./parallelAllAdaptive/ess_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", ess_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
+np.savetxt("./parallelAllAdaptive/ess_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", ess_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
+
+np.savetxt("./parallelAllAdaptive/n_def_off_policy_importance_sampling.csv", n_def_off_policy_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllAdaptive/n_def_off_policy_importance_sampling_pd.csv", n_def_off_policy_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllAdaptive/n_def_off_policy_multiple_importance_sampling.csv", n_def_off_policy_multiple_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllAdaptive/n_def_off_policy_multiple_importance_sampling_cv.csv", n_def_off_policy_multiple_importance_sampling_cv, delimiter=",")
+np.savetxt("./parallelAllAdaptive/n_def_off_policy_multiple_importance_sampling_cv_baseline.csv", n_def_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
+np.savetxt("./parallelAllAdaptive/n_def_off_policy_multiple_importance_sampling_pd.csv", n_def_off_policy_multiple_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllAdaptive/n_def_off_policy_multiple_importance_sampling_cv_pd.csv", n_def_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
+np.savetxt("./parallelAllAdaptive/n_def_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", n_def_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
+np.savetxt("./parallelAllAdaptive/n_def_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", n_def_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
 
 stats_opt = iw.optimalPolicy(env, num_batch, 10, discount_factor, variance_action, episode_length) # Optimal policy
 
-np.savetxt("./parallelAll5b/discounted_reward_optimal.csv", stats_opt.episode_disc_rewards, delimiter=",")
-np.savetxt("./parallelAll5b/policy_param_optimal.csv", stats_opt.policy_parameter, delimiter=",")
+np.savetxt("./parallelAllAdaptive/discounted_reward_optimal.csv", stats_opt.episode_disc_rewards, delimiter=",")
+np.savetxt("./parallelAllAdaptive/policy_param_optimal.csv", stats_opt.policy_parameter, delimiter=",")

@@ -5,7 +5,6 @@
       <change beforePath="$PROJECT_DIR$/algorithmsComparisonOffPolicy.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithmsComparisonOffPolicy.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/importanceWeights.py" beforeDir="false" afterPath="$PROJECT_DIR$/importanceWeights.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sourceTaskCreation.py" beforeDir="false" afterPath="$PROJECT_DIR$/sourceTaskCreation.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -77,7 +76,7 @@
     <session id="211049904">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="28" />
+          <entry key="project.closed" value="29" />
           <entry key="project.open.time.0" value="3" />
           <entry key="project.open.time.1" value="3" />
           <entry key="project.open.time.17" value="1" />
@@ -90,57 +89,71 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="Python Console" value="4788" />
-          <entry key="py" value="9249" />
+          <entry key="Python Console" value="4959" />
+          <entry key="py" value="10011" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Python" value="14037" />
+          <entry key="Python" value="14970" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
-          <entry key="Python" value="66" />
+          <entry key="Python" value="67" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.vcs.git.usages" />
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="py" value="66" />
+          <entry key="py" value="67" />
         </counts>
       </usages-collector>
     </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1785">
-              <caret line="85" column="14" lean-forward="true" selection-start-line="85" selection-start-column="14" selection-end-line="85" selection-end-column="14" />
+            <state relative-caret-position="-2741">
+              <caret line="85" column="13" selection-start-line="85" selection-start-column="13" selection-end-line="85" selection-end-column="13" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
-                <marker date="1543001704456" expanded="true" signature="195:197" ph="..." />
-                <marker date="1543001704456" expanded="true" signature="449:1633" ph="..." />
+                <marker date="1543006673577" expanded="true" signature="195:197" ph="..." />
+                <marker date="1543006673577" expanded="true" signature="449:1633" ph="..." />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/importanceWeights.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="88">
-              <caret line="1491" selection-start-line="1491" selection-end-line="1491" />
+            <state relative-caret-position="1234">
+              <caret line="690" column="44" selection-start-line="690" selection-start-column="44" selection-end-line="690" selection-end-column="44" />
               <folding>
                 <element signature="e#0#16#0" expanded="true" />
+                <element signature="e#131#449#0" />
+                <element signature="e#513#1781#0" />
+                <element signature="e#1861#3087#0" />
+                <element signature="e#3172#3774#0" />
+                <element signature="e#3973#5985#0" />
+                <element signature="e#6153#8203#0" />
                 <element signature="e#18310#22689#0" />
+                <element signature="e#22950#28327#0" />
+                <element signature="e#45274#45732#0" />
                 <element signature="e#68085#70142#0" />
                 <element signature="e#70379#72445#0" />
                 <element signature="e#72613#74869#0" />
+                <element signature="e#76705#79597#0" />
+                <element signature="e#80234#82587#0" />
                 <element signature="e#82766#85047#0" />
+                <element signature="e#89758#92039#0" />
                 <element signature="e#85292#87597#0" />
+                <element signature="e#87844#90216#0" />
+                <element signature="e#90483#92869#0" />
+                <element signature="e#93124#95518#0" />
               </folding>
             </state>
           </provider>
@@ -149,8 +162,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/algorithmsComparisonOffPolicy.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="118">
-              <caret line="89" selection-start-line="89" selection-end-line="89" />
+            <state relative-caret-position="171">
+              <caret line="73" selection-start-line="73" selection-end-line="73" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -195,12 +208,22 @@
       <find>adam</find>
       <find>discount_factor</find>
       <find>param = param + discount_factor * gradient</find>
+      <find>parallelAll5b</find>
+      <find>ess_</find>
+      <find>computeInitialNdefMultipleImportanceWeights</find>
+      <find>np.max</find>
+      <find>int(max</find>
     </findStrings>
     <replaceStrings>
       <replace>clipped_actions</replace>
       <replace>Partial</replace>
       <replace>parallelAll5b</replace>
       <replace>param = param + learning_rate * gradient</replace>
+      <replace>parallelAllAdaptive</replace>
+      <replace>n_def_</replace>
+      <replace>computeInitialNdefPerDecisionMultipleImportanceWeights</replace>
+      <replace>max</replace>
+      <replace>int(max</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -217,9 +240,9 @@
         <option value="$PROJECT_DIR$/algorithmComparisonPolicySearch.py" />
         <option value="$PROJECT_DIR$/algorithmPolicySearch.py" />
         <option value="$PROJECT_DIR$/sourceTaskCreation.py" />
+        <option value="$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py" />
         <option value="$PROJECT_DIR$/algorithmsComparisonOffPolicy.py" />
         <option value="$PROJECT_DIR$/importanceWeights.py" />
-        <option value="$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py" />
       </list>
     </option>
   </component>
@@ -402,7 +425,7 @@
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.22409639" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.51686746" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.32409638" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -452,7 +475,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py</url>
-          <line>143</line>
+          <line>153</line>
           <option name="timeStamp" value="32" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -462,22 +485,22 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>1240</line>
+          <line>1342</line>
           <option name="timeStamp" value="64" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>1284</line>
+          <line>1392</line>
           <option name="timeStamp" value="66" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>1401</line>
+          <line>1565</line>
           <option name="timeStamp" value="68" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>1446</line>
+          <line>1616</line>
           <option name="timeStamp" value="70" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -487,7 +510,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py</url>
-          <line>145</line>
+          <line>155</line>
           <option name="timeStamp" value="72" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -502,7 +525,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/algorithmsComparisonOffPolicy.py</url>
-          <line>81</line>
+          <line>82</line>
           <option name="timeStamp" value="86" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -512,48 +535,78 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/algorithmsComparisonOffPolicy.py</url>
-          <line>72</line>
+          <line>73</line>
           <option name="timeStamp" value="88" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/algorithmsComparisonOffPolicy.py</url>
-          <line>89</line>
+          <line>90</line>
           <option name="timeStamp" value="89" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/algorithmsComparisonOffPolicy.py</url>
-          <line>75</line>
+          <line>76</line>
           <option name="timeStamp" value="91" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/algorithmsComparisonOffPolicy.py</url>
-          <line>78</line>
+          <line>79</line>
           <option name="timeStamp" value="92" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>1491</line>
+          <line>1667</line>
           <option name="timeStamp" value="94" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>1243</line>
+          <line>1345</line>
           <option name="timeStamp" value="95" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>1287</line>
+          <line>1395</line>
           <option name="timeStamp" value="96" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>1405</line>
+          <line>1569</line>
           <option name="timeStamp" value="97" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>1449</line>
+          <line>1619</line>
           <option name="timeStamp" value="98" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/importanceWeights.py</url>
+          <line>1114</line>
+          <option name="timeStamp" value="102" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/algorithmsComparisonOffPolicy.py</url>
+          <line>71</line>
+          <option name="timeStamp" value="103" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/importanceWeights.py</url>
+          <line>1293</line>
+          <option name="timeStamp" value="104" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/importanceWeights.py</url>
+          <line>653</line>
+          <option name="timeStamp" value="106" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/importanceWeights.py</url>
+          <line>211</line>
+          <option name="timeStamp" value="107" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/importanceWeights.py</url>
+          <line>772</line>
+          <option name="timeStamp" value="108" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
@@ -693,10 +746,29 @@
         </state>
       </provider>
     </entry>
+    <entry file="file:///usr/local/lib/python3.7/site-packages/numpy/core/numeric.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1736">
+          <caret line="219" selection-start-line="219" selection-end-line="219" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2741">
+          <caret line="85" column="13" selection-start-line="85" selection-start-column="13" selection-end-line="85" selection-end-column="13" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+            <marker date="1543006673577" expanded="true" signature="195:197" ph="..." />
+            <marker date="1543006673577" expanded="true" signature="449:1633" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/algorithmsComparisonOffPolicy.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="118">
-          <caret line="89" selection-start-line="89" selection-end-line="89" />
+        <state relative-caret-position="171">
+          <caret line="73" selection-start-line="73" selection-end-line="73" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
@@ -705,28 +777,30 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/importanceWeights.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="88">
-          <caret line="1491" selection-start-line="1491" selection-end-line="1491" />
+        <state relative-caret-position="1234">
+          <caret line="690" column="44" selection-start-line="690" selection-start-column="44" selection-end-line="690" selection-end-column="44" />
           <folding>
             <element signature="e#0#16#0" expanded="true" />
+            <element signature="e#131#449#0" />
+            <element signature="e#513#1781#0" />
+            <element signature="e#1861#3087#0" />
+            <element signature="e#3172#3774#0" />
+            <element signature="e#3973#5985#0" />
+            <element signature="e#6153#8203#0" />
             <element signature="e#18310#22689#0" />
+            <element signature="e#22950#28327#0" />
+            <element signature="e#45274#45732#0" />
             <element signature="e#68085#70142#0" />
             <element signature="e#70379#72445#0" />
             <element signature="e#72613#74869#0" />
+            <element signature="e#76705#79597#0" />
+            <element signature="e#80234#82587#0" />
             <element signature="e#82766#85047#0" />
+            <element signature="e#89758#92039#0" />
             <element signature="e#85292#87597#0" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1785">
-          <caret line="85" column="14" lean-forward="true" selection-start-line="85" selection-start-column="14" selection-end-line="85" selection-end-column="14" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-            <marker date="1543001704456" expanded="true" signature="195:197" ph="..." />
-            <marker date="1543001704456" expanded="true" signature="449:1633" ph="..." />
+            <element signature="e#87844#90216#0" />
+            <element signature="e#90483#92869#0" />
+            <element signature="e#93124#95518#0" />
           </folding>
         </state>
       </provider>
