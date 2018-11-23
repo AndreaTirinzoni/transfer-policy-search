@@ -12,6 +12,7 @@ class BatchStats:
         self.policy_parameter = np.zeros(num_batch)
         self.gradient = np.zeros(num_batch)
         self.ess = np.zeros(num_batch)
+        self.n_def = np.zeros(num_batch)
 
 def optimalPolicy(env, num_batch, batch_size, discount_factor, variance_action, episode_length):
     """
@@ -396,6 +397,9 @@ def computeMultipleImportanceWeightsSourceTargetCvPerDecision(policy_param, env_
             baseline_covariate = (weights * policy_gradients)[:, :, np.newaxis]
             control_variate = np.concatenate((control_variate, baseline_covariate), axis=2)
 
+    else:
+        control_variate = np.sum(control_variate, axis=1)
+
     return weights, src_distributions, control_variate
 
 # Compute the update of the algorithms using different estimators
@@ -483,8 +487,8 @@ def offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_con
     ess = np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2
     N = source_task.shape[0]
     gradient = 1/N * np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis=0)
-    param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
-    #param = param + discount_factor * gradient
+    #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+    param = param + learning_rate * gradient
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess
 
@@ -572,8 +576,8 @@ def offPolicyUpdateImportanceSamplingPerDec(env, param, source_param, episodes_p
     ess = np.min(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
     N = source_task.shape[0]
     gradient = 1/N * np.sum(np.sum(weights_source_target_update * gradient_off_policy_update * discounted_rewards_all, axis = 1))
-    param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
-    #param = param + discount_factor * gradient
+    #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+    param = param + learning_rate * gradient
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess
 
@@ -848,8 +852,8 @@ def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, ep
     gradient_off_policy_update = np.cumsum(computeGradientsSourceTargetTimestep(param, source_task, variance_action), axis=1)
     discounted_rewards_all = discount_factor_timestep * source_task[:,2::3]
     gradient = 1/N * np.sum(np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis = 1), axis=0)
-    param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
-    #param = param + discount_factor * gradient
+    #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+    param = param + learning_rate * gradient
 
     if num_episodes_target!=0:
         #Compute rewards of batch
@@ -925,7 +929,7 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, 
         clipped_actions = np.concatenate((clipped_actions, clipped_actions_new))
 
     #Update the parameters
-    N =  source_task.shape[0]
+    N = source_task.shape[0]
     #Compute importance weights_source_target of source task
     gradient_off_policy_update = np.cumsum(computeGradientsSourceTargetTimestep(param, source_task, variance_action), axis=1)
     [weights_source_target_update, src_distributions, control_variates] = computeMultipleImportanceWeightsSourceTargetCvPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, gradient_off_policy_update, baseline, approximation)
@@ -938,8 +942,8 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, 
     gradient = regressionFittingZeroBatch(gradient_estimation, gradient_estimation_average, control_variates) #always the same, only the MIS with CV changes format of the x_avg array
 
     #Update the parameter
-    param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
-    #param = param + discount_factor * gradient
+    #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+    param = param + learning_rate * gradient
 
     if num_episodes_target!=0:
         #Compute rewards of batch
@@ -1029,8 +1033,8 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source
         gradient += regressionFittingZeroBatch(gradient_estimation[:, t], gradient_estimation_average[t], control_variates[:, t, :]) #always the same, only the MIS with CV changes format of the x_avg array
 
     #Update the parameter
-    param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
-    #param = param + discount_factor * gradient
+    #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+    param = param + learning_rate * gradient
 
     if num_episodes_target!=0:
         #Compute rewards of batch
@@ -1363,7 +1367,7 @@ def offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, sour
 
 def offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate):
     """
-    Perform transfer from source tasks, using REINFORCE with PD-MIS
+    Perform transfer from source tasks, using REINFORCE with PD-MIS and control variates
     :param env: OpenAI environment
     :param batch_size: size of the batch
     :param discount_factor: the discout factor
