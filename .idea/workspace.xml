@@ -2,9 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4263835c-fd92-417b-afad-0a299f6d3721" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/Policy parameter policy search.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Rewards policy search.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithmComparisonPolicySearch.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithmComparisonPolicySearch.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/algorithmPolicySearch.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithmPolicySearch.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/algorithmsComparisonOffPolicy.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithmsComparisonOffPolicy.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py" afterDir="false" />
@@ -80,80 +79,94 @@
     <session id="211049904">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="23" />
+          <entry key="project.closed" value="28" />
           <entry key="project.open.time.0" value="3" />
-          <entry key="project.open.time.1" value="2" />
+          <entry key="project.open.time.1" value="3" />
           <entry key="project.open.time.17" value="1" />
           <entry key="project.open.time.3" value="7" />
-          <entry key="project.open.time.4" value="9" />
-          <entry key="project.open.time.5" value="2" />
+          <entry key="project.open.time.4" value="12" />
+          <entry key="project.open.time.5" value="3" />
           <entry key="project.open.time.7" value="1" />
-          <entry key="project.opened" value="25" />
+          <entry key="project.opened" value="30" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="Python Console" value="4348" />
-          <entry key="py" value="8333" />
+          <entry key="Python Console" value="4614" />
+          <entry key="py" value="8957" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Python" value="12681" />
+          <entry key="Python" value="13571" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
-          <entry key="Python" value="58" />
+          <entry key="Python" value="64" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.vcs.git.usages" />
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="py" value="58" />
+          <entry key="py" value="64" />
         </counts>
       </usages-collector>
     </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="42">
-              <caret line="139" column="4" selection-start-line="139" selection-start-column="4" selection-end-line="139" selection-end-column="4" />
+            <state relative-caret-position="700">
+              <caret line="161" column="7" lean-forward="true" selection-start-line="161" selection-start-column="7" selection-end-line="161" selection-end-column="7" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
-                <marker date="1542837381509" expanded="true" signature="195:197" ph="..." />
-                <marker date="1542837381509" expanded="true" signature="449:1633" ph="..." />
+                <marker date="1542991463625" expanded="true" signature="195:197" ph="..." />
+                <marker date="1542991463625" expanded="true" signature="449:1633" ph="..." />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/sourceTaskCreation.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1224">
+              <caret line="103" selection-start-line="103" selection-end-line="103" />
+              <folding>
+                <element signature="e#0#10#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/Library/Python/3.7/lib/python/site-packages/joblib/parallel.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="223">
+              <caret line="941" selection-start-line="941" selection-end-line="941" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/importanceWeights.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-6633">
-              <caret line="725" column="30" lean-forward="true" selection-start-line="725" selection-start-column="30" selection-end-line="725" selection-end-column="30" />
+            <state relative-caret-position="110">
+              <caret line="843" column="8" lean-forward="true" selection-start-line="843" selection-start-column="8" selection-end-line="843" selection-end-column="8" />
               <folding>
                 <element signature="e#0#16#0" expanded="true" />
-                <element signature="e#136#337#0" />
-                <element signature="e#336#1812#0" />
-                <element signature="e#1892#3118#0" />
-                <element signature="e#4004#6016#0" />
-                <element signature="e#6184#8234#0" />
-                <element signature="e#18341#22720#0" />
-                <element signature="e#61396#63587#0" />
-                <element signature="e#63809#66009#0" />
-                <element signature="e#66177#68433#0" />
-                <element signature="e#68661#71080#0" />
-                <element signature="e#71310#73783#0" />
-                <element signature="e#74021#76508#0" />
-                <element signature="e#76687#78968#0" />
-                <element signature="e#79198#81637#0" />
-                <element signature="e#81869#84338#0" />
-                <element signature="e#84578#87061#0" />
+                <element signature="e#18310#22689#0" />
+                <element signature="e#28629#34009#0" />
+                <element signature="e#34250#39634#0" />
+                <element signature="e#68085#70142#0" />
+                <element signature="e#70379#72445#0" />
+                <element signature="e#72613#74869#0" />
+                <element signature="e#80234#82587#0" />
+                <element signature="e#82766#85047#0" />
+                <element signature="e#85292#87597#0" />
               </folding>
             </state>
           </provider>
@@ -162,7 +175,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/algorithmsComparisonOffPolicy.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state>
+            <state relative-caret-position="1554">
+              <caret line="81" selection-start-line="81" selection-end-line="81" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -173,10 +187,19 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/algorithmComparisonPolicySearch.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state>
+            <state relative-caret-position="-901">
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/algorithmPolicySearch.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="287">
+              <caret line="107" column="9" selection-start-line="107" selection-start-column="9" selection-end-line="107" selection-end-column="9" />
             </state>
           </provider>
         </entry>
@@ -214,11 +237,11 @@
         <option value="$PROJECT_DIR$/envs/lqg1d.py" />
         <option value="$PROJECT_DIR$/algorithmComparisonPolicySearchJoblib.py" />
         <option value="$PROJECT_DIR$/sourceTaskCreation.py" />
-        <option value="$PROJECT_DIR$/algorithmPolicySearch.py" />
         <option value="$PROJECT_DIR$/algorithmComparisonPolicySearch.py" />
         <option value="$PROJECT_DIR$/algorithmsComparisonOffPolicy.py" />
-        <option value="$PROJECT_DIR$/importanceWeights.py" />
+        <option value="$PROJECT_DIR$/algorithmPolicySearch.py" />
         <option value="$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py" />
+        <option value="$PROJECT_DIR$/importanceWeights.py" />
       </list>
     </option>
   </component>
@@ -231,7 +254,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Course" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -243,6 +265,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Course" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -266,7 +289,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.algorithmsComparisonOffPolicy">
+  <component name="RunManager" selected="Python.algorithmsComparisonOffPolicyJoblib">
     <configuration name="algorithmComparison" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="transfer-policy-search-master" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -381,9 +404,9 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.algorithmsComparisonOffPolicyJoblib" />
         <item itemvalue="Python.algorithmsComparisonOffPolicy" />
         <item itemvalue="Python.algorithmComparison" />
-        <item itemvalue="Python.algorithmsComparisonOffPolicyJoblib" />
         <item itemvalue="Python.algorithmPolicySearch" />
         <item itemvalue="Python.algorithmComparisonPolicySearchJoblib" />
       </list>
@@ -451,7 +474,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py</url>
-          <line>138</line>
+          <line>139</line>
           <option name="timeStamp" value="32" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -461,22 +484,22 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>1290</line>
+          <line>1236</line>
           <option name="timeStamp" value="64" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>1334</line>
+          <line>1280</line>
           <option name="timeStamp" value="66" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>1450</line>
+          <line>1397</line>
           <option name="timeStamp" value="68" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>1494</line>
+          <line>1442</line>
           <option name="timeStamp" value="70" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -486,7 +509,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py</url>
-          <line>140</line>
+          <line>163</line>
           <option name="timeStamp" value="72" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -501,8 +524,18 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importanceWeights.py</url>
-          <line>1081</line>
-          <option name="timeStamp" value="83" />
+          <line>1025</line>
+          <option name="timeStamp" value="85" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/algorithmsComparisonOffPolicy.py</url>
+          <line>81</line>
+          <option name="timeStamp" value="86" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py</url>
+          <line>53</line>
+          <option name="timeStamp" value="87" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
@@ -532,13 +565,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="5189">
           <caret line="383" selection-start-line="383" selection-end-line="383" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Library/Python/3.7/lib/python/site-packages/joblib/parallel.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="21">
-          <caret line="224" selection-start-line="224" selection-end-line="224" />
         </state>
       </provider>
     </entry>
@@ -587,23 +613,7 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../results-tps/2500e-10b-5r_no_models/plotResults.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/sourceTaskCreation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="73">
-          <caret line="103" selection-start-line="103" selection-end-line="103" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file:///usr/local/lib/python3.7/site-packages/numpy/core/multiarray.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -612,65 +622,90 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/algorithmPolicySearch.py">
+    <entry file="file:///usr/local/Cellar/python/3.7.1/Frameworks/Python.framework/Versions/3.7/lib/python3.7/codecs.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="12" column="38" lean-forward="true" selection-start-line="4" selection-end-line="12" selection-end-column="38" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/algorithmComparisonPolicySearch.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="3293">
+          <caret line="321" selection-start-line="321" selection-end-line="321" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/algorithmsComparisonOffPolicy.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state>
+        <state relative-caret-position="1554">
+          <caret line="81" selection-start-line="81" selection-end-line="81" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/importanceWeights.py">
+    <entry file="file://$PROJECT_DIR$/algorithmComparisonPolicySearch.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-6633">
-          <caret line="725" column="30" lean-forward="true" selection-start-line="725" selection-start-column="30" selection-end-line="725" selection-end-column="30" />
+        <state relative-caret-position="-901">
           <folding>
-            <element signature="e#0#16#0" expanded="true" />
-            <element signature="e#136#337#0" />
-            <element signature="e#336#1812#0" />
-            <element signature="e#1892#3118#0" />
-            <element signature="e#4004#6016#0" />
-            <element signature="e#6184#8234#0" />
-            <element signature="e#18341#22720#0" />
-            <element signature="e#61396#63587#0" />
-            <element signature="e#63809#66009#0" />
-            <element signature="e#66177#68433#0" />
-            <element signature="e#68661#71080#0" />
-            <element signature="e#71310#73783#0" />
-            <element signature="e#74021#76508#0" />
-            <element signature="e#76687#78968#0" />
-            <element signature="e#79198#81637#0" />
-            <element signature="e#81869#84338#0" />
-            <element signature="e#84578#87061#0" />
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/algorithmPolicySearch.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="287">
+          <caret line="107" column="9" selection-start-line="107" selection-start-column="9" selection-end-line="107" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Library/Python/3.7/lib/python/site-packages/joblib/_parallel_backends.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="118">
+          <caret line="181" selection-start-line="181" selection-end-line="181" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Library/Python/3.7/lib/python/site-packages/joblib/parallel.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="223">
+          <caret line="941" selection-start-line="941" selection-end-line="941" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sourceTaskCreation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1224">
+          <caret line="103" selection-start-line="103" selection-end-line="103" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/algorithmsComparisonOffPolicyJoblib.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="42">
-          <caret line="139" column="4" selection-start-line="139" selection-start-column="4" selection-end-line="139" selection-end-column="4" />
+        <state relative-caret-position="700">
+          <caret line="161" column="7" lean-forward="true" selection-start-line="161" selection-start-column="7" selection-end-line="161" selection-end-column="7" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
-            <marker date="1542837381509" expanded="true" signature="195:197" ph="..." />
-            <marker date="1542837381509" expanded="true" signature="449:1633" ph="..." />
+            <marker date="1542991463625" expanded="true" signature="195:197" ph="..." />
+            <marker date="1542991463625" expanded="true" signature="449:1633" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/importanceWeights.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="110">
+          <caret line="843" column="8" lean-forward="true" selection-start-line="843" selection-start-column="8" selection-end-line="843" selection-end-column="8" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+            <element signature="e#18310#22689#0" />
+            <element signature="e#28629#34009#0" />
+            <element signature="e#34250#39634#0" />
+            <element signature="e#68085#70142#0" />
+            <element signature="e#70379#72445#0" />
+            <element signature="e#72613#74869#0" />
+            <element signature="e#80234#82587#0" />
+            <element signature="e#82766#85047#0" />
+            <element signature="e#85292#87597#0" />
           </folding>
         </state>
       </provider>

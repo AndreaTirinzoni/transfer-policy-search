@@ -104,8 +104,8 @@ def reinforce(env, num_batch, batch_size, discount_factor, episode_length, initi
 
 
         gradient = np.asscalar(1/batch_size * np.dot(episode_informations[:,0].T, episode_informations[:,2]))
-        #param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t)
-        param = param + learning_rate * gradient
+        param, t, m_t, v_t = adam(param, -gradient, t, m_t, v_t)
+        #param = param + learning_rate * gradient
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
         # Update statistics
