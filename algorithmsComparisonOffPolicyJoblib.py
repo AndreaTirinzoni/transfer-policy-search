@@ -85,7 +85,7 @@ batch_size = 10
 ess_min = 50
 num_batch = 150
 discount_factor = 0.99
-runs = 9
+runs = 10
 learning_rate = 10e-6
 
 discounted_reward_off_policy_importance_sampling = np.zeros((runs, num_batch))
@@ -149,7 +149,7 @@ policy_param_max = 0
 
 seeds = [np.random.randint(1000000) for _ in range(runs)]
 
-results = Parallel(n_jobs=3)(delayed(simulation)(env, batch_size, discount_factor, variance_action, episode_length, mean_initial_param, variance_initial_param, num_batch, learning_rate, seed, episodes_per_configuration, env_param_min, env_param_max, policy_param_min, policy_param_max) for seed in seeds)
+results = Parallel(n_jobs=5)(delayed(simulation)(env, batch_size, discount_factor, variance_action, episode_length, mean_initial_param, variance_initial_param, num_batch, learning_rate, seed, episodes_per_configuration, env_param_min, env_param_max, policy_param_min, policy_param_max) for seed in seeds)
 
 for i_run in range(runs):
 
@@ -195,6 +195,16 @@ for i_run in range(runs):
     ess_off_policy_multiple_importance_sampling_cv_pd[i_run, :] = results[i_run][7].ess
     ess_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated[i_run, :] = results[i_run][8].ess
     ess_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run, :] = results[i_run][9].ess
+
+    n_def_off_policy_importance_sampling[i_run, :] = results[i_run][0].n_def
+    n_def_off_policy_importance_sampling_pd[i_run, :] = results[i_run][1].n_def
+    n_def_off_policy_multiple_importance_sampling[i_run, :] = results[i_run][3].n_def
+    n_def_off_policy_multiple_importance_sampling_cv[i_run, :] = results[i_run][4].n_def
+    n_def_off_policy_multiple_importance_sampling_cv_baseline[i_run, :] = results[i_run][5].n_def
+    n_def_off_policy_multiple_importance_sampling_pd[i_run, :] = results[i_run][6].n_def
+    n_def_off_policy_multiple_importance_sampling_cv_pd[i_run, :] = results[i_run][7].n_def
+    n_def_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated[i_run, :] = results[i_run][8].n_def
+    n_def_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run, :] = results[i_run][9].n_def
 
 print("Saving files")
 np.savetxt("./parallelAllAdaptive/discounted_reward_off_policy_importance_sampling.csv", discounted_reward_off_policy_importance_sampling, delimiter=",")
