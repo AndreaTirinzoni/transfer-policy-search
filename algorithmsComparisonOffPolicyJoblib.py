@@ -83,7 +83,7 @@ variance_initial_param = 0
 variance_action = 0.1
 batch_size = 10
 ess_min = 50
-num_batch = 100
+num_batch = 150
 discount_factor = 0.99
 runs = 9
 learning_rate = 10e-6
@@ -153,48 +153,48 @@ results = Parallel(n_jobs=3)(delayed(simulation)(env, batch_size, discount_facto
 
 for i_run in range(runs):
 
-    discounted_reward_off_policy_importance_sampling[i_run,:] = results[i_run][0].episode_disc_rewards
-    discounted_reward_off_policy_importance_sampling_pd[i_run,:] = results[i_run][1].episode_disc_rewards
+    discounted_reward_off_policy_importance_sampling[i_run, :] = results[i_run][0].episode_disc_rewards
+    discounted_reward_off_policy_importance_sampling_pd[i_run, :] = results[i_run][1].episode_disc_rewards
     discounted_reward_reinforce[i_run, :] = results[i_run][2].episode_disc_rewards
-    discounted_reward_off_policy_multiple_importance_sampling[i_run,:] = results[i_run][3].episode_disc_rewards
-    discounted_reward_off_policy_multiple_importance_sampling_cv[i_run,:] = results[i_run][4].episode_disc_rewards
-    discounted_reward_off_policy_multiple_importance_sampling_cv_baseline[i_run,:] = results[i_run][5].episode_disc_rewards
-    discounted_reward_off_policy_multiple_importance_sampling_pd[i_run,:] = results[i_run][6].episode_disc_rewards
-    discounted_reward_off_policy_multiple_importance_sampling_cv_pd[i_run,:] = results[i_run][7].episode_disc_rewards
-    discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated[i_run,:] = results[i_run][8].episode_disc_rewards
-    discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run,:] = results[i_run][9].episode_disc_rewards
+    discounted_reward_off_policy_multiple_importance_sampling[i_run, :] = results[i_run][3].episode_disc_rewards
+    discounted_reward_off_policy_multiple_importance_sampling_cv[i_run, :] = results[i_run][4].episode_disc_rewards
+    discounted_reward_off_policy_multiple_importance_sampling_cv_baseline[i_run, :] = results[i_run][5].episode_disc_rewards
+    discounted_reward_off_policy_multiple_importance_sampling_pd[i_run, :] = results[i_run][6].episode_disc_rewards
+    discounted_reward_off_policy_multiple_importance_sampling_cv_pd[i_run, :] = results[i_run][7].episode_disc_rewards
+    discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated[i_run, :] = results[i_run][8].episode_disc_rewards
+    discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run, :] = results[i_run][9].episode_disc_rewards
 
-    policy_param_off_policy_importance_sampling[i_run,:] = results[i_run][0].policy_parameter
-    policy_param_off_policy_importance_sampling_pd[i_run,:] = results[i_run][1].policy_parameter
+    policy_param_off_policy_importance_sampling[i_run, :] = results[i_run][0].policy_parameter
+    policy_param_off_policy_importance_sampling_pd[i_run, :] = results[i_run][1].policy_parameter
     policy_param_reinforce[i_run, :] = results[i_run][2].policy_parameter
-    policy_param_off_policy_multiple_importance_sampling[i_run,:] = results[i_run][3].policy_parameter
-    policy_param_off_policy_multiple_importance_sampling_cv[i_run,:] = results[i_run][4].policy_parameter
-    policy_param_off_policy_multiple_importance_sampling_cv_baseline[i_run,:] = results[i_run][5].policy_parameter
-    policy_param_off_policy_multiple_importance_sampling_pd[i_run,:] = results[i_run][6].policy_parameter
-    policy_param_off_policy_multiple_importance_sampling_cv_pd[i_run,:] = results[i_run][7].policy_parameter
-    policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated[i_run,:] = results[i_run][8].policy_parameter
-    policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run,:] = results[i_run][9].policy_parameter
+    policy_param_off_policy_multiple_importance_sampling[i_run, :] = results[i_run][3].policy_parameter
+    policy_param_off_policy_multiple_importance_sampling_cv[i_run, :] = results[i_run][4].policy_parameter
+    policy_param_off_policy_multiple_importance_sampling_cv_baseline[i_run, :] = results[i_run][5].policy_parameter
+    policy_param_off_policy_multiple_importance_sampling_pd[i_run, :] = results[i_run][6].policy_parameter
+    policy_param_off_policy_multiple_importance_sampling_cv_pd[i_run, :] = results[i_run][7].policy_parameter
+    policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated[i_run, :] = results[i_run][8].policy_parameter
+    policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run, :] = results[i_run][9].policy_parameter
 
-    gradient_off_policy_importance_sampling[i_run,:] = results[i_run][0].gradient
-    gradient_off_policy_importance_sampling_pd[i_run,:] = results[i_run][1].gradient
+    gradient_off_policy_importance_sampling[i_run, :] = results[i_run][0].gradient
+    gradient_off_policy_importance_sampling_pd[i_run, :] = results[i_run][1].gradient
     gradient_reinforce[i_run, :] = results[i_run][2].gradient
-    gradient_off_policy_multiple_importance_sampling[i_run,:] = results[i_run][3].gradient
-    gradient_off_policy_multiple_importance_sampling_cv[i_run,:] = results[i_run][4].gradient
-    gradient_off_policy_multiple_importance_sampling_cv_baseline[i_run,:] = results[i_run][5].gradient
-    gradient_off_policy_multiple_importance_sampling_pd[i_run,:] = results[i_run][6].gradient
-    gradient_off_policy_multiple_importance_sampling_cv_pd[i_run,:] = results[i_run][7].gradient
-    gradient_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated[i_run,:] = results[i_run][8].gradient
-    gradient_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run,:] = results[i_run][9].gradient
+    gradient_off_policy_multiple_importance_sampling[i_run, :] = results[i_run][3].gradient
+    gradient_off_policy_multiple_importance_sampling_cv[i_run, :] = results[i_run][4].gradient
+    gradient_off_policy_multiple_importance_sampling_cv_baseline[i_run, :] = results[i_run][5].gradient
+    gradient_off_policy_multiple_importance_sampling_pd[i_run, :] = results[i_run][6].gradient
+    gradient_off_policy_multiple_importance_sampling_cv_pd[i_run, :] = results[i_run][7].gradient
+    gradient_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated[i_run, :] = results[i_run][8].gradient
+    gradient_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run, :] = results[i_run][9].gradient
 
-    ess_off_policy_importance_sampling[i_run,:] = results[i_run][0].ess
-    ess_off_policy_importance_sampling_pd[i_run,:] = results[i_run][1].ess
-    ess_off_policy_multiple_importance_sampling[i_run,:] = results[i_run][3].ess
-    ess_off_policy_multiple_importance_sampling_cv[i_run,:] = results[i_run][4].ess
-    ess_off_policy_multiple_importance_sampling_cv_baseline[i_run,:] = results[i_run][5].ess
-    ess_off_policy_multiple_importance_sampling_pd[i_run,:] = results[i_run][6].ess
-    ess_off_policy_multiple_importance_sampling_cv_pd[i_run,:] = results[i_run][7].ess
-    ess_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated[i_run,:] = results[i_run][8].ess
-    ess_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run,:] = results[i_run][9].ess
+    ess_off_policy_importance_sampling[i_run, :] = results[i_run][0].ess
+    ess_off_policy_importance_sampling_pd[i_run, :] = results[i_run][1].ess
+    ess_off_policy_multiple_importance_sampling[i_run, :] = results[i_run][3].ess
+    ess_off_policy_multiple_importance_sampling_cv[i_run, :] = results[i_run][4].ess
+    ess_off_policy_multiple_importance_sampling_cv_baseline[i_run, :] = results[i_run][5].ess
+    ess_off_policy_multiple_importance_sampling_pd[i_run, :] = results[i_run][6].ess
+    ess_off_policy_multiple_importance_sampling_cv_pd[i_run, :] = results[i_run][7].ess
+    ess_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated[i_run, :] = results[i_run][8].ess
+    ess_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run, :] = results[i_run][9].ess
 
 print("Saving files")
 np.savetxt("./parallelAllAdaptive/discounted_reward_off_policy_importance_sampling.csv", discounted_reward_off_policy_importance_sampling, delimiter=",")

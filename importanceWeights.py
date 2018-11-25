@@ -98,6 +98,20 @@ def computeGradientsSourceTargetTimestep(param, source_task, variance_action):
 
     return gradient_off_policy
 
+def computeNdef(weights, ess_min, n):
+    """
+    Compute the number of samples to generare from the target
+    :param weights: the weights
+    :param ess_min: the minimum effective sample size
+    :return:
+    """
+
+    w_1 = np.linalg.norm(weights, 1)
+    w_2 = np.linalg.norm(weights, 2)
+    num_episodes_target = int(max(0, np.ceil((ess_min * w_1 / n) - (w_1 / (w_2 ** 2) * n))))
+
+    return num_episodes_target
+
 #Compute weights of different estimators
 
 def computeImportanceWeightsSourceTarget(policy_param, env_param, source_param, variance_action, source_task, next_states_unclipped, clipped_actions):
@@ -207,7 +221,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
     if source_task.shape[0]!=src_distributions.shape[0]:
         src_distributions = np.concatenate((src_distributions, np.matrix(policy_src_new_param * model_src_new_param).T), axis=1)
         src_distributions = np.concatenate((src_distributions, np.matrix(policy_src_new_traj * model_src_new_traj)), axis=0)
-        mis_denominator = np.dot(episodes_per_config/n, src_distributions.T).T
+        mis_denominator = np.squeeze(np.asarray(np.dot(episodes_per_config/n, src_distributions.T).T))
     else:
         mis_denominator = np.squeeze(np.asarray(np.dot(episodes_per_config/n, src_distributions.T).T))
 
@@ -271,7 +285,7 @@ def computeMultipleImportanceWeightsSourceTargetCv(policy_param, env_param, sour
 
     if baseline == 1:
 
-        baseline_covariate = np.multiply(weights, policy_gradients)
+        baseline_covariate = np.multiply(weights, policy_gradients)[:, np.newaxis]
         control_variate = np.concatenate((control_variate, baseline_covariate), axis=1)
 
     return weights, src_distributions, control_variate
@@ -429,9 +443,8 @@ def offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_con
     gradient_off_policy = np.sum(computeGradientsSourceTargetTimestep(param, source_task, variance_action), axis=1)
     #Compute importance weights_source_target of source task
     weights_source_target = computeImportanceWeightsSourceTarget(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions)
-    w_1 = np.linalg.norm(weights_source_target, 1)
-    w_2 = np.linalg.norm(weights_source_target, 2)
-    num_episodes_target = int(max(0, np.ceil((ess_min * w_1 / source_task.shape[0]) - (w_1 / (w_2 ** 2) * source_task.shape[0]))))
+
+    num_episodes_target = computeNdef(weights_source_target, ess_min, source_task.shape[0])
     #num_episodes_target = batch_size
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
@@ -522,12 +535,10 @@ def offPolicyUpdateImportanceSamplingPerDec(env, param, source_param, episodes_p
     #Compute importance weights_source_target of source task
     weights_source_target = computeImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions)
 
-    w_1 = np.linalg.norm(weights_source_target, 1)
-    w_2 = np.linalg.norm(weights_source_target, 2)
-    num_episodes_target = int(max(0, np.ceil((ess_min * w_1 / source_task.shape[0]) - (w_1 / (w_2 ** 2) * source_task.shape[0]))))
+    num_episodes_target = computeNdef(weights_source_target[:, -1], ess_min, source_task.shape[0])
     #num_episodes_target = batch_size
 
-    discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
+    discount_factor_timestep = np.power(discount_factor * np.ones(episode_length), range(episode_length))
 
     if num_episodes_target!=0:
         # Create new parameters and new tasks associated to episodes, used tu update the source_param and source_task later
@@ -673,9 +684,7 @@ def offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes
     ess = np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2
 
     #Number of n_def next iteration
-    w_1 = np.linalg.norm(weights_source_target_update, 1)
-    w_2 = np.linalg.norm(weights_source_target_update, 2)
-    num_episodes_target = int(max(0, np.ceil((ess_min * w_1 / source_task.shape[0]) - (w_1 / (w_2 ** 2) * source_task.shape[0]))))
+    num_episodes_target = computeNdef(weights_source_target_update, ess_min, source_task.shape[0])
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, num_episodes_target
 
@@ -687,7 +696,7 @@ def regressionFittingZeroBatch(y, y_avg, x):
     :param x: the parameters
     :return: returns the error of the fitted regression
     """
-    x_avg = np.mean(x, axis=0)
+    x_avg = np.squeeze(np.asarray(np.mean(x, axis=0)))
     beta = np.matmul(np.linalg.inv(np.matmul((x[:, 1:]-x_avg[1:]).T, (x[:, 1:]-x_avg[1:]))), np.matmul((x[:, 1:]-x_avg[1:]).T, (y-y_avg)).T)
     error = y_avg - np.dot(x_avg[1:], beta)
 
@@ -701,9 +710,9 @@ def regressionFitting(y, y_avg, x):
     :param x: the parameters
     :return: returns the error of the fitted regression
     """
-    x_avg = np.mean(x, axis=0)
-    beta = np.matmul(np.linalg.inv(np.matmul((x[:, 1:]-x_avg[:, 1:]).T, (x[:, 1:]-x_avg[:, 1:]))), np.matmul((x[:, 1:]-x_avg[:, 1:]).T, (y-y_avg)).T)
-    error = y_avg - np.dot(x_avg[:, 1:], beta)
+    x_avg = np.squeeze(np.asarray(np.mean(x, axis=0)))
+    beta = np.matmul(np.linalg.inv(np.matmul((x[:, 1:]-x_avg[1:]).T, (x[:, 1:]-x_avg[1:]))), np.matmul((x[:, 1:]-x_avg[1:]).T, (y-y_avg)).T)
+    error = y_avg - np.dot(x_avg[1:], beta)
 
     return error
 
@@ -778,11 +787,7 @@ def offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episod
     gradient_estimation_average = 1/N * np.sum(gradient_estimation)
 
     #Fitting the regression
-    if num_episodes_target==0:
-        gradient = regressionFittingZeroBatch(gradient_estimation, gradient_estimation_average, control_variates)
-
-    else:
-        gradient = regressionFitting(gradient_estimation, gradient_estimation_average, control_variates)
+    gradient = regressionFitting(gradient_estimation, gradient_estimation_average, control_variates)
 
     #Update the parameter
     #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
@@ -801,9 +806,7 @@ def offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episod
     ess = np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2
 
     #Number of n_def next iteration
-    w_1 = np.linalg.norm(weights_source_target_update, 1)
-    w_2 = np.linalg.norm(weights_source_target_update, 2)
-    num_episodes_target = int(max(0, np.ceil((ess_min * w_1 / source_task.shape[0]) - (w_1 / (w_2 ** 2) * source_task.shape[0]))))
+    num_episodes_target = computeNdef(weights_source_target_update, ess_min, source_task.shape[0])
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, num_episodes_target
 
@@ -888,11 +891,9 @@ def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, ep
         discounted_reward_batch = 0
 
     ess = np.min(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
-
+    min_index = np.argmin(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
     #Number of n_def next iteration
-    w_1 = np.linalg.norm(weights_source_target_update, 1)
-    w_2 = np.linalg.norm(weights_source_target_update, 2)
-    num_episodes_target = int(max(0, np.ceil((ess_min * w_1 / source_task.shape[0]) - (w_1 / (w_2 ** 2) * source_task.shape[0]))))
+    num_episodes_target = computeNdef(weights_source_target_update[:, min_index], ess_min, source_task.shape[0])
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, num_episodes_target
 
@@ -963,12 +964,12 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, 
     [weights_source_target_update, src_distributions, control_variates] = computeMultipleImportanceWeightsSourceTargetCvPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, gradient_off_policy_update, baseline, approximation)
     weights_source_target_update[np.isnan(weights_source_target_update)] = 0
 
-    discounted_rewards_all = discount_factor_timestep * source_task[:,2::3]
-    gradient_estimation = np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis = 1)
+    discounted_rewards_all = discount_factor_timestep * source_task[:, 2::3]
+    gradient_estimation = np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis=1)
     gradient_estimation_average = 1/N * np.sum(gradient_estimation, axis=0)
 
     #Fitting the regression
-    gradient = regressionFittingZeroBatch(gradient_estimation, gradient_estimation_average, control_variates) #always the same, only the MIS with CV changes format of the x_avg array
+    gradient = regressionFitting(gradient_estimation, gradient_estimation_average, control_variates) #always the same, only the MIS with CV changes format of the x_avg array
 
     #Update the parameter
     #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
@@ -984,11 +985,10 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, 
         discounted_reward_batch = 0
 
     ess = np.min(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
+    min_index = np.argmin(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
 
     #Number of n_def next iteration
-    w_1 = np.linalg.norm(weights_source_target_update, 1)
-    w_2 = np.linalg.norm(weights_source_target_update, 2)
-    num_episodes_target = int(max(0, np.ceil((ess_min * w_1 / source_task.shape[0]) - (w_1 / (w_2 ** 2) * source_task.shape[0]))))
+    num_episodes_target = computeNdef(weights_source_target_update[:, min_index], ess_min, source_task.shape[0])
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, num_episodes_target
 
@@ -1066,7 +1066,7 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source
     gradient = 0
     #Fitting the regression for every t 0...T-1
     for t in range(control_variates.shape[1]):
-        gradient += regressionFittingZeroBatch(gradient_estimation[:, t], gradient_estimation_average[t], control_variates[:, t, :]) #always the same, only the MIS with CV changes format of the x_avg array
+        gradient += regressionFitting(gradient_estimation[:, t], gradient_estimation_average[t], control_variates[:, t, :]) #always the same, only the MIS with CV changes format of the x_avg array
 
     #Update the parameter
     #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
@@ -1082,11 +1082,10 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source
         discounted_reward_batch = 0
 
     ess = np.min(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
+    min_index = np.argmin(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
 
     #Number of n_def next iteration
-    w_1 = np.linalg.norm(weights_source_target_update, 1)
-    w_2 = np.linalg.norm(weights_source_target_update, 2)
-    num_episodes_target = int(max(0, np.ceil((ess_min * w_1 / source_task.shape[0]) - (w_1 / (w_2 ** 2) * source_task.shape[0]))))
+    num_episodes_target = computeNdef(weights_source_target_update[:, min_index], ess_min, source_task.shape[0])
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, num_episodes_target
 
@@ -1247,9 +1246,7 @@ def computeInitialNdefMultipleImportanceWeights(policy_param, env_param, source_
 
     weights = policy_tgt[:, np.newaxis] * model_tgt[:, np.newaxis] / mis_denominator
 
-    w_1 = np.linalg.norm(weights, 1)
-    w_2 = np.linalg.norm(weights, 2)
-    num_episodes_target = int(max(0, np.ceil((ess_min * w_1 / source_task.shape[0]) - (w_1 / (w_2 ** 2) * source_task.shape[0]))))
+    num_episodes_target = computeNdef(weights, ess_min, source_task.shape[0])
 
     return num_episodes_target
 
@@ -1467,10 +1464,9 @@ def computeInitialNdefPerDecisionMultipleImportanceWeights(policy_param, env_par
     mis_denominator = np.sum(episodes_per_config/n * src_distributions, axis=2)
 
     weights = policy_tgt * model_tgt / mis_denominator
+    min_index = np.argmin(np.linalg.norm(weights, 1, axis=0)**2 / np.linalg.norm(weights, 2, axis=0)**2, axis=0)
 
-    w_1 = np.linalg.norm(weights, 1)
-    w_2 = np.linalg.norm(weights, 2)
-    num_episodes_target = int(max(0, np.ceil((ess_min * w_1 / source_task.shape[0]) - (w_1 / (w_2 ** 2) * source_task.shape[0]))))
+    num_episodes_target = computeNdef(weights[:, min_index], ess_min, source_task.shape[0])
 
     return num_episodes_target
 
