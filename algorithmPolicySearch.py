@@ -6,8 +6,8 @@ class BatchStats:
 
     def __init__(self, num_batch):
 
-        self.episode_total_rewards = np.zeros(num_batch)
-        self.episode_disc_rewards = np.zeros(num_batch)
+        self.total_rewards = np.zeros(num_batch)
+        self.disc_rewards = np.zeros(num_batch)
         self.policy_parameter = np.zeros(num_batch)
         self.gradient = np.zeros(num_batch)
         self.ess = np.zeros(num_batch)
@@ -109,8 +109,8 @@ def reinforce(env, num_batch, batch_size, discount_factor, episode_length, initi
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
         # Update statistics
-        stats.episode_total_rewards[i_batch] = tot_reward_batch
-        stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.total_rewards[i_batch] = tot_reward_batch
+        stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.gradient[i_batch] = gradient
 
         #print(state, action, reward, param)
@@ -166,8 +166,8 @@ def reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_lengt
         tot_reward_batch = np.mean(episode_informations[:,1])
         discounted_reward_batch = np.mean(episode_informations[:,2])
         # Update statistics
-        stats.episode_total_rewards[i_batch] = tot_reward_batch
-        stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.total_rewards[i_batch] = tot_reward_batch
+        stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.gradient[i_batch] = gradient
 
     return stats
@@ -222,8 +222,8 @@ def gpomdp(env, num_batch, batch_size, discount_factor, episode_length, initial_
         tot_reward_batch = np.mean(episode_informations[:,0])
         discounted_reward_batch = np.mean(episode_informations[:,1])
         # Update statistics
-        stats.episode_total_rewards[i_batch] = tot_reward_batch
-        stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.total_rewards[i_batch] = tot_reward_batch
+        stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.gradient[i_batch] = gradient
 
     return stats
