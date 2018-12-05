@@ -2,13 +2,14 @@ import math as m
 import numpy as np
 from collections import namedtuple
 import algorithmPolicySearch as alg
+import random
 
 class BatchStats:
 
     def __init__(self, num_batch):
 
-        self.episode_total_rewards = np.zeros(num_batch)
-        self.episode_disc_rewards = np.zeros(num_batch)
+        self.total_rewards = np.zeros(num_batch)
+        self.disc_rewards = np.zeros(num_batch)
         self.policy_parameter = np.zeros(num_batch)
         self.gradient = np.zeros(num_batch)
         self.ess = np.zeros(num_batch)
@@ -44,8 +45,8 @@ def optimalPolicy(env, num_batch, batch_size, discount_factor, variance_action, 
 
         # Update statistics
         stats.policy_parameter[i_batch] = K
-        stats.episode_total_rewards[i_batch] = tot_reward_batch
-        stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.total_rewards[i_batch] = tot_reward_batch
+        stats.disc_rewards[i_batch] = discounted_reward_batch
 
     return stats
 
@@ -227,7 +228,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
 
     weights = policy_tgt * model_tgt / mis_denominator
 
-    return weights, src_distributions
+    return [weights, src_distributions]
 
 def computeMultipleImportanceWeightsSourceTargetCv(policy_param, env_param, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, policy_gradients, baseline):
     """
@@ -288,7 +289,7 @@ def computeMultipleImportanceWeightsSourceTargetCv(policy_param, env_param, sour
         baseline_covariate = np.multiply(weights, policy_gradients)[:, np.newaxis]
         control_variate = np.concatenate((control_variate, baseline_covariate), axis=1)
 
-    return weights, src_distributions, control_variate
+    return [weights, src_distributions, control_variate]
 
 def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_param, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions):
     """
@@ -341,7 +342,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
 
     weights = policy_tgt * model_tgt / mis_denominator
 
-    return weights, src_distributions
+    return [weights, src_distributions]
 
 def computeMultipleImportanceWeightsSourceTargetCvPerDecision(policy_param, env_param, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, policy_gradients, baseline, approximation):
     """
@@ -414,11 +415,132 @@ def computeMultipleImportanceWeightsSourceTargetCvPerDecision(policy_param, env_
     else:
         control_variate = np.sum(control_variate, axis=1)
 
-    return weights, src_distributions, control_variate
+    return [weights, src_distributions, control_variate]
 
 # Compute the update of the algorithms using different estimators
 
-def offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min):
+def addEpisodesToSourceDataset(env, num_episodes_target, episode_length, param, variance_action, discount_factor_timestep, source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, estimator, weights_source_target = None, gradient_off_policy = None):
+    """
+    Generate a batch of episodes and update the source dataset
+    :param env: openAI environment
+    :param num_episodes_target: number of episodes of the target environment
+    :param episode_length: length of every episode
+    :param param: policy param
+    :param variance_action: variance of the action's distribution
+    :param discount_factor_timestep: discount factor for every timestep gamma^t
+    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
+    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
+    :param episodes_per_config: number of episodes for every policy_parameter - env_parameter
+    :param next_states_unclipped: matrix containing the unclipped next states of every episode for every time step
+    :param clipped_actions: matrix containing the unclipped actions of every episode for every time step
+    :param estimator: the estimator of the current algorithm
+    :param weights_source_target: current weights of the source dataset
+    :param gradient_off_policy: gradients of the current dataset
+    :return: returns the updated dataset and the new informations to update the statistics
+    """
+
+    batch_size = num_episodes_target
+
+    source_param_new = np.ones((num_episodes_target, 5))
+    source_task_new = np.ones((num_episodes_target, episode_length*3+1))
+    # Iterate for every episode in batch
+
+    batch = createBatch(env, batch_size, episode_length, param, variance_action) # [state, action, reward, next_state, next_state_unclipped, clipped_actions]
+
+    # The return after this timestep
+    total_return = np.sum(batch[:, :, 2], axis=1)
+    discounted_return_timestep = (discount_factor_timestep * batch[:, :, 2])
+    discounted_return = np.sum(discounted_return_timestep, axis=1)
+
+    if estimator == "IS":
+        gradient_est = np.sum(((batch[:, :, 5] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action, axis=1)
+        weights_source_target_update = np.concatenate([weights_source_target, np.ones(num_episodes_target)], axis=0) # are the weights used for computing ESS
+        #Update the parameters
+        weights_source_target_update[np.isnan(weights_source_target_update)] = 0
+        gradient_off_policy_update = np.concatenate([gradient_off_policy, np.asarray(gradient_est)], axis=0)
+        discounted_rewards_all = np.concatenate([source_param[:,0], np.asarray(discounted_return)], axis=0)
+
+    if estimator == "PD-IS":
+        gradient_est = np.cumsum(((batch[:, :, 5] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action, axis=1)
+        weights_source_target_update = np.concatenate([weights_source_target, np.ones((num_episodes_target, episode_length))], axis=0) # are the weights used for computing ESS
+        #Update the parameters
+        weights_source_target_update[np.isnan(weights_source_target_update)] = 0
+        gradient_off_policy_update = np.concatenate([gradient_off_policy, np.asarray(gradient_est)], axis=0)
+        discounted_rewards_all = np.concatenate([source_param[:, 0], np.asmatrix(discounted_return_timestep)], axis=0)
+
+    source_param_new[:, 0] = discounted_return
+    source_param_new[:, 1] = param
+    source_param_new[:, 2] = env.A
+    source_param_new[:, 3] = env.B
+    source_param_new[:, 4] = env.sigma_noise**2
+
+    source_task_new[:, 0::3] = np.concatenate((batch[:, :, 0], np.matrix(batch[:, -1, 3]).T), axis=1)
+    source_task_new[:, 1::3] = batch[:, :, 5]
+    source_task_new[:, 2::3] = batch[:, :, 2]
+    next_states_unclipped_new = batch[:, :, 4]
+    clipped_actions_new = batch[:, :, 1]
+
+    #Compute rewards of batch
+    tot_reward_batch = np.mean(total_return)
+    discounted_reward_batch = np.mean(discounted_return)
+
+    # Concatenate new episodes to source tasks
+    source_param = np.concatenate((source_param, source_param_new), axis=0)
+    source_task = np.concatenate((source_task, source_task_new), axis=0)
+    episodes_per_config = np.concatenate((episodes_per_config, [batch_size]))
+    next_states_unclipped = np.concatenate((next_states_unclipped, next_states_unclipped_new))
+    clipped_actions = np.concatenate((clipped_actions, clipped_actions_new))
+
+    if ((estimator == "IS") | (estimator == "PD-IS")):
+        return source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, gradient_off_policy_update, discounted_rewards_all, weights_source_target_update, tot_reward_batch, discounted_reward_batch
+
+    else:
+        return source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, tot_reward_batch, discounted_reward_batch
+
+def generateEpisodesAndComputeRewards(env, episode_length, param, variance_action, discount_factor_timestep, source_task, estimator, weights_source_target = None, gradient_off_policy = None):
+    """
+    Generate episodes to compute statistics if there are no episodes from the target distribution
+    :param env: openAI environment
+    :param episode_length: length of every episode
+    :param param: policy parameter
+    :param variance_action: variance of the action's distribution
+    :param discount_factor_timestep: discount factor for every timestep gamma^t
+    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
+    :param estimator:
+    :param weights_source_target: current weights of the source dataset
+    :param gradient_off_policy: gradients of the current dataset
+    :return: rewards of the batch
+    """
+    batch_size = 5
+    # Iterate for every episode in batch
+
+    batch = createBatch(env, batch_size, episode_length, param, variance_action) # [state, action, reward, next_state, next_state_unclipped, clipped_actions]
+
+    # The return after this timestep
+    total_return = np.sum(batch[:, :, 2], axis=1)
+    discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
+
+    #Compute rewards of batch
+    tot_reward_batch = np.mean(total_return)
+    discounted_reward_batch = np.mean(discounted_return)
+
+    if ((estimator == "IS") | (estimator == "PD-IS")):
+
+        weights_source_target_update = weights_source_target # are the weights used for computing ESS
+        weights_source_target_update[np.isnan(weights_source_target_update)] = 0
+        gradient_off_policy_update = gradient_off_policy
+
+        if estimator == "IS":
+            discounted_rewards_all = np.sum(source_task[:, 2::3] * discount_factor_timestep)
+
+        else:
+            discounted_rewards_all = source_task[:, 2::3] * discount_factor_timestep
+        return tot_reward_batch, discounted_reward_batch, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all
+
+    else:
+        return tot_reward_batch, discounted_reward_batch
+
+def offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min, adaptive):
     """
     Compute the gradient update of the policy parameter using importance sampling
     :param env: OpenAI environment
@@ -437,6 +559,7 @@ def offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_con
     :param discount_factor: the discount factor
     :param learning_rate: learning rate of the update rule
     :param ess_min: minimum effective sample size
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Returns all informations related to the update, the new sorce parameter, source tasks, new parameter ...
     """
     #Compute gradients of the source task
@@ -444,61 +567,23 @@ def offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_con
     #Compute importance weights_source_target of source task
     weights_source_target = computeImportanceWeightsSourceTarget(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions)
 
-    num_episodes_target = computeNdef(weights_source_target, ess_min, source_task.shape[0])
-    #num_episodes_target = batch_size
+    if adaptive == "Yes":
+        num_episodes_target = computeNdef(weights_source_target, ess_min, source_task.shape[0])
+
+    else:
+        num_episodes_target = batch_size
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
+    estimator = "IS"
+
     if num_episodes_target!=0:
-        # Create new parameters and new tasks associated to episodes, used tu update the source_param and source_task later
-        source_param_new = np.ones((num_episodes_target, 5))
-        source_task_new = np.ones((num_episodes_target, episode_length*3+1))
-        # Iterate for every episode in batch
-
-        batch = createBatch(env, num_episodes_target, episode_length, param, variance_action) # [state, action, reward, next_state, next_state_unclipped, clipped_actions]
-
-        # The return after this timestep
-        total_return = np.sum(batch[:, :, 2], axis=1)
-        discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
-        gradient_est = np.sum(((batch[:, :, 5] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action, axis=1)
-
-        source_param_new[:, 0] = discounted_return
-        source_param_new[:, 1] = param
-        source_param_new[:, 2] = env.A
-        source_param_new[:, 3] = env.B
-        source_param_new[:, 4] = env.sigma_noise**2
-
-        source_task_new[:, 0::3] = np.concatenate((batch[:, :, 0], np.matrix(batch[:, -1, 3]).T), axis=1)
-        source_task_new[:, 1::3] = batch[:, :, 5]
-        source_task_new[:, 2::3] = batch[:, :, 2]
-        next_states_unclipped_new = batch[:, :, 4]
-        clipped_actions_new = batch[:, :, 1]
-
-        #Update the parameters
-        weights_source_target_update = np.concatenate([weights_source_target, np.ones(num_episodes_target)], axis=0) # are the weights used for computing ESS
-        weights_source_target_update[np.isnan(weights_source_target_update)] = 0
-        gradient_off_policy_update = np.concatenate([gradient_off_policy, np.asarray(gradient_est)], axis=0)
-        discounted_rewards_all = np.concatenate([source_param[:,0], np.asarray(discounted_return)], axis=0)
-
-        #Compute rewards of batch
-        tot_reward_batch = np.mean(total_return)
-        discounted_reward_batch = np.mean(discounted_return)
-
-        # Concatenate new episodes to source tasks
-        source_param = np.concatenate((source_param, source_param_new), axis=0)
-        source_task = np.concatenate((source_task, source_task_new), axis=0)
-        episodes_per_config = np.concatenate((episodes_per_config, [batch_size]))
-        next_states_unclipped = np.concatenate((next_states_unclipped, next_states_unclipped_new))
-        clipped_actions = np.concatenate((clipped_actions, clipped_actions_new))
+        #Generate the episodes and compute the rewards over the batch
+        [source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, gradient_off_policy_update, discounted_rewards_all, weights_source_target_update, tot_reward_batch, discounted_reward_batch] = addEpisodesToSourceDataset(env, num_episodes_target, episode_length, param, variance_action, discount_factor_timestep, source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, estimator, weights_source_target, gradient_off_policy)
 
     else:
-        weights_source_target_update = weights_source_target # are the weights used for computing ESS
-        weights_source_target_update[np.isnan(weights_source_target_update)] = 0
-        gradient_off_policy_update = gradient_off_policy
-        discounted_rewards_all = source_param[:,0]
-        #Compute rewards of batch
-        tot_reward_batch = 0
-        discounted_reward_batch = 0
+        #Generate episodes and compute rewards for estimating rewards (trick)
+        [tot_reward_batch, discounted_reward_batch, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all] = generateEpisodesAndComputeRewards(env, episode_length, param, variance_action, discount_factor_timestep, source_param, estimator, weights_source_target, gradient_off_policy)
 
     ess = np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2
     N = source_task.shape[0]
@@ -508,7 +593,7 @@ def offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_con
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target
 
-def offPolicyUpdateImportanceSamplingPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min):
+def offPolicyUpdateImportanceSamplingPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min, adaptive):
     """
     Compute the gradient update of the policy parameter using per-decision importance sampling
     :param env: OpenAI environment
@@ -527,6 +612,7 @@ def offPolicyUpdateImportanceSamplingPerDec(env, param, source_param, episodes_p
     :param discount_factor: the discout factor
     :param learning_rate: learning rate of the update rule
     :param ess_min: minimum effective sample size
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Returns all informations related to the update, the new sorce parameter, source tasks, new parameter ...
     """
 
@@ -535,62 +621,23 @@ def offPolicyUpdateImportanceSamplingPerDec(env, param, source_param, episodes_p
     #Compute importance weights_source_target of source task
     weights_source_target = computeImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions)
 
-    num_episodes_target = computeNdef(weights_source_target[:, -1], ess_min, source_task.shape[0])
-    #num_episodes_target = batch_size
+    if adaptive == "Yes":
+        num_episodes_target = computeNdef(weights_source_target[:, -1], ess_min, source_task.shape[0])
+
+    else:
+        num_episodes_target = batch_size
 
     discount_factor_timestep = np.power(discount_factor * np.ones(episode_length), range(episode_length))
 
+    estimator = "PD-IS"
+
     if num_episodes_target!=0:
-        # Create new parameters and new tasks associated to episodes, used tu update the source_param and source_task later
-        source_param_new = np.ones((num_episodes_target, 5))
-        source_task_new = np.ones((num_episodes_target, episode_length*3+1))
-        # Iterate for every episode in batch
-
-        batch = createBatch(env, num_episodes_target, episode_length, param, variance_action) # [state, action, reward, next_state, next_state_unclipped, clipped_actions]
-
-        # The return after this timestep
-        total_return = np.sum(batch[:, :, 2], axis=1)
-        discounted_return_timestep = discount_factor_timestep * batch[:, :, 2]
-        discounted_return = np.sum(discounted_return_timestep, axis=1)
-        gradient_est_timestep = np.cumsum(((batch[:, :, 5] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action, axis=1)
-
-        source_param_new[:, 0] = discounted_return
-        source_param_new[:, 1] = param
-        source_param_new[:, 2] = env.A
-        source_param_new[:, 3] = env.B
-        source_param_new[:, 4] = env.sigma_noise**2
-
-        source_task_new[:, 0::3] = np.concatenate((batch[:, :, 0], np.matrix(batch[:, -1, 3]).T), axis=1)
-        source_task_new[:, 1::3] = batch[:, :, 5]
-        source_task_new[:, 2::3] = batch[:, :, 2]
-        next_states_unclipped_new = batch[:, :, 4]
-        clipped_actions_new = batch[:, :, 1]
-
-        #Update the parameters
-        weights_source_target_update = np.concatenate([weights_source_target, np.ones((num_episodes_target, episode_length))], axis=0) # are the weights used for computing ESS
-        weights_source_target_update[np.isnan(weights_source_target_update)] = 0
-        gradient_off_policy_update = np.concatenate([gradient_off_policy, gradient_est_timestep], axis=0)
-        discounted_rewards_all = np.concatenate([discount_factor_timestep * source_task[:,2::3], discounted_return_timestep], axis=0)
-
-        #Compute rewards of batch
-        tot_reward_batch = np.mean(total_return)
-        discounted_reward_batch = np.mean(discounted_return)
-
-        #Concatenate new episodes to source tasks
-        source_param = np.concatenate((source_param, source_param_new), axis=0)
-        source_task = np.concatenate((source_task, source_task_new), axis=0)
-        episodes_per_config = np.concatenate((episodes_per_config, [batch_size]))
-        next_states_unclipped = np.concatenate((next_states_unclipped, next_states_unclipped_new))
-        clipped_actions = np.concatenate((clipped_actions, clipped_actions_new))
+        #Generate the episodes and compute the rewards over the batch
+        [source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, gradient_off_policy_update, discounted_rewards_all, weights_source_target_update, tot_reward_batch, discounted_reward_batch] = addEpisodesToSourceDataset(env, num_episodes_target, episode_length, param, variance_action, discount_factor_timestep, source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, estimator, weights_source_target, gradient_off_policy)
 
     else:
-        weights_source_target_update = weights_source_target # are the weights used for computing ESS
-        weights_source_target_update[np.isnan(weights_source_target_update)] = 0
-        gradient_off_policy_update = gradient_off_policy
-        discounted_rewards_all = discount_factor_timestep * source_task[:,2::3]
-        #Compute rewards of batch
-        tot_reward_batch = 0
-        discounted_reward_batch = 0
+        #Generate episodes and compute rewards
+        [tot_reward_batch, discounted_reward_batch, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all] = generateEpisodesAndComputeRewards(env, episode_length, param, variance_action, discount_factor_timestep, source_param, estimator, weights_source_target, gradient_off_policy)
 
     ess = np.min(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
     N = source_task.shape[0]
@@ -600,7 +647,7 @@ def offPolicyUpdateImportanceSamplingPerDec(env, param, source_param, episodes_p
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target
 
-def offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min):
+def offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min, adaptive):
     """
     Compute the gradient update of the policy parameter using multiple importance sampling
     :param env: OpenAI environment
@@ -620,6 +667,7 @@ def offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes
     :param discount_factor: the discout factor
     :param learning_rate: learning rate of the update rule
     :param ess_min: minimum effective sample size
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Returns all informations related to the update, the new sorce parameter, source tasks, new parameter ...
     """
 
@@ -629,36 +677,15 @@ def offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
+    estimator = "No weights and gradients"
+
     if num_episodes_target!=0:
-        # Create new parameters and new tasks associated to episodes, used tu update the source_param and source_task later
-        source_param_new = np.ones((num_episodes_target, 5))
-        source_task_new = np.ones((num_episodes_target, episode_length*3+1))
-        # Iterate for every episode in batch
+        #Generate the episodes and compute the rewards over the batch
+        [source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, tot_reward_batch, discounted_reward_batch] = addEpisodesToSourceDataset(env, num_episodes_target, episode_length, param, variance_action, discount_factor_timestep, source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, estimator)
 
-        batch = createBatch(env, batch_size, episode_length, param, variance_action) # [state, action, reward, next_state, next_state_unclipped, clipped_actions]
-
-       # The return after this timestep
-        total_return = np.sum(batch[:, :, 2], axis=1)
-        discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
-
-        source_param_new[:, 0] = discounted_return
-        source_param_new[:, 1] = param
-        source_param_new[:, 2] = env.A
-        source_param_new[:, 3] = env.B
-        source_param_new[:, 4] = env.sigma_noise**2
-
-        source_task_new[:, 0::3] = np.concatenate((batch[:, :, 0], np.matrix(batch[:, -1, 3]).T), axis=1)
-        source_task_new[:, 1::3] = batch[:, :, 5]
-        source_task_new[:, 2::3] = batch[:, :, 2]
-        next_states_unclipped_new = batch[:, :, 4]
-        clipped_actions_new = batch[:, :, 1]
-
-        # Concatenate new episodes to source tasks
-        source_param = np.concatenate((source_param, source_param_new), axis=0)
-        source_task = np.concatenate((source_task, source_task_new), axis=0)
-        episodes_per_config = np.concatenate((episodes_per_config, [batch_size]))
-        next_states_unclipped = np.concatenate((next_states_unclipped, next_states_unclipped_new))
-        clipped_actions = np.concatenate((clipped_actions, clipped_actions_new))
+    else:
+        #Generate episodes and compute rewards for estimating rewards (trick)
+        [tot_reward_batch, discounted_reward_batch] = generateEpisodesAndComputeRewards(env, episode_length, param, variance_action, discount_factor_timestep, source_param, estimator)
 
     #Update the parameters
     N = source_task.shape[0]
@@ -671,52 +698,46 @@ def offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes
     #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     param = param + learning_rate * gradient
 
-    if num_episodes_target!=0:
-        #Compute rewards of batch
-        tot_reward_batch = np.mean(total_return)
-        discounted_reward_batch = np.mean(discounted_return)
+    weights_source_target_ess = computeMultipleImportanceWeightsSourceTarget(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions)[0]
+    weights_source_target_ess[np.isnan(weights_source_target_ess)] = 0
+    ess = np.linalg.norm(weights_source_target_ess, 1)**2 / np.linalg.norm(weights_source_target_ess, 2)**2
+
+    if adaptive=="Yes":
+        #Number of n_def next iteration
+        num_episodes_target = computeNdef(weights_source_target_ess, ess_min, source_task.shape[0])
 
     else:
-        #Compute rewards of batch
-        tot_reward_batch = 0
-        discounted_reward_batch = 0
-
-    ess = np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2
-
-    #Number of n_def next iteration
-    num_episodes_target = computeNdef(weights_source_target_update, ess_min, source_task.shape[0])
+        num_episodes_target = batch_size
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, num_episodes_target
 
-def regressionFittingZeroBatch(y, y_avg, x):
+def regressionFitting(y, x, n_config_cv):
     """
     Fit a regression with the control variates
     :param y: the target
-    :param y_avg: the average of the target
     :param x: the parameters
+    :param n_config_cv: number of control variates to fit
     :return: returns the error of the fitted regression
     """
-    x_avg = np.squeeze(np.asarray(np.mean(x, axis=0)))
-    beta = np.matmul(np.linalg.inv(np.matmul((x[:, 1:]-x_avg[1:]).T, (x[:, 1:]-x_avg[1:]))), np.matmul((x[:, 1:]-x_avg[1:]).T, (y-y_avg)).T)
-    error = y_avg - np.dot(x_avg[1:], beta)
+    baseline = np.squeeze(np.asarray(x[:, -1]))[:, np.newaxis]
+    x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
 
-    return error
+    train_size = int(np.ceil(x.shape[0]/3*2))
+    train_index = random.sample(range(x.shape[0]), train_size)
+    x_train = x[train_index]
+    y_train = y[train_index]
+    x_test = np.delete(x, train_index, axis=0)
+    y_test = np.delete(y, train_index, axis=0)
+    beta = np.squeeze(np.asarray(np.matmul(np.linalg.pinv(x_train[:, 1:]), y_train)))
+    error = np.squeeze(np.asarray(y_test - np.dot(x_test[:, 1:], beta)))
+    # x_avg = np.squeeze(np.asarray(np.mean(x, axis=0)))
+    # beta = np.matmul(np.linalg.inv(np.matmul((x[:, 1:]-x_avg[1:]).T, (x[:, 1:]-x_avg[1:]))), np.matmul((x[:, 1:]-x_avg[1:]).T, (y-y_avg)).T)
+    # I = np.identity(y.shape[0])
+    # error = np.squeeze(np.asarray(np.matmul(I - np.matmul(x[:, 1:], np.linalg.pinv(x[:, 1:])), y)))
 
-def regressionFitting(y, y_avg, x):
-    """
-    Fit a regression with the control variates
-    :param y: the target
-    :param y_avg: the average of the target
-    :param x: the parameters
-    :return: returns the error of the fitted regression
-    """
-    x_avg = np.squeeze(np.asarray(np.mean(x, axis=0)))
-    beta = np.matmul(np.linalg.inv(np.matmul((x[:, 1:]-x_avg[1:]).T, (x[:, 1:]-x_avg[1:]))), np.matmul((x[:, 1:]-x_avg[1:]).T, (y-y_avg)).T)
-    error = y_avg - np.dot(x_avg[1:], beta)
+    return np.mean(error)
 
-    return error
-
-def offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, learning_rate, ess_min):
+def offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, learning_rate, ess_min, adaptive, n_config_cv):
     """
     Compute the gradient update of the policy parameter using multiple importance sampling
     :param env: OpenAI environment
@@ -737,6 +758,7 @@ def offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episod
     :param baseline: 0 the algorithms doesn't have the baseline, 1 it has
     :param learning_rate: learning rate of the update rule
     :param ess_min: minimum effective sample size
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Returns all informations related to the update, the new sorce parameter, source tasks, new parameter ...
     """
 
@@ -745,36 +767,16 @@ def offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episod
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
-    if num_episodes_target!=0:
-        # Create new parameters and new tasks associated to episodes, used tu update the source_param and source_task later
-        source_param_new = np.ones((num_episodes_target, 5))
-        source_task_new = np.ones((num_episodes_target, episode_length*3+1))
-        # Iterate for every episode in batch
+    estimator = "No weights and gradients"
 
-        batch = createBatch(env, batch_size, episode_length, param, variance_action) # [state, action, reward, next_state, next_state_unclipped, clipped_actions]
+    if num_episodes_target != 0:
+        #Generate the episodes and compute the rewards over the batch
+        [source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, tot_reward_batch, discounted_reward_batch] = addEpisodesToSourceDataset(env, num_episodes_target, episode_length, param, variance_action, discount_factor_timestep, source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, estimator)
 
-       # The return after this timestep
-        total_return = np.sum(batch[:, :, 2], axis=1)
-        discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
+    else:
+        #Generate episodes and compute rewards for estimating rewards (trick)
+        [tot_reward_batch, discounted_reward_batch] = generateEpisodesAndComputeRewards(env, episode_length, param, variance_action, discount_factor_timestep, source_param, estimator)
 
-        source_param_new[:, 0] = discounted_return
-        source_param_new[:, 1] = param
-        source_param_new[:, 2] = env.A
-        source_param_new[:, 3] = env.B
-        source_param_new[:, 4] = env.sigma_noise**2
-
-        source_task_new[:, 0::3] = np.concatenate((batch[:, :, 0], np.matrix(batch[:, -1, 3]).T), axis=1)
-        source_task_new[:, 1::3] = batch[:, :, 5]
-        source_task_new[:, 2::3] = batch[:, :, 2]
-        next_states_unclipped_new = batch[:, :, 4]
-        clipped_actions_new = batch[:, :, 1]
-
-        # Concatenate new episodes to source tasks
-        source_param = np.concatenate((source_param, source_param_new), axis=0)
-        source_task = np.concatenate((source_task, source_task_new), axis=0)
-        episodes_per_config = np.concatenate((episodes_per_config, [batch_size]))
-        next_states_unclipped = np.concatenate((next_states_unclipped, next_states_unclipped_new))
-        clipped_actions = np.concatenate((clipped_actions, clipped_actions_new))
 
     #Update the parameters
     N = source_task.shape[0]
@@ -784,33 +786,28 @@ def offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episod
 
     discounted_rewards_all = source_param[:,0]
     gradient_estimation = (np.squeeze(np.array(weights_source_target_update)) * gradient_off_policy_update) * discounted_rewards_all
-    gradient_estimation_average = 1/N * np.sum(gradient_estimation)
 
     #Fitting the regression
-    gradient = regressionFitting(gradient_estimation, gradient_estimation_average, control_variates)
+    gradient = regressionFitting(gradient_estimation, control_variates, n_config_cv)
 
     #Update the parameter
     #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     param = param + learning_rate * gradient
 
-    if num_episodes_target!=0:
-        #Compute rewards of batch
-        tot_reward_batch = np.mean(total_return)
-        discounted_reward_batch = np.mean(discounted_return)
+    weights_source_target_ess = computeMultipleImportanceWeightsSourceTarget(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions)[0]
+    weights_source_target_ess[np.isnan(weights_source_target_ess)] = 0
+    ess = np.linalg.norm(weights_source_target_ess, 1)**2 / np.linalg.norm(weights_source_target_ess, 2)**2
+
+    if adaptive == "Yes":
+        #Number of n_def next iteration
+        num_episodes_target = computeNdef(weights_source_target_ess, ess_min, source_task.shape[0])
 
     else:
-        #Compute rewards of batch
-        tot_reward_batch = 0
-        discounted_reward_batch = 0
-
-    ess = np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2
-
-    #Number of n_def next iteration
-    num_episodes_target = computeNdef(weights_source_target_update, ess_min, source_task.shape[0])
+        num_episodes_target = batch_size
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, num_episodes_target
 
-def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min):
+def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min, adaptive):
     """
     Compute the gradient update of the policy parameter using per decision multiple importance sampling
     :param env: OpenAI environment
@@ -830,6 +827,7 @@ def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, ep
     :param discount_factor: the discout factor
     :param learning_rate: learning rate of the update rule
     :param ess_min: minimum effective sample size
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Returns all informations related to the update, the new sorce parameter, source tasks, new parameter ...
     """
 
@@ -838,36 +836,16 @@ def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, ep
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
-    if num_episodes_target!=0:
-        # Create new parameters and new tasks associated to episodes, used tu update the source_param and source_task later
-        source_param_new = np.ones((num_episodes_target, 5))
-        source_task_new = np.ones((num_episodes_target, episode_length*3+1))
-        # Iterate for every episode in batch
+    estimator = "No weights and gradients"
 
-        batch = createBatch(env, batch_size, episode_length, param, variance_action) # [state, action, reward, next_state, next_state_unclipped]
+    if num_episodes_target != 0:
+        #Generate the episodes and compute the rewards over the batch
+        [source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, tot_reward_batch, discounted_reward_batch] = addEpisodesToSourceDataset(env, num_episodes_target, episode_length, param, variance_action, discount_factor_timestep, source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, estimator)
 
-        # The return after this timestep
-        total_return = np.sum(batch[:, :, 2], axis=1)
-        discounted_return_timestep = (discount_factor_timestep * batch[:, :, 2])
+    else:
+        #Generate episodes and compute rewards for estimating rewards (trick)
+        [tot_reward_batch, discounted_reward_batch] = generateEpisodesAndComputeRewards(env, episode_length, param, variance_action, discount_factor_timestep, source_param, estimator)
 
-        source_param_new[:, 0] = np.sum(discounted_return_timestep, axis=1)
-        source_param_new[:, 1] = param
-        source_param_new[:, 2] = env.A
-        source_param_new[:, 3] = env.B
-        source_param_new[:, 4] = env.sigma_noise**2
-
-        source_task_new[:, 0::3] = np.concatenate((batch[:, :, 0], np.matrix(batch[:, -1, 3]).T), axis=1)
-        source_task_new[:, 1::3] = batch[:, :, 5]
-        source_task_new[:, 2::3] = batch[:, :, 2]
-        next_states_unclipped_new = batch[:, :, 4]
-        clipped_actions_new = batch[:, :, 1]
-
-        # Concatenate new episodes to source tasks
-        source_param = np.concatenate((source_param, source_param_new), axis=0)
-        source_task = np.concatenate((source_task, source_task_new), axis=0)
-        episodes_per_config = np.concatenate((episodes_per_config, [batch_size]))
-        next_states_unclipped = np.concatenate((next_states_unclipped, next_states_unclipped_new))
-        clipped_actions = np.concatenate((clipped_actions, clipped_actions_new))
 
     #Update the parameters
     N = source_task.shape[0]
@@ -876,28 +854,26 @@ def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, ep
     weights_source_target_update[np.isnan(weights_source_target_update)] = 0
 
     gradient_off_policy_update = np.cumsum(computeGradientsSourceTargetTimestep(param, source_task, variance_action), axis=1)
-    discounted_rewards_all = discount_factor_timestep * source_task[:,2::3]
+    discounted_rewards_all = discount_factor_timestep * source_task[:, 2::3]
     gradient = 1/N * np.sum(np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis = 1), axis=0)
     #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     param = param + learning_rate * gradient
 
-    if num_episodes_target!=0:
-        #Compute rewards of batch
-        tot_reward_batch = np.mean(total_return)
-        discounted_reward_batch = np.mean(np.sum(discounted_return_timestep, axis=1))
-    else:
-        #Compute rewards of batch
-        tot_reward_batch = 0
-        discounted_reward_batch = 0
+    weights_source_target_ess = computeMultipleImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions)[0]
+    weights_source_target_ess[np.isnan(weights_source_target_ess)] = 0
+    ess = np.min(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
+    min_index = np.argmin(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
 
-    ess = np.min(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
-    min_index = np.argmin(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
-    #Number of n_def next iteration
-    num_episodes_target = computeNdef(weights_source_target_update[:, min_index], ess_min, source_task.shape[0])
+    if adaptive=="Yes":
+        #Number of n_def next iteration
+        num_episodes_target = computeNdef(weights_source_target_ess[:, min_index], ess_min, source_task.shape[0])
+
+    else:
+        num_episodes_target = batch_size
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, num_episodes_target
 
-def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, approximation, learning_rate, ess_min):
+def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, approximation, learning_rate, ess_min, adaptive, n_config_cv):
     """
     Compute the gradient update of the policy parameter using per decision multiple importance sampling
     :param env: OpenAI environment
@@ -918,6 +894,7 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, 
     :param baseline: 0 the algorithms doesn't have the baseline, 1 it has
     :param approximation: 0 the algorithms doesn't use the baseline approximation, 1 it does
     :param learning_rate: learning rate of the update rule
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Returns all informations related to the update, the new sorce parameter, source tasks, new parameter ...
     """
 
@@ -926,36 +903,15 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, 
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
-    if num_episodes_target!=0:
-        # Create new parameters and new tasks associated to episodes, used tu update the source_param and source_task later
-        source_param_new = np.ones((num_episodes_target, 5))
-        source_task_new = np.ones((num_episodes_target, episode_length*3+1))
-        # Iterate for every episode in batch
+    estimator = "No weights and gradients"
 
-        batch = createBatch(env, batch_size, episode_length, param, variance_action) # [state, action, reward, next_state, next_state_unclipped]
+    if num_episodes_target != 0:
+        #Generate the episodes and compute the rewards over the batch
+        [source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, tot_reward_batch, discounted_reward_batch] = addEpisodesToSourceDataset(env, num_episodes_target, episode_length, param, variance_action, discount_factor_timestep, source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, estimator)
 
-        # The return after this timestep
-        total_return = np.sum(batch[:, :, 2], axis=1)
-        discounted_return_timestep = (discount_factor_timestep * batch[:, :, 2])
-
-        source_param_new[:, 0] = np.sum(discounted_return_timestep, axis=1)
-        source_param_new[:, 1] = param
-        source_param_new[:, 2] = env.A
-        source_param_new[:, 3] = env.B
-        source_param_new[:, 4] = env.sigma_noise**2
-
-        source_task_new[:, 0::3] = np.concatenate((batch[:, :, 0], np.matrix(batch[:, -1, 3]).T), axis=1)
-        source_task_new[:, 1::3] = batch[:, :, 5]
-        source_task_new[:, 2::3] = batch[:, :, 2]
-        next_states_unclipped_new = batch[:, :, 4]
-        clipped_actions_new = batch[:, :, 1]
-
-        # Concatenate new episodes to source tasks
-        source_param = np.concatenate((source_param, source_param_new), axis=0)
-        source_task = np.concatenate((source_task, source_task_new), axis=0)
-        episodes_per_config = np.concatenate((episodes_per_config, [batch_size]))
-        next_states_unclipped = np.concatenate((next_states_unclipped, next_states_unclipped_new))
-        clipped_actions = np.concatenate((clipped_actions, clipped_actions_new))
+    else:
+        #Generate episodes and compute rewards for estimating rewards (trick)
+        [tot_reward_batch, discounted_reward_batch] = generateEpisodesAndComputeRewards(env, episode_length, param, variance_action, discount_factor_timestep, source_param, estimator)
 
     #Update the parameters
     N = source_task.shape[0]
@@ -966,33 +922,29 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, 
 
     discounted_rewards_all = discount_factor_timestep * source_task[:, 2::3]
     gradient_estimation = np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis=1)
-    gradient_estimation_average = 1/N * np.sum(gradient_estimation, axis=0)
 
     #Fitting the regression
-    gradient = regressionFitting(gradient_estimation, gradient_estimation_average, control_variates) #always the same, only the MIS with CV changes format of the x_avg array
+    gradient = regressionFitting(gradient_estimation, control_variates, n_config_cv) #always the same, only the MIS with CV changes format of the x_avg array
 
     #Update the parameter
     #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     param = param + learning_rate * gradient
 
-    if num_episodes_target!=0:
-        #Compute rewards of batch
-        tot_reward_batch = np.mean(total_return)
-        discounted_reward_batch = np.mean(np.sum(discounted_return_timestep, axis=1))
+    weights_source_target_ess = computeMultipleImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions)[0]
+    weights_source_target_ess[np.isnan(weights_source_target_ess)] = 0
+    ess = np.min(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
+    min_index = np.argmin(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
+
+    if adaptive=="Yes":
+        #Number of n_def next iteration
+        num_episodes_target = computeNdef(weights_source_target_ess[:, min_index], ess_min, source_task.shape[0])
+
     else:
-        #Compute rewards of batch
-        tot_reward_batch = 0
-        discounted_reward_batch = 0
-
-    ess = np.min(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
-    min_index = np.argmin(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
-
-    #Number of n_def next iteration
-    num_episodes_target = computeNdef(weights_source_target_update[:, min_index], ess_min, source_task.shape[0])
+        num_episodes_target = batch_size
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, num_episodes_target
 
-def offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, approximation, learning_rate, ess_min):
+def offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, approximation, learning_rate, ess_min, adaptive, n_config_cv):
     """
     Compute the gradient update of the policy parameter using per decision multiple importance sampling
     :param env: OpenAI environment
@@ -1014,6 +966,7 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source
     :param approximation: 0 the algorithms doesn't use the baseline approximation, 1 it does
     :param learning_rate: learning rate of the update rule
     :param ess_min: minimum effective sample size
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Returns all informations related to the update, the new sorce parameter, source tasks, new parameter ...
     """
 
@@ -1022,36 +975,15 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
-    if num_episodes_target!=0:
-        # Create new parameters and new tasks associated to episodes, used tu update the source_param and source_task later
-        source_param_new = np.ones((num_episodes_target, 5))
-        source_task_new = np.ones((num_episodes_target, episode_length*3+1))
-        # Iterate for every episode in batch
+    estimator = "No weights and gradients"
 
-        batch = createBatch(env, batch_size, episode_length, param, variance_action) # [state, action, reward, next_state, next_state_unclipped]
+    if num_episodes_target != 0:
+        #Generate the episodes and compute the rewards over the batch
+        [source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, tot_reward_batch, discounted_reward_batch] = addEpisodesToSourceDataset(env, num_episodes_target, episode_length, param, variance_action, discount_factor_timestep, source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, estimator)
 
-        # The return after this timestep
-        total_return = np.sum(batch[:, :, 2], axis=1)
-        discounted_return_timestep = (discount_factor_timestep * batch[:, :, 2])
-
-        source_param_new[:, 0] = np.sum(discounted_return_timestep, axis=1)
-        source_param_new[:, 1] = param
-        source_param_new[:, 2] = env.A
-        source_param_new[:, 3] = env.B
-        source_param_new[:, 4] = env.sigma_noise**2
-
-        source_task_new[:, 0::3] = np.concatenate((batch[:, :, 0], np.matrix(batch[:, -1, 3]).T), axis=1)
-        source_task_new[:, 1::3] = batch[:, :, 5]
-        source_task_new[:, 2::3] = batch[:, :, 2]
-        next_states_unclipped_new = batch[:, :, 4]
-        clipped_actions_new = batch[:, :, 1]
-
-        # Concatenate new episodes to source tasks
-        source_param = np.concatenate((source_param, source_param_new), axis=0)
-        source_task = np.concatenate((source_task, source_task_new), axis=0)
-        episodes_per_config = np.concatenate((episodes_per_config, [batch_size]))
-        next_states_unclipped = np.concatenate((next_states_unclipped, next_states_unclipped_new))
-        clipped_actions = np.concatenate((clipped_actions, clipped_actions_new))
+    else:
+        #Generate episodes and compute rewards
+        [tot_reward_batch, discounted_reward_batch] = generateEpisodesAndComputeRewards(env, episode_length, param, variance_action, discount_factor_timestep, source_param, estimator)
 
     #Update the parameters
     N =  source_task.shape[0]
@@ -1060,38 +992,35 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source
     [weights_source_target_update, src_distributions, control_variates] = computeMultipleImportanceWeightsSourceTargetCvPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, gradient_off_policy_update, baseline, approximation)
     weights_source_target_update[np.isnan(weights_source_target_update)] = 0
 
-    discounted_rewards_all = discount_factor_timestep * source_task[:,2::3]
+    discounted_rewards_all = discount_factor_timestep * source_task[:, 2::3]
     gradient_estimation = (weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all
-    gradient_estimation_average = 1/N * np.sum(gradient_estimation, axis=0)
     gradient = 0
+
     #Fitting the regression for every t 0...T-1
     for t in range(control_variates.shape[1]):
-        gradient += regressionFitting(gradient_estimation[:, t], gradient_estimation_average[t], control_variates[:, t, :]) #always the same, only the MIS with CV changes format of the x_avg array
+        gradient += regressionFitting(gradient_estimation[:, t], control_variates[:, t, :], n_config_cv) #always the same, only the MIS with CV changes format of the x_avg array
 
     #Update the parameter
     #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     param = param + learning_rate * gradient
 
-    if num_episodes_target!=0:
-        #Compute rewards of batch
-        tot_reward_batch = np.mean(total_return)
-        discounted_reward_batch = np.mean(np.sum(discounted_return_timestep, axis=1))
+    weights_source_target_ess = computeMultipleImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions)[0]
+    weights_source_target_ess[np.isnan(weights_source_target_ess)] = 0
+    ess = np.min(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
+    min_index = np.argmin(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
+
+    if adaptive=="Yes":
+        #Number of n_def next iteration
+        num_episodes_target = computeNdef(weights_source_target_ess[:, min_index], ess_min, source_task.shape[0])
+
     else:
-        #Compute rewards of batch
-        tot_reward_batch = 0
-        discounted_reward_batch = 0
-
-    ess = np.min(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
-    min_index = np.argmin(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
-
-    #Number of n_def next iteration
-    num_episodes_target = computeNdef(weights_source_target_update[:, min_index], ess_min, source_task.shape[0])
+        num_episodes_target = batch_size
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, num_episodes_target
 
 # Algorithm off policy using different estimators
 
-def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min):
+def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive):
     """
     Perform transfer from source tasks, using REINFORCE with IS
     :param env: OpenAI environment
@@ -1108,6 +1037,7 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, n
     :param num_batch: number of batch of the algorithm
     :param learning_rate: learning rate of the update rule
     :param ess_min: minimum effective sample size
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Return a BatchStats object
     """
 
@@ -1122,11 +1052,11 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, n
 
     for i_batch in range(num_batch):
 
-        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min)
+        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min, adaptive)
 
         # Update statistics
-        stats.episode_total_rewards[i_batch] = tot_reward_batch
-        stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.total_rewards[i_batch] = tot_reward_batch
+        stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.policy_parameter[i_batch] = param
         stats.gradient[i_batch] = gradient
         stats.ess[i_batch] = ess
@@ -1134,7 +1064,7 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, n
 
     return stats
 
-def offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min):
+def offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive):
     """
     Perform transfer from source tasks, using REINFORCE with PD-IS
     :param env: OpenAI environment
@@ -1151,6 +1081,7 @@ def offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task,
     :param num_batch: number of batch of the algorithm
     :param learning_rate: learning rate of the update rule
     :param ess_min: minimum effective sample size
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Return a BatchStats object
     """
 
@@ -1165,11 +1096,11 @@ def offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task,
 
     for i_batch in range(num_batch):
 
-        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = offPolicyUpdateImportanceSamplingPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min)
+        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = offPolicyUpdateImportanceSamplingPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min, adaptive)
 
         # Update statistics
-        stats.episode_total_rewards[i_batch] = tot_reward_batch
-        stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.total_rewards[i_batch] = tot_reward_batch
+        stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.policy_parameter[i_batch] = param
         stats.gradient[i_batch] = gradient
         stats.ess[i_batch] = ess
@@ -1225,32 +1156,13 @@ def computeInitialNdefMultipleImportanceWeights(policy_param, env_param, source_
     :return: Returns the weights of the multiple importance sampling estimator and the new qj of the MIS denominator (policy and model)
     """
 
-    n = source_task.shape[0]
-
-    param_indices = np.concatenate(([0], np.cumsum(np.delete(episodes_per_config, -1))))
-
-    param_policy_src = source_param[param_indices, 1][np.newaxis, np.newaxis, :]#policy parameter of source not repeated
-
-    B = source_param[param_indices, 3][np.newaxis, np.newaxis, :] # environment parameter B of src
-
-    state_t = np.repeat(np.delete(source_task[:, 0::3], -1, axis=1)[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t
-    state_t1 = np.repeat(next_states_unclipped[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t+1
-    unclipped_action_t = np.repeat(source_task[:, 1::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # action t
-    clipped_actions_t = np.repeat(clipped_actions[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # unclipped action t
-    variance_env = source_param[:, 4][:, np.newaxis, np.newaxis] # variance of the model transition
-
-    policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - policy_param*state_t[:, :, 0])**2)/(2*variance_action)), axis = 1)
-    model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, :, 0]) * np.exp(-((state_t1[:, :, 0] - env_param * state_t[:, :, 0] - B[:, :, -1] * clipped_actions_t[:, :, 0]) **2) / (2*variance_env[:, :, 0])), axis = 1)
-
-    mis_denominator = np.dot(episodes_per_config/n, src_distributions.T).T[:,np.newaxis]
-
-    weights = policy_tgt[:, np.newaxis] * model_tgt[:, np.newaxis] / mis_denominator
+    weights = computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions)[0]
 
     num_episodes_target = computeNdef(weights, ess_min, source_task.shape[0])
 
     return num_episodes_target
 
-def offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min):
+def offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive):
     """
     Perform transfer from source tasks, using REINFORCE with MIS
     :param env: OpenAI environment
@@ -1267,6 +1179,7 @@ def offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source
     :param num_batch: number of batch of the algorithm
     :param learning_rate: learning rate of the update rule
     :param ess_min: minimum effective sample size
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Return a BatchStats object
     """
 
@@ -1281,24 +1194,29 @@ def offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source
     # Keep track of useful statistics#
     stats = BatchStats(num_batch)
 
-    n_def = computeInitialNdefMultipleImportanceWeights(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, ess_min)
+    if adaptive=="Yes":
+        #Number of n_def next iteration
+        n_def = computeInitialNdefMultipleImportanceWeights(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, ess_min)
+
+    else:
+        n_def = batch_size
 
     for i_batch in range(num_batch):
 
         stats.n_def[i_batch] = n_def
         batch_size = n_def
 
-        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, n_def] = offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min)
+        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, n_def] = offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min, adaptive)
         # Update statistics
-        stats.episode_total_rewards[i_batch] = tot_reward_batch
-        stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.total_rewards[i_batch] = tot_reward_batch
+        stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.policy_parameter[i_batch] = param
         stats.gradient[i_batch] = gradient
         stats.ess[i_batch] = ess
 
     return stats
 
-def offPolicyMultipleImportanceSamplingCv(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min):
+def offPolicyMultipleImportanceSamplingCv(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv):
     """
     Perform transfer from source tasks, using REINFORCE with MIS anc the Control Variate
     :param env: OpenAI environment
@@ -1315,6 +1233,7 @@ def offPolicyMultipleImportanceSamplingCv(env, batch_size, discount_factor, sour
     :param num_batch: number of batch of the algorithm
     :param learning_rate: learning rate of the update rule
     :param ess_min: minimum effective sample size
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Return a BatchStats object
     """
 
@@ -1330,25 +1249,30 @@ def offPolicyMultipleImportanceSamplingCv(env, batch_size, discount_factor, sour
     # Keep track of useful statistics#
     stats = BatchStats(num_batch)
 
-    n_def = computeInitialNdefMultipleImportanceWeights(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, ess_min)
+    if adaptive=="Yes":
+        #Number of n_def next iteration
+        n_def = computeInitialNdefMultipleImportanceWeights(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, ess_min)
+
+    else:
+        n_def = batch_size
 
     for i_batch in range(num_batch):
 
         stats.n_def[i_batch] = n_def
         batch_size = n_def
 
-        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, n_def] = offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, learning_rate, ess_min)
+        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, n_def] = offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, learning_rate, ess_min, adaptive, n_config_cv)
 
         # Update statistics
-        stats.episode_total_rewards[i_batch] = tot_reward_batch
-        stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.total_rewards[i_batch] = tot_reward_batch
+        stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.policy_parameter[i_batch] = param
         stats.gradient[i_batch] = gradient
         stats.ess[i_batch] = ess
 
     return stats
 
-def offPolicyMultipleImportanceSamplingCvBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min):
+def offPolicyMultipleImportanceSamplingCvBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv):
     """
     Perform transfer from source tasks, using REINFORCE with MIS anc the Control Variate with baseline
     :param env: OpenAI environment
@@ -1365,6 +1289,7 @@ def offPolicyMultipleImportanceSamplingCvBaseline(env, batch_size, discount_fact
     :param num_batch: number of batch of the algorithm
     :param learning_rate: learning rate of the update rule
     :param ess_min: minimum effective sample size
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Return a BatchStats object
     """
 
@@ -1380,18 +1305,23 @@ def offPolicyMultipleImportanceSamplingCvBaseline(env, batch_size, discount_fact
     # Keep track of useful statistics#
     stats = BatchStats(num_batch)
 
-    n_def = computeInitialNdefMultipleImportanceWeights(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, ess_min)
+    if adaptive=="Yes":
+        #Number of n_def next iteration
+        n_def = computeInitialNdefMultipleImportanceWeights(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, ess_min)
+
+    else:
+        n_def = batch_size
 
     for i_batch in range(num_batch):
 
         stats.n_def[i_batch] = n_def
         batch_size = n_def
 
-        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, n_def] = offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, learning_rate, ess_min)
+        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, n_def] = offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, learning_rate, ess_min, adaptive, n_config_cv)
 
         # Update statistics
-        stats.episode_total_rewards[i_batch] = tot_reward_batch
-        stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.total_rewards[i_batch] = tot_reward_batch
+        stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.policy_parameter[i_batch] = param
         stats.gradient[i_batch] = gradient
         stats.ess[i_batch] = ess
@@ -1445,32 +1375,14 @@ def computeInitialNdefPerDecisionMultipleImportanceWeights(policy_param, env_par
     :return: Returns the weights of the multiple importance sampling estimator and the new qj of the MIS denominator (policy and model)
     """
 
-    n = source_task.shape[0]
-    param_indices = np.concatenate(([0], np.cumsum(np.delete(episodes_per_config, -1))))
-
-    param_policy_src = source_param[param_indices, 1][np.newaxis, np.newaxis, :]#policy parameter of source not repeated
-
-    B = source_param[param_indices, 3][np.newaxis, np.newaxis, :] # environment parameter B of src
-
-    state_t = np.repeat(np.delete(source_task[:, 0::3], -1, axis=1)[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t
-    state_t1 = np.repeat(next_states_unclipped[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t+1
-    unclipped_action_t = np.repeat(source_task[:, 1::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # action t
-    clipped_actions_t = np.repeat(clipped_actions[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # unclipped action t
-    variance_env = source_param[:, 4][:, np.newaxis, np.newaxis] # variance of the model transition
-
-    policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - policy_param*state_t[:, :, 0])**2)/(2*variance_action)), axis = 1)
-    model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, :, 0]) * np.exp(-((state_t1[:, :, 0] - env_param * state_t[:, :, 0] - (B[:, :, -1] * clipped_actions_t)[:, :, 0]) **2) / (2*variance_env[:, :, 0])), axis = 1)
-
-    mis_denominator = np.sum(episodes_per_config/n * src_distributions, axis=2)
-
-    weights = policy_tgt * model_tgt / mis_denominator
+    weights = computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_param, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions)[0]
     min_index = np.argmin(np.linalg.norm(weights, 1, axis=0)**2 / np.linalg.norm(weights, 2, axis=0)**2, axis=0)
 
     num_episodes_target = computeNdef(weights[:, min_index], ess_min, source_task.shape[0])
 
     return num_episodes_target
 
-def offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min):
+def offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive):
     """
     Perform transfer from source tasks, using REINFORCE with PD-MIS
     :param env: OpenAI environment
@@ -1487,6 +1399,7 @@ def offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, sour
     :param num_batch: number of batch of the algorithm
     :param learning_rate: learning rate of the update rule
     :param ess_min: minimum effective sample size
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Return a BatchStats object
     """
 
@@ -1501,25 +1414,30 @@ def offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, sour
     # Keep track of useful statistics#
     stats = BatchStats(num_batch)
 
-    n_def = computeInitialNdefPerDecisionMultipleImportanceWeights(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, ess_min)
+    if adaptive=="Yes":
+        #Number of n_def next iteration
+        n_def = computeInitialNdefPerDecisionMultipleImportanceWeights(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, ess_min)
+
+    else:
+        n_def = batch_size
 
     for i_batch in range(num_batch):
 
         stats.n_def[i_batch] = n_def
         batch_size = n_def
 
-        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, n_def] = offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min)
+        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, n_def] = offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, learning_rate, ess_min, adaptive)
 
         # Update statistics
-        stats.episode_total_rewards[i_batch] = tot_reward_batch
-        stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.total_rewards[i_batch] = tot_reward_batch
+        stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.policy_parameter[i_batch] = param
         stats.gradient[i_batch] = gradient
         stats.ess[i_batch] = ess
 
     return stats
 
-def offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min):
+def offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv):
     """
     Perform transfer from source tasks, using REINFORCE with PD-MIS and control variates
     :param env: OpenAI environment
@@ -1536,6 +1454,7 @@ def offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, so
     :param num_batch: number of batch of the algorithm
     :param learning_rate: learning rate of the update rule
     :param ess_min: minimum effective sample size
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Return a BatchStats object
     """
 
@@ -1552,25 +1471,30 @@ def offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, so
     # Keep track of useful statistics#
     stats = BatchStats(num_batch)
 
-    n_def = computeInitialNdefPerDecisionMultipleImportanceWeights(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, ess_min)
+    if adaptive=="Yes":
+        #Number of n_def next iteration
+        n_def = computeInitialNdefPerDecisionMultipleImportanceWeights(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, ess_min)
+
+    else:
+        n_def = batch_size
 
     for i_batch in range(num_batch):
 
         stats.n_def[i_batch] = n_def
         batch_size = n_def
 
-        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions ,n_def] = offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, approximation, learning_rate, ess_min)
+        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions ,n_def] = offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, approximation, learning_rate, ess_min, adaptive, n_config_cv)
 
         # Update statistics
-        stats.episode_total_rewards[i_batch] = tot_reward_batch
-        stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.total_rewards[i_batch] = tot_reward_batch
+        stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.policy_parameter[i_batch] = param
         stats.gradient[i_batch] = gradient
         stats.ess[i_batch] = ess
 
     return stats
 
-def offPolicyMultipleImportanceSamplingCvPdBaselineApproximated(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min):
+def offPolicyMultipleImportanceSamplingCvPdBaselineApproximated(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv):
     """
     Perform transfer from source tasks, using REINFORCE with PD-MIS with baseline
     :param env: OpenAI environment
@@ -1587,6 +1511,7 @@ def offPolicyMultipleImportanceSamplingCvPdBaselineApproximated(env, batch_size,
     :param num_batch: number of batch of the algorithm
     :param learning_rate: learning rate of the update rule
     :param ess_min: minimum effective sample size
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Return a BatchStats object
     """
 
@@ -1603,25 +1528,30 @@ def offPolicyMultipleImportanceSamplingCvPdBaselineApproximated(env, batch_size,
     # Keep track of useful statistics#
     stats = BatchStats(num_batch)
 
-    n_def = computeInitialNdefPerDecisionMultipleImportanceWeights(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, ess_min)
+    if adaptive=="Yes":
+        #Number of n_def next iteration
+        n_def = computeInitialNdefPerDecisionMultipleImportanceWeights(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, ess_min)
+
+    else:
+        n_def = batch_size
 
     for i_batch in range(num_batch):
 
         stats.n_def[i_batch] = n_def
         batch_size = n_def
 
-        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, n_def] = offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, approximation, learning_rate, ess_min)
+        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, n_def] = offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, approximation, learning_rate, ess_min, adaptive, n_config_cv)
 
         # Update statistics
-        stats.episode_total_rewards[i_batch] = tot_reward_batch
-        stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.total_rewards[i_batch] = tot_reward_batch
+        stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.policy_parameter[i_batch] = param
         stats.gradient[i_batch] = gradient
         stats.ess[i_batch] = ess
 
     return stats
 
-def offPolicyMultipleImportanceSamplingCvPdBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min):
+def offPolicyMultipleImportanceSamplingCvPdBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv):
     """
     Perform transfer from source tasks, using REINFORCE with PD-MIS with baseline
     :param env: OpenAI environment
@@ -1638,6 +1568,7 @@ def offPolicyMultipleImportanceSamplingCvPdBaseline(env, batch_size, discount_fa
     :param num_batch: number of batch of the algorithm
     :param learning_rate: learning rate of the update rule
     :param ess_min: minimum effective sample size
+    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't
     :return: Return a BatchStats object
     """
 
@@ -1654,18 +1585,23 @@ def offPolicyMultipleImportanceSamplingCvPdBaseline(env, batch_size, discount_fa
     # Keep track of useful statistics#
     stats = BatchStats(num_batch)
 
-    n_def = computeInitialNdefPerDecisionMultipleImportanceWeights(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, ess_min)
+    if adaptive=="Yes":
+        #Number of n_def next iteration
+        n_def = computeInitialNdefPerDecisionMultipleImportanceWeights(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, ess_min)
+
+    else:
+        n_def = batch_size
 
     for i_batch in range(num_batch):
 
         stats.n_def[i_batch] = n_def
         batch_size = n_def
 
-        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, n_def] = offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, approximation, learning_rate, ess_min)
+        [source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, n_def] = offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, approximation, learning_rate, ess_min, adaptive, n_config_cv)
 
         # Update statistics
-        stats.episode_total_rewards[i_batch] = tot_reward_batch
-        stats.episode_disc_rewards[i_batch] = discounted_reward_batch
+        stats.total_rewards[i_batch] = tot_reward_batch
+        stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.policy_parameter[i_batch] = param
         stats.gradient[i_batch] = gradient
         stats.ess[i_batch] = ess
