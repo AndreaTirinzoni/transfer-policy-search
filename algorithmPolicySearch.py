@@ -63,7 +63,7 @@ def adam(params, grad, t, m_t, v_t, alpha=0.01, beta_1=0.9, beta_2=0.999, eps=1e
     v_t = beta_2 * v_t + (1 - beta_2) * grad ** 2
     m_t_hat = m_t / (1 - beta_1 ** t)
     v_t_hat = v_t / (1 - beta_2 ** t)
-    return params - alpha * m_t_hat / (np.sqrt(v_t_hat) + eps), t, m_t, v_t
+    return params - alpha * m_t_hat / (np.sqrt(v_t_hat) + eps), t, m_t, v_t, m_t_hat
 
 def reinforce(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, learning_rate):
     """

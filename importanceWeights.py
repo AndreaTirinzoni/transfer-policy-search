@@ -199,16 +199,17 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
     param_policy_src = source_param[param_indices, 1][np.newaxis, np.newaxis, :]#policy parameter of source not repeated
     evaluated_trajectories = src_distributions.shape[0]
 
-    A = source_param[param_indices, 2][np.newaxis, np.newaxis, :] # environment parameter A of src
-    B = source_param[param_indices, 3][np.newaxis, np.newaxis, :] # environment parameter B of src
-
-    state_t = np.repeat(np.delete(source_task[:, 0::3], -1, axis=1)[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t
-    state_t1 = np.repeat(next_states_unclipped[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t+1
-    unclipped_action_t = np.repeat(source_task[:, 1::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # action t
-    clipped_actions_t = np.repeat(clipped_actions[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # unclipped action t
-    variance_env = source_param[:, 4][:, np.newaxis, np.newaxis] # variance of the model transition
-
     if n_tgt != 0:
+
+        A = source_param[param_indices, 2][np.newaxis, np.newaxis, :] # environment parameter A of src
+        B = source_param[param_indices, 3][np.newaxis, np.newaxis, :] # environment parameter B of src
+
+        state_t = np.repeat(np.delete(source_task[:, 0::3], -1, axis=1)[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t
+        state_t1 = np.repeat(next_states_unclipped[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t+1
+        unclipped_action_t = np.repeat(source_task[:, 1::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # action t
+        clipped_actions_t = np.repeat(clipped_actions[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # unclipped action t
+        variance_env = source_param[:, 4][:, np.newaxis, np.newaxis] # variance of the model transition
+
         policy_src_new_traj = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :] - param_policy_src * state_t[evaluated_trajectories:, :, :])**2)/(2*variance_action)), axis=1)
         model_src_new_traj = np.prod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, :, :]) * np.exp(-((state_t1[evaluated_trajectories:, :, :] - A * state_t[evaluated_trajectories:, :, :] - B * clipped_actions_t[evaluated_trajectories:, :, :]) **2) / (2*variance_env[evaluated_trajectories:, :, :])), axis=1)
 
@@ -218,8 +219,21 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
         src_distributions = np.concatenate((src_distributions, np.matrix(policy_src_new_param * model_src_new_param).T), axis=1)
         src_distributions = np.concatenate((src_distributions, np.matrix(policy_src_new_traj * model_src_new_traj)), axis=0)
 
-    policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - policy_param * state_t[:, :, 0])**2)/(2*variance_action)), axis = 1)
-    model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, :, 0]) * np.exp(-((state_t1[:, :, 0] - env_param * state_t[:, :, 0] - B[:, :, -1] * clipped_actions_t[:, :, 0]) **2) / (2*variance_env[:, :, 0])), axis = 1)
+        policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - policy_param * state_t[:, :, 0])**2)/(2*variance_action)), axis = 1)
+        model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, :, 0]) * np.exp(-((state_t1[:, :, 0] - env_param * state_t[:, :, 0] - B[:, :, -1] * clipped_actions_t[:, :, 0]) **2) / (2*variance_env[:, :, 0])), axis = 1)
+
+    else:
+
+        B = source_param[:, 3][:, np.newaxis] # environment parameter B of src
+
+        state_t = np.delete(source_task[:, 0::3], -1, axis=1) # state t
+        state_t1 = next_states_unclipped # state t+1
+        unclipped_action_t = source_task[:, 1::3] # action t
+        clipped_actions_t = clipped_actions # unclipped action t
+        variance_env = source_param[:, 4][:, np.newaxis] # variance of the model transition
+
+        policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - policy_param * state_t)**2)/(2*variance_action)), axis = 1)
+        model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - env_param * state_t - B * clipped_actions_t) **2) / (2*variance_env)), axis = 1)
 
     mis_denominator = np.squeeze(np.asarray(np.dot(episodes_per_config/n, src_distributions.T).T))
 
@@ -253,16 +267,17 @@ def computeMultipleImportanceWeightsSourceTargetCv(policy_param, env_param, sour
     param_policy_src = source_param[param_indices, 1][np.newaxis, np.newaxis, :]#policy parameter of source not repeated
     evaluated_trajectories = src_distributions.shape[0]
 
-    A = source_param[param_indices, 2][np.newaxis, np.newaxis, :] # environment parameter A of src
-    B = source_param[param_indices, 3][np.newaxis, np.newaxis, :] # environment parameter B of src
-
-    state_t = np.repeat(np.delete(source_task[:, 0::3], -1, axis=1)[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t
-    state_t1 = np.repeat(next_states_unclipped[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t+1
-    unclipped_action_t = np.repeat(source_task[:, 1::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # action t
-    clipped_actions_t = np.repeat(clipped_actions[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # unclipped action t
-    variance_env = source_param[:, 4][:, np.newaxis, np.newaxis] # variance of the model transition
-
     if n_tgt != 0:
+
+        A = source_param[param_indices, 2][np.newaxis, np.newaxis, :] # environment parameter A of src
+        B = source_param[param_indices, 3][np.newaxis, np.newaxis, :] # environment parameter B of src
+
+        state_t = np.repeat(np.delete(source_task[:, 0::3], -1, axis=1)[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t
+        state_t1 = np.repeat(next_states_unclipped[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t+1
+        unclipped_action_t = np.repeat(source_task[:, 1::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # action t
+        clipped_actions_t = np.repeat(clipped_actions[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # unclipped action t
+        variance_env = source_param[:, 4][:, np.newaxis, np.newaxis] # variance of the model transition
+
         policy_src_new_traj = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :] - param_policy_src * state_t[evaluated_trajectories:, :, :])**2)/(2*variance_action)), axis=1)
         model_src_new_traj = np.prod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, :, :]) * np.exp(-((state_t1[evaluated_trajectories:, :, :] - A * state_t[evaluated_trajectories:, :, :] - B * clipped_actions_t[evaluated_trajectories:, :, :]) **2) / (2*variance_env[evaluated_trajectories:, :, :])), axis=1)
 
@@ -272,8 +287,21 @@ def computeMultipleImportanceWeightsSourceTargetCv(policy_param, env_param, sour
         src_distributions = np.concatenate((src_distributions, np.matrix(policy_src_new_param * model_src_new_param).T), axis=1)
         src_distributions = np.concatenate((src_distributions, np.matrix(policy_src_new_traj * model_src_new_traj)), axis=0)
 
-    policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - policy_param * state_t[:, :, 0])**2)/(2*variance_action)), axis = 1)
-    model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, :, 0]) * np.exp(-((state_t1[:, :, 0] - env_param * state_t[:, :, 0] - B[:, :, -1] * clipped_actions_t[:, :, 0]) **2) / (2*variance_env[:, :, 0])), axis = 1)
+        policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - policy_param * state_t[:, :, 0])**2)/(2*variance_action)), axis = 1)
+        model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, :, 0]) * np.exp(-((state_t1[:, :, 0] - env_param * state_t[:, :, 0] - B[:, :, -1] * clipped_actions_t[:, :, 0]) **2) / (2*variance_env[:, :, 0])), axis = 1)
+
+    else:
+
+        B = source_param[:, 3][:, np.newaxis] # environment parameter B of src
+
+        state_t = np.delete(source_task[:, 0::3], -1, axis=1) # state t
+        state_t1 = next_states_unclipped # state t+1
+        unclipped_action_t = source_task[:, 1::3] # action t
+        clipped_actions_t = clipped_actions # unclipped action t
+        variance_env = source_param[:, 4][:, np.newaxis] # variance of the model transition
+
+        policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - policy_param * state_t)**2)/(2*variance_action)), axis = 1)
+        model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - env_param * state_t - B * clipped_actions_t)**2) / (2*variance_env)), axis = 1)
 
     mis_denominator = np.squeeze(np.asarray(np.dot(episodes_per_config/n, src_distributions.T).T))
 
@@ -335,8 +363,8 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
 
     param_policy_src = source_param[param_indices, 1] #policy parameter of source not repeated
 
-    A = source_param[param_indices, 2] # environment parameter A of src
-    B = source_param[param_indices, 3][:, np.newaxis] # environment parameter B of src
+    A = source_param[:, 2] # environment parameter A of src
+    B = source_param[:, 3][:, np.newaxis] # environment parameter B of src
 
     evaluated_trajectories = src_distributions.shape[0]
 
@@ -346,24 +374,22 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
     clipped_actions_t = clipped_actions[:, :] # unclipped action t
     variance_env = source_param[:, 4][:, np.newaxis] # variance of the model transition
 
-    policy_src_new_traj = np.ones((source_task.shape[0]-evaluated_trajectories, param_policy_src.shape[0]))
-    model_src_new_traj = np.ones((source_task.shape[0]-evaluated_trajectories, param_policy_src.shape[0]))
-    policy_src_new_param = np.ones((source_task.shape[0]-evaluated_trajectories, param_policy_src.shape[0]))
-    model_src_new_param = np.ones((source_task.shape[0]-evaluated_trajectories, param_policy_src.shape[0]))
-
     if n_tgt != 0:
-        for i in param_policy_src.shape[0]:
-            policy_src_new_traj[:, i] = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :] - param_policy_src[i] * state_t[evaluated_trajectories:, :])**2)/(2*variance_action)), axis=1)
-            model_src_new_traj[:, i] = np.cumprod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, i, :]) * np.exp(-((state_t1[evaluated_trajectories:, :, :] - A[i] * state_t[evaluated_trajectories:, :] - B[i] * clipped_actions_t[evaluated_trajectories:, :]) **2) / (2*variance_env[evaluated_trajectories:, :])), axis=1)
+        policy_src_new_traj = np.ones((source_task.shape[0]-evaluated_trajectories, state_t.shape[1], param_policy_src.shape[0]))
+        model_src_new_traj = np.ones((source_task.shape[0]-evaluated_trajectories, state_t.shape[1], param_policy_src.shape[0]))
 
-            policy_src_new_param[:, i] = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[0:evaluated_trajectories, :, 0] - param_policy_src[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0])**2)/(2*variance_action)), axis=1)
-            model_src_new_param[:, i] = np.cumprod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, :, 0]) * np.exp(-((state_t1[0:evaluated_trajectories, :, 0] - A[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0] - B[0:evaluated_trajectories, :, -1] * clipped_actions_t[0:evaluated_trajectories, :, 0]) **2) / (2*variance_env[0:evaluated_trajectories, :, 0])), axis=1)
+        for i in range(param_policy_src.shape[0]-1):
+            policy_src_new_traj[:, :, i] = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :] - param_policy_src[i] * state_t[evaluated_trajectories:, :])**2)/(2*variance_action)), axis=1)
+            model_src_new_traj[:, :, i] = np.cumprod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, :]) * np.exp(-((state_t1[evaluated_trajectories:, :] - A[i] * state_t[evaluated_trajectories:, :] - B[i] * clipped_actions_t[evaluated_trajectories:, :])**2) / (2*variance_env[evaluated_trajectories:, :])), axis=1)
 
-            src_distributions = np.concatenate((src_distributions, (policy_src_new_param * model_src_new_param)[:, :, np.newaxis]), axis=2)
-            src_distributions = np.concatenate((src_distributions, (policy_src_new_traj * model_src_new_traj)), axis=0)
+        policy_src_new_param = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[0:evaluated_trajectories, :] - param_policy_src[-1] * state_t[0:evaluated_trajectories, :])**2)/(2*variance_action)), axis=1)
+        model_src_new_param = np.cumprod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, :]) * np.exp(-((state_t1[0:evaluated_trajectories, :] - A[-1] * state_t[0:evaluated_trajectories, :] - B[-1] * clipped_actions_t[0:evaluated_trajectories, :])**2) / (2*variance_env[0:evaluated_trajectories, :])), axis=1)
 
-    policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - policy_param * state_t)**2)/(2*variance_action)), axis = 1)
-    model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - env_param * state_t - (B * clipped_actions_t))**2) / (2*variance_env)), axis = 1)
+        src_distributions = np.concatenate((src_distributions, (policy_src_new_param * model_src_new_param)[:, :, np.newaxis]), axis=2)
+        src_distributions = np.concatenate((src_distributions, (policy_src_new_traj * model_src_new_traj)), axis=0)
+
+    policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - policy_param * state_t)**2)/(2*variance_action)), axis=1)
+    model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - env_param * state_t - (B * clipped_actions_t))**2) / (2*variance_env)), axis=1)
 
     mis_denominator = np.sum(episodes_per_config/n * src_distributions, axis=2)
 
@@ -397,8 +423,8 @@ def computeMultipleImportanceWeightsSourceTargetCvPerDecision(policy_param, env_
 
     param_policy_src = source_param[param_indices, 1] #policy parameter of source not repeated
 
-    A = source_param[param_indices, 2] # environment parameter A of src
-    B = source_param[param_indices, 3][:, np.newaxis] # environment parameter B of src
+    A = source_param[:, 2] # environment parameter A of src
+    B = source_param[:, 3][:, np.newaxis] # environment parameter B of src
 
     evaluated_trajectories = src_distributions.shape[0]
 
@@ -408,30 +434,28 @@ def computeMultipleImportanceWeightsSourceTargetCvPerDecision(policy_param, env_
     clipped_actions_t = clipped_actions[:, :] # unclipped action t
     variance_env = source_param[:, 4][:, np.newaxis] # variance of the model transition
 
-    policy_src_new_traj = np.ones((source_task.shape[0]-evaluated_trajectories, param_policy_src.shape[0]))
-    model_src_new_traj = np.ones((source_task.shape[0]-evaluated_trajectories, param_policy_src.shape[0]))
-    policy_src_new_param = np.ones((source_task.shape[0]-evaluated_trajectories, param_policy_src.shape[0]))
-    model_src_new_param = np.ones((source_task.shape[0]-evaluated_trajectories, param_policy_src.shape[0]))
-
     if n_tgt != 0:
-        for i in param_policy_src.shape[0]:
-            policy_src_new_traj[:, i] = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :] - param_policy_src[i] * state_t[evaluated_trajectories:, :])**2)/(2*variance_action)), axis=1)
-            model_src_new_traj[:, i] = np.cumprod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, i, :]) * np.exp(-((state_t1[evaluated_trajectories:, :, :] - A[i] * state_t[evaluated_trajectories:, :] - B[i] * clipped_actions_t[evaluated_trajectories:, :]) **2) / (2*variance_env[evaluated_trajectories:, :])), axis=1)
+        policy_src_new_traj = np.ones((source_task.shape[0]-evaluated_trajectories, state_t.shape[1], param_policy_src.shape[0]))
+        model_src_new_traj = np.ones((source_task.shape[0]-evaluated_trajectories, state_t.shape[1], param_policy_src.shape[0]))
 
-            policy_src_new_param[:, i] = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[0:evaluated_trajectories, :, 0] - param_policy_src[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0])**2)/(2*variance_action)), axis=1)
-            model_src_new_param[:, i] = np.cumprod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, :, 0]) * np.exp(-((state_t1[0:evaluated_trajectories, :, 0] - A[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0] - B[0:evaluated_trajectories, :, -1] * clipped_actions_t[0:evaluated_trajectories, :, 0]) **2) / (2*variance_env[0:evaluated_trajectories, :, 0])), axis=1)
+        for i in range(param_policy_src.shape[0]-1):
+            policy_src_new_traj[:, :, i] = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :] - param_policy_src[i] * state_t[evaluated_trajectories:, :])**2)/(2*variance_action)), axis=1)
+            model_src_new_traj[:, :, i] = np.cumprod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, :]) * np.exp(-((state_t1[evaluated_trajectories:, :] - A[i] * state_t[evaluated_trajectories:, :] - B[i] * clipped_actions_t[evaluated_trajectories:, :])**2) / (2*variance_env[evaluated_trajectories:, :])), axis=1)
 
-            src_distributions = np.concatenate((src_distributions, (policy_src_new_param * model_src_new_param)[:, :, np.newaxis]), axis=2)
-            src_distributions = np.concatenate((src_distributions, (policy_src_new_traj * model_src_new_traj)), axis=0)
+        policy_src_new_param = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[0:evaluated_trajectories, :] - param_policy_src[-1] * state_t[0:evaluated_trajectories, :])**2)/(2*variance_action)), axis=1)
+        model_src_new_param = np.cumprod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, :]) * np.exp(-((state_t1[0:evaluated_trajectories, :] - A[-1] * state_t[0:evaluated_trajectories, :] - B[-1] * clipped_actions_t[0:evaluated_trajectories, :])**2) / (2*variance_env[0:evaluated_trajectories, :])), axis=1)
 
-    policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - policy_param * state_t)**2)/(2*variance_action)), axis = 1)
-    model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - env_param * state_t - (B * clipped_actions_t))**2) / (2*variance_env)), axis = 1)
+        src_distributions = np.concatenate((src_distributions, (policy_src_new_param * model_src_new_param)[:, :, np.newaxis]), axis=2)
+        src_distributions = np.concatenate((src_distributions, (policy_src_new_traj * model_src_new_traj)), axis=0)
+
+    policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - policy_param * state_t)**2)/(2*variance_action)), axis=1)
+    model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - env_param * state_t - (B * clipped_actions_t))**2) / (2*variance_env)), axis=1)
 
     mis_denominator = np.sum(episodes_per_config/n * src_distributions, axis=2)
 
     weights = policy_tgt * model_tgt / mis_denominator
 
-    mis_denominator_tensor = np.repeat(mis_denominator[:, :, np.newaxis], param_policy_src.shape[2], axis=2)
+    mis_denominator_tensor = np.repeat(mis_denominator[:, :, np.newaxis], param_policy_src.shape[0], axis=2)
 
     control_variate = (src_distributions / mis_denominator_tensor) - np.ones(src_distributions.shape)
 
@@ -621,7 +645,7 @@ def offPolicyUpdateImportanceSampling(env, param, source_param, episodes_per_con
     ess = np.linalg.norm(weights_source_target_update, 1)**2 / np.linalg.norm(weights_source_target_update, 2)**2
     N = source_task.shape[0]
     gradient = 1/N * np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis=0)
-    #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+    ##param, t, m_t, v_t, gradient = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     param = param + learning_rate * gradient
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target
@@ -675,7 +699,7 @@ def offPolicyUpdateImportanceSamplingPerDec(env, param, source_param, episodes_p
     ess = np.min(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
     N = source_task.shape[0]
     gradient = 1/N * np.sum(np.sum(weights_source_target_update * gradient_off_policy_update * discounted_rewards_all, axis = 1))
-    #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+    ##param, t, m_t, v_t, gradient = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     param = param + learning_rate * gradient
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target
@@ -728,7 +752,7 @@ def offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes
     gradient_off_policy_update = np.sum(computeGradientsSourceTargetTimestep(param, source_task, variance_action), axis=1)
     discounted_rewards_all = source_param[:,0]
     gradient = 1/N * np.sum((np.squeeze(np.array(weights_source_target_update)) * gradient_off_policy_update) * discounted_rewards_all)
-    #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+    ##param, t, m_t, v_t, gradient = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     param = param + learning_rate * gradient
 
     weights_source_target_ess = computeMultipleImportanceWeightsSourceTarget(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, n_tgt=0)[0]
@@ -824,7 +848,7 @@ def offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episod
     gradient = regressionFitting(gradient_estimation, control_variates, n_config_cv)
 
     #Update the parameter
-    #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+    ##param, t, m_t, v_t, gradient = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     param = param + learning_rate * gradient
 
     weights_source_target_ess = computeMultipleImportanceWeightsSourceTarget(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, n_tgt=0)[0]
@@ -889,7 +913,7 @@ def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, ep
     gradient_off_policy_update = np.cumsum(computeGradientsSourceTargetTimestep(param, source_task, variance_action), axis=1)
     discounted_rewards_all = discount_factor_timestep * source_task[:, 2::3]
     gradient = 1/N * np.sum(np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis = 1), axis=0)
-    #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+    ##param, t, m_t, v_t, gradient = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     param = param + learning_rate * gradient
 
     weights_source_target_ess = computeMultipleImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, n_tgt=0)[0]
@@ -960,7 +984,7 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, 
     gradient = regressionFitting(gradient_estimation, control_variates, n_config_cv) #always the same, only the MIS with CV changes format of the x_avg array
 
     #Update the parameter
-    #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+    ##param, t, m_t, v_t, gradient = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     param = param + learning_rate * gradient
 
     weights_source_target_ess = computeMultipleImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, n_tgt=0)[0]
@@ -1034,7 +1058,7 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source
         gradient += regressionFitting(gradient_estimation[:, t], control_variates[:, t, :], n_config_cv) #always the same, only the MIS with CV changes format of the x_avg array
 
     #Update the parameter
-    #param, t, m_t, v_t = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+    #param, t, m_t, v_t, gradient = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     param = param + learning_rate * gradient
 
     weights_source_target_ess = computeMultipleImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, n_tgt=0)[0]
@@ -1408,7 +1432,7 @@ def computeInitialNdefPerDecisionMultipleImportanceWeights(policy_param, env_par
     :return: Returns the weights of the multiple importance sampling estimator and the new qj of the MIS denominator (policy and model)
     """
 
-    weights = computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_param, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributionsn_tgt=0)[0]
+    weights = computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_param, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, n_tgt=0)[0]
     min_index = np.argmin(np.linalg.norm(weights, 1, axis=0)**2 / np.linalg.norm(weights, 2, axis=0)**2, axis=0)
 
     num_episodes_target = computeNdef(weights[:, min_index], ess_min, source_task.shape[0])
