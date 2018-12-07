@@ -83,13 +83,13 @@ mean_initial_param = -0.1
 episode_length = 20
 variance_initial_param = 0
 variance_action = 0.1
-batch_size = 5
+batch_size = 1
 ess_min = 50
-num_batch = 800
+num_batch = 1000
 discount_factor = 0.99
 runs = 10
 learning_rate = 1e-5
-adaptive = "Yes"
+adaptive = "No"
 
 discounted_reward_off_policy_importance_sampling = np.zeros((runs, num_batch))
 discounted_reward_off_policy_importance_sampling_pd = np.zeros((runs, num_batch))
@@ -155,7 +155,7 @@ n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to 
 
 seeds = [np.random.randint(1000000) for _ in range(runs)]
 
-results = Parallel(n_jobs=1)(delayed(simulation)(env, batch_size, discount_factor, variance_action, episode_length, mean_initial_param, variance_initial_param, num_batch, learning_rate, seed, episodes_per_configuration, env_param_min, env_param_max, policy_param_min, policy_param_max) for seed in seeds)
+results = Parallel(n_jobs=5)(delayed(simulation)(env, batch_size, discount_factor, variance_action, episode_length, mean_initial_param, variance_initial_param, num_batch, learning_rate, seed, episodes_per_configuration, env_param_min, env_param_max, policy_param_min, policy_param_max) for seed in seeds)
 
 for i_run in range(runs):
 
@@ -213,60 +213,60 @@ for i_run in range(runs):
     n_def_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run, :] = results[i_run][4].n_def
 
 print("Saving files")
-np.savetxt("./parallelAllMisAdaptive/discounted_reward_off_policy_importance_sampling.csv", discounted_reward_off_policy_importance_sampling, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/discounted_reward_off_policy_importance_sampling_pd.csv", discounted_reward_off_policy_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/discounted_reward_off_policy_multiple_importance_sampling.csv", discounted_reward_off_policy_multiple_importance_sampling, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/discounted_reward_off_policy_multiple_importance_sampling_cv.csv", discounted_reward_off_policy_multiple_importance_sampling_cv, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/discounted_reward_off_policy_multiple_importance_sampling_cv_baseline.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/discounted_reward_off_policy_multiple_importance_sampling_pd.csv", discounted_reward_off_policy_multiple_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/discounted_reward_off_policy_multiple_importance_sampling_cv_pd.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/discounted_reward_reinforce.csv", discounted_reward_reinforce, delimiter=",")
+np.savetxt("./parallelAllMis1b/discounted_reward_off_policy_importance_sampling.csv", discounted_reward_off_policy_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllMis1b/discounted_reward_off_policy_importance_sampling_pd.csv", discounted_reward_off_policy_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllMis1b/discounted_reward_off_policy_multiple_importance_sampling.csv", discounted_reward_off_policy_multiple_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllMis1b/discounted_reward_off_policy_multiple_importance_sampling_cv.csv", discounted_reward_off_policy_multiple_importance_sampling_cv, delimiter=",")
+np.savetxt("./parallelAllMis1b/discounted_reward_off_policy_multiple_importance_sampling_cv_baseline.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
+np.savetxt("./parallelAllMis1b/discounted_reward_off_policy_multiple_importance_sampling_pd.csv", discounted_reward_off_policy_multiple_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllMis1b/discounted_reward_off_policy_multiple_importance_sampling_cv_pd.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
+np.savetxt("./parallelAllMis1b/discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
+np.savetxt("./parallelAllMis1b/discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", discounted_reward_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
+np.savetxt("./parallelAllMis1b/discounted_reward_reinforce.csv", discounted_reward_reinforce, delimiter=",")
 
-np.savetxt("./parallelAllMisAdaptive/policy_param_off_policy_importance_sampling.csv", policy_param_off_policy_importance_sampling, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/policy_param_off_policy_importance_sampling_pd.csv", policy_param_off_policy_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/policy_param_off_policy_multiple_importance_sampling.csv", policy_param_off_policy_multiple_importance_sampling, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/policy_param_off_policy_multiple_importance_sampling_cv.csv", policy_param_off_policy_multiple_importance_sampling_cv, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/policy_param_off_policy_multiple_importance_sampling_cv_baseline.csv", policy_param_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/policy_param_off_policy_multiple_importance_sampling_pd.csv", policy_param_off_policy_multiple_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/policy_param_off_policy_multiple_importance_sampling_cv_pd.csv", policy_param_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/policy_param_reinforce.csv", policy_param_reinforce, delimiter=",")
+np.savetxt("./parallelAllMis1b/policy_param_off_policy_importance_sampling.csv", policy_param_off_policy_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllMis1b/policy_param_off_policy_importance_sampling_pd.csv", policy_param_off_policy_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllMis1b/policy_param_off_policy_multiple_importance_sampling.csv", policy_param_off_policy_multiple_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllMis1b/policy_param_off_policy_multiple_importance_sampling_cv.csv", policy_param_off_policy_multiple_importance_sampling_cv, delimiter=",")
+np.savetxt("./parallelAllMis1b/policy_param_off_policy_multiple_importance_sampling_cv_baseline.csv", policy_param_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
+np.savetxt("./parallelAllMis1b/policy_param_off_policy_multiple_importance_sampling_pd.csv", policy_param_off_policy_multiple_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllMis1b/policy_param_off_policy_multiple_importance_sampling_cv_pd.csv", policy_param_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
+np.savetxt("./parallelAllMis1b/policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
+np.savetxt("./parallelAllMis1b/policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", policy_param_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
+np.savetxt("./parallelAllMis1b/policy_param_reinforce.csv", policy_param_reinforce, delimiter=",")
 
-np.savetxt("./parallelAllMisAdaptive/gradient_off_policy_importance_sampling.csv", gradient_off_policy_importance_sampling, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/gradient_off_policy_importance_sampling_pd.csv", gradient_off_policy_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/gradient_off_policy_multiple_importance_sampling.csv", gradient_off_policy_multiple_importance_sampling, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/gradient_off_policy_multiple_importance_sampling_cv.csv", gradient_off_policy_multiple_importance_sampling_cv, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/gradient_off_policy_multiple_importance_sampling_cv_baseline.csv", gradient_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/gradient_off_policy_multiple_importance_sampling_pd.csv", gradient_off_policy_multiple_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/gradient_off_policy_multiple_importance_sampling_cv_pd.csv", gradient_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/gradient_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", gradient_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/gradient_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", gradient_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/gradient_reinforce.csv", gradient_reinforce, delimiter=",")
+np.savetxt("./parallelAllMis1b/gradient_off_policy_importance_sampling.csv", gradient_off_policy_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllMis1b/gradient_off_policy_importance_sampling_pd.csv", gradient_off_policy_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllMis1b/gradient_off_policy_multiple_importance_sampling.csv", gradient_off_policy_multiple_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllMis1b/gradient_off_policy_multiple_importance_sampling_cv.csv", gradient_off_policy_multiple_importance_sampling_cv, delimiter=",")
+np.savetxt("./parallelAllMis1b/gradient_off_policy_multiple_importance_sampling_cv_baseline.csv", gradient_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
+np.savetxt("./parallelAllMis1b/gradient_off_policy_multiple_importance_sampling_pd.csv", gradient_off_policy_multiple_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllMis1b/gradient_off_policy_multiple_importance_sampling_cv_pd.csv", gradient_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
+np.savetxt("./parallelAllMis1b/gradient_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", gradient_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
+np.savetxt("./parallelAllMis1b/gradient_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", gradient_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
+np.savetxt("./parallelAllMis1b/gradient_reinforce.csv", gradient_reinforce, delimiter=",")
 
-np.savetxt("./parallelAllMisAdaptive/ess_off_policy_importance_sampling.csv", ess_off_policy_importance_sampling, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/ess_off_policy_importance_sampling_pd.csv", ess_off_policy_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/ess_off_policy_multiple_importance_sampling.csv", ess_off_policy_multiple_importance_sampling, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/ess_off_policy_multiple_importance_sampling_cv.csv", ess_off_policy_multiple_importance_sampling_cv, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/ess_off_policy_multiple_importance_sampling_cv_baseline.csv", ess_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/ess_off_policy_multiple_importance_sampling_pd.csv", ess_off_policy_multiple_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/ess_off_policy_multiple_importance_sampling_cv_pd.csv", ess_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/ess_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", ess_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/ess_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", ess_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
+np.savetxt("./parallelAllMis1b/ess_off_policy_importance_sampling.csv", ess_off_policy_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllMis1b/ess_off_policy_importance_sampling_pd.csv", ess_off_policy_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllMis1b/ess_off_policy_multiple_importance_sampling.csv", ess_off_policy_multiple_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllMis1b/ess_off_policy_multiple_importance_sampling_cv.csv", ess_off_policy_multiple_importance_sampling_cv, delimiter=",")
+np.savetxt("./parallelAllMis1b/ess_off_policy_multiple_importance_sampling_cv_baseline.csv", ess_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
+np.savetxt("./parallelAllMis1b/ess_off_policy_multiple_importance_sampling_pd.csv", ess_off_policy_multiple_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllMis1b/ess_off_policy_multiple_importance_sampling_cv_pd.csv", ess_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
+np.savetxt("./parallelAllMis1b/ess_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", ess_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
+np.savetxt("./parallelAllMis1b/ess_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", ess_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
 
-np.savetxt("./parallelAllMisAdaptive/n_def_off_policy_importance_sampling.csv", n_def_off_policy_importance_sampling, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/n_def_off_policy_importance_sampling_pd.csv", n_def_off_policy_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/n_def_off_policy_multiple_importance_sampling.csv", n_def_off_policy_multiple_importance_sampling, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/n_def_off_policy_multiple_importance_sampling_cv.csv", n_def_off_policy_multiple_importance_sampling_cv, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/n_def_off_policy_multiple_importance_sampling_cv_baseline.csv", n_def_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/n_def_off_policy_multiple_importance_sampling_pd.csv", n_def_off_policy_multiple_importance_sampling_pd, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/n_def_off_policy_multiple_importance_sampling_cv_pd.csv", n_def_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/n_def_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", n_def_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/n_def_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", n_def_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
+np.savetxt("./parallelAllMis1b/n_def_off_policy_importance_sampling.csv", n_def_off_policy_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllMis1b/n_def_off_policy_importance_sampling_pd.csv", n_def_off_policy_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllMis1b/n_def_off_policy_multiple_importance_sampling.csv", n_def_off_policy_multiple_importance_sampling, delimiter=",")
+np.savetxt("./parallelAllMis1b/n_def_off_policy_multiple_importance_sampling_cv.csv", n_def_off_policy_multiple_importance_sampling_cv, delimiter=",")
+np.savetxt("./parallelAllMis1b/n_def_off_policy_multiple_importance_sampling_cv_baseline.csv", n_def_off_policy_multiple_importance_sampling_cv_baseline, delimiter=",")
+np.savetxt("./parallelAllMis1b/n_def_off_policy_multiple_importance_sampling_pd.csv", n_def_off_policy_multiple_importance_sampling_pd, delimiter=",")
+np.savetxt("./parallelAllMis1b/n_def_off_policy_multiple_importance_sampling_cv_pd.csv", n_def_off_policy_multiple_importance_sampling_cv_pd, delimiter=",")
+np.savetxt("./parallelAllMis1b/n_def_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated.csv", n_def_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated, delimiter=",")
+np.savetxt("./parallelAllMis1b/n_def_off_policy_multiple_importance_sampling_cv_pd_baseline.csv", n_def_off_policy_multiple_importance_sampling_cv_pd_baseline, delimiter=",")
 
 stats_opt = iw.optimalPolicy(env, num_batch, 10, discount_factor, variance_action, episode_length) # Optimal policy
 
-np.savetxt("./parallelAllMisAdaptive/discounted_reward_optimal.csv", stats_opt.disc_rewards, delimiter=",")
-np.savetxt("./parallelAllMisAdaptive/policy_param_optimal.csv", stats_opt.policy_parameter, delimiter=",")
+np.savetxt("./parallelAllMis1b/discounted_reward_optimal.csv", stats_opt.disc_rewards, delimiter=",")
+np.savetxt("./parallelAllMis1b/policy_param_optimal.csv", stats_opt.policy_parameter, delimiter=",")

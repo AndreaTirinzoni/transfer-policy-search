@@ -768,7 +768,7 @@ def offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes
 
     return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, num_episodes_target
 
-def regressionFitting(y, x, n_config_cv):
+def regressionFitting(y, x, n_config_cv, baseline_flag):
     """
     Fit a regression with the control variates
     :param y: the target
@@ -776,10 +776,13 @@ def regressionFitting(y, x, n_config_cv):
     :param n_config_cv: number of control variates to fit
     :return: returns the error of the fitted regression
     """
-    baseline = np.squeeze(np.asarray(x[:, -1]))[:, np.newaxis]
-    x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
+    if baseline_flag==1:
+        baseline = np.squeeze(np.asarray(x[:, -1]))[:, np.newaxis]
+        x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
+    else:
+        x = x[:, 0:n_config_cv]
 
-    train_size = int(np.ceil(x.shape[0]/3*2))
+    train_size = int(np.ceil(x.shape[0]/20))
     train_index = random.sample(range(x.shape[0]), train_size)
     x_train = x[train_index]
     y_train = y[train_index]
@@ -845,8 +848,10 @@ def offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episod
     gradient_estimation = (np.squeeze(np.array(weights_source_target_update)) * gradient_off_policy_update) * discounted_rewards_all
 
     #Fitting the regression
-    gradient = regressionFitting(gradient_estimation, control_variates, n_config_cv)
-
+    gradient = regressionFitting(gradient_estimation, control_variates, n_config_cv, baseline)
+    print([gradient, param, num_episodes_target])
+    if abs(gradient) > 1e4:
+        print("")
     #Update the parameter
     ##param, t, m_t, v_t, gradient = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     param = param + learning_rate * gradient
@@ -854,6 +859,8 @@ def offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episod
     weights_source_target_ess = computeMultipleImportanceWeightsSourceTarget(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, n_tgt=0)[0]
     weights_source_target_ess[np.isnan(weights_source_target_ess)] = 0
     ess = np.linalg.norm(weights_source_target_ess, 1)**2 / np.linalg.norm(weights_source_target_ess, 2)**2
+    if np.isnan(ess):
+        print("nan")
 
     if adaptive == "Yes":
         #Number of n_def next iteration
@@ -981,7 +988,7 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, 
     gradient_estimation = np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis=1)
 
     #Fitting the regression
-    gradient = regressionFitting(gradient_estimation, control_variates, n_config_cv) #always the same, only the MIS with CV changes format of the x_avg array
+    gradient = regressionFitting(gradient_estimation, control_variates, n_config_cv, baseline) #always the same, only the MIS with CV changes format of the x_avg array
 
     #Update the parameter
     ##param, t, m_t, v_t, gradient = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
@@ -1055,7 +1062,7 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source
 
     #Fitting the regression for every t 0...T-1
     for t in range(control_variates.shape[1]):
-        gradient += regressionFitting(gradient_estimation[:, t], control_variates[:, t, :], n_config_cv) #always the same, only the MIS with CV changes format of the x_avg array
+        gradient += regressionFitting(gradient_estimation[:, t], control_variates[:, t, :], n_config_cv, baseline) #always the same, only the MIS with CV changes format of the x_avg array
 
     #Update the parameter
     #param, t, m_t, v_t, gradient = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
@@ -1358,7 +1365,7 @@ def offPolicyMultipleImportanceSamplingCvBaseline(env, batch_size, discount_fact
     baseline = 1
 
     src_distributions = computeMultipleImportanceWeightsSourceDistributions(source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config)
-
+    print(source_task.shape[0])
     # Keep track of useful statistics#
     stats = BatchStats(num_batch)
 
@@ -1382,7 +1389,7 @@ def offPolicyMultipleImportanceSamplingCvBaseline(env, batch_size, discount_fact
         stats.policy_parameter[i_batch] = param
         stats.gradient[i_batch] = gradient
         stats.ess[i_batch] = ess
-
+    print(source_task.shape[0])
     return stats
 
 def computePerDecisionMultipleImportanceWeightsSourceDistributions(source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config):
