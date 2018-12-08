@@ -523,7 +523,7 @@ def addEpisodesToSourceDataset(env, num_episodes_target, episode_length, param, 
         #Update the parameters
         weights_source_target_update[np.isnan(weights_source_target_update)] = 0
         gradient_off_policy_update = np.concatenate([gradient_off_policy, np.asarray(gradient_est)], axis=0)
-        discounted_rewards_all = np.concatenate([source_param[:, 0], np.asmatrix(discounted_return_timestep)], axis=0)
+        discounted_rewards_all = np.concatenate([source_task[:, 2::3] * discount_factor_timestep, np.asmatrix(discounted_return_timestep)], axis=0)
 
     source_param_new[:, 0] = discounted_return
     source_param_new[:, 1] = param
@@ -698,7 +698,7 @@ def offPolicyUpdateImportanceSamplingPerDec(env, param, source_param, episodes_p
 
     ess = np.min(np.linalg.norm(weights_source_target_update, 1, axis=0)**2 / np.linalg.norm(weights_source_target_update, 2, axis=0)**2, axis=0)
     N = source_task.shape[0]
-    gradient = 1/N * np.sum(np.sum(weights_source_target_update * gradient_off_policy_update * discounted_rewards_all, axis = 1))
+    gradient = 1/N * np.sum(np.sum(np.multiply(weights_source_target_update, np.multiply(gradient_off_policy_update, discounted_rewards_all)), axis = 1))
     ##param, t, m_t, v_t, gradient = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     param = param + learning_rate * gradient
 
