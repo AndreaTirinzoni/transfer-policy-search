@@ -782,7 +782,7 @@ def regressionFitting(y, x, n_config_cv, baseline_flag):
     else:
         x = x[:, 0:n_config_cv]
 
-    train_size = int(np.ceil(x.shape[0]/20))
+    train_size = int(np.ceil(x.shape[0]/2))
     train_index = random.sample(range(x.shape[0]), train_size)
     x_train = x[train_index]
     y_train = y[train_index]
