@@ -17,10 +17,10 @@ variance_action = 0.1
 batch_size = 1
 num_batch = 100
 discount_factor = 0.99
-runs = 5
+runs = 7
 learning_rate = 1e-6
 ess_min = 80
-adaptive = "No"
+adaptive = "Yes"
 
 episodes_per_configuration = 10
 env_param_min = 0.5
@@ -83,7 +83,7 @@ for i_run in range(runs):
     #off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive)
     #
     # print("PD-IS")
-    off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive)
+    #off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive)
     #
     # print("REINFORCE")
     # reinforce = alg.reinforce(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, learning_rate)
@@ -100,7 +100,7 @@ for i_run in range(runs):
     # off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive)
     #
     # print("PD-MIS-CV")
-    #off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv)
+    off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv)
     #
     # print("PD-MIS-CV-BASELINE-APPROXIMATED")
     #off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyMultipleImportanceSamplingCvPdBaselineApproximated(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv)
