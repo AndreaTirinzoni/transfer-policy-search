@@ -40,34 +40,34 @@ def simulation(env, batch_size, discount_factor, variance_action, episode_length
     print("Learning policy")
 
     print("IS")
-    off_policy_importance_sampling = iw.offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive)
+    off_policy_importance_sampling = iw.offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, learning_rate = 1e-6)
 
     print("PD-IS")
-    off_policy_importance_sampling_pd = iw.offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive)
+    off_policy_importance_sampling_pd = iw.offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, learning_rate = 1e-6)
 
     print("REINFORCE")
     reinforce = alg.reinforce(env, num_batch, 5, discount_factor, episode_length, initial_param, variance_action, learning_rate)
 
     print("MIS")
-    off_policy_multiple_importance_sampling = iw.offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive)
+    off_policy_multiple_importance_sampling = iw.offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, learning_rate = 1e-7)
 
     print("MIS-CV")
-    off_policy_multiple_importance_sampling_cv = iw.offPolicyMultipleImportanceSamplingCv(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv)
+    off_policy_multiple_importance_sampling_cv = iw.offPolicyMultipleImportanceSamplingCv(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, n_config_cv, learning_rate = 1e-6)
 
     print("MIS-CV-BASELINE")
-    off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyMultipleImportanceSamplingCvBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv)
+    off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyMultipleImportanceSamplingCvBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, n_config_cv, learning_rate = 1e-5)
 
     print("PD-MIS")
-    off_policy_multiple_importance_sampling_pd = iw.offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive)
+    off_policy_multiple_importance_sampling_pd = iw.offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, learning_rate = 1e-5)
 
     print("PD-MIS-CV")
-    off_policy_multiple_importance_sampling_pd_cv = iw.offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv)
+    off_policy_multiple_importance_sampling_pd_cv = iw.offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, n_config_cv, learning_rate = 1e-7)
 
     print("PD-MIS-CV-BASELINE-APPROXIMATED")
-    off_policy_multiple_importance_sampling_pd_cv_baseline_approximated = iw.offPolicyMultipleImportanceSamplingCvPdBaselineApproximated(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv)
+    off_policy_multiple_importance_sampling_pd_cv_baseline_approximated = iw.offPolicyMultipleImportanceSamplingCvPdBaselineApproximated(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, n_config_cv, learning_rate = 1e-5)
 
     print("PD-MIS-CV-BASELINE")
-    off_policy_multiple_importance_sampling_pd_cv_baseline = iw.offPolicyMultipleImportanceSamplingCvPdBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv)
+    off_policy_multiple_importance_sampling_pd_cv_baseline = iw.offPolicyMultipleImportanceSamplingCvPdBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, n_config_cv, learning_rate = 1e-5)
 
     return [off_policy_importance_sampling, off_policy_importance_sampling_pd, reinforce, off_policy_multiple_importance_sampling,
             off_policy_multiple_importance_sampling_cv, off_policy_multiple_importance_sampling_cv_baseline, off_policy_multiple_importance_sampling_pd,
@@ -83,7 +83,7 @@ variance_initial_param = 0
 variance_action = 0.1
 batch_size = 1
 ess_min = 90
-num_batch = 800
+num_batch = 600
 discount_factor = 0.99
 runs = 10
 learning_rate = 1e-6
@@ -192,23 +192,23 @@ for i_run in range(runs):
 
     ess_off_policy_importance_sampling[i_run, :] = results[i_run][0].ess
     ess_off_policy_importance_sampling_pd[i_run, :] = results[i_run][1].ess
-    ess_off_policy_multiple_importance_sampling[i_run, :] = results[i_run][2].ess
-    ess_off_policy_multiple_importance_sampling_cv[i_run, :] = results[i_run][3].ess
-    ess_off_policy_multiple_importance_sampling_cv_baseline[i_run, :] = results[i_run][4].ess
-    ess_off_policy_multiple_importance_sampling_pd[i_run, :] = results[i_run][5].ess
-    ess_off_policy_multiple_importance_sampling_cv_pd[i_run, :] = results[i_run][6].ess
-    ess_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated[i_run, :] = results[i_run][7].ess
-    ess_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run, :] = results[i_run][8].ess
+    ess_off_policy_multiple_importance_sampling[i_run, :] = results[i_run][3].ess
+    ess_off_policy_multiple_importance_sampling_cv[i_run, :] = results[i_run][4].ess
+    ess_off_policy_multiple_importance_sampling_cv_baseline[i_run, :] = results[i_run][5].ess
+    ess_off_policy_multiple_importance_sampling_pd[i_run, :] = results[i_run][6].ess
+    ess_off_policy_multiple_importance_sampling_cv_pd[i_run, :] = results[i_run][7].ess
+    ess_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated[i_run, :] = results[i_run][8].ess
+    ess_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run, :] = results[i_run][9].ess
 
     n_def_off_policy_importance_sampling[i_run, :] = results[i_run][0].n_def
     n_def_off_policy_importance_sampling_pd[i_run, :] = results[i_run][1].n_def
-    n_def_off_policy_multiple_importance_sampling[i_run, :] = results[i_run][2].n_def
-    n_def_off_policy_multiple_importance_sampling_cv[i_run, :] = results[i_run][3].n_def
-    n_def_off_policy_multiple_importance_sampling_cv_baseline[i_run, :] = results[i_run][4].n_def
-    n_def_off_policy_multiple_importance_sampling_pd[i_run, :] = results[i_run][5].n_def
-    n_def_off_policy_multiple_importance_sampling_cv_pd[i_run, :] = results[i_run][6].n_def
-    n_def_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated[i_run, :] = results[i_run][7].n_def
-    n_def_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run, :] = results[i_run][8].n_def
+    n_def_off_policy_multiple_importance_sampling[i_run, :] = results[i_run][3].n_def
+    n_def_off_policy_multiple_importance_sampling_cv[i_run, :] = results[i_run][4].n_def
+    n_def_off_policy_multiple_importance_sampling_cv_baseline[i_run, :] = results[i_run][5].n_def
+    n_def_off_policy_multiple_importance_sampling_pd[i_run, :] = results[i_run][6].n_def
+    n_def_off_policy_multiple_importance_sampling_cv_pd[i_run, :] = results[i_run][7].n_def
+    n_def_off_policy_multiple_importance_sampling_cv_pd_baseline_approximated[i_run, :] = results[i_run][8].n_def
+    n_def_off_policy_multiple_importance_sampling_cv_pd_baseline[i_run, :] = results[i_run][9].n_def
 
 print("Saving files")
 np.savetxt("./parallelAllAdaptive/discounted_reward_off_policy_importance_sampling.csv", discounted_reward_off_policy_importance_sampling, delimiter=",")

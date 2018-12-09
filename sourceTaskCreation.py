@@ -109,13 +109,13 @@ env = gym.make('LQG1D-v0')
 # variance_action = 0.1
 # episode_length = 20
 # np.random.seed(2000)
-# batch_size = 15
+# batch_size = 20
 # discount_factor = 0.99
-# env_param_min = 0.5
+# env_param_min = 0.6
 # env_param_max = 1.5
 # policy_param_min = -1
 # policy_param_max = -0.1
-# linspace_env = 11
+# linspace_env = 10
 # linspace_policy = 10
 #
 # [source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = stc.sourceTaskCreation(episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy)

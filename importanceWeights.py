@@ -1084,7 +1084,7 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source
 
 # Algorithm off policy using different estimators
 
-def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive):
+def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, learning_rate):
     """
     Perform transfer from source tasks, using REINFORCE with IS
     :param env: OpenAI environment
@@ -1128,7 +1128,7 @@ def offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, n
 
     return stats
 
-def offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive):
+def offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, learning_rate):
     """
     Perform transfer from source tasks, using REINFORCE with PD-IS
     :param env: OpenAI environment
@@ -1226,7 +1226,7 @@ def computeInitialNdefMultipleImportanceWeights(policy_param, env_param, source_
 
     return num_episodes_target
 
-def offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive):
+def offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, learning_rate):
     """
     Perform transfer from source tasks, using REINFORCE with MIS
     :param env: OpenAI environment
@@ -1280,7 +1280,7 @@ def offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source
 
     return stats
 
-def offPolicyMultipleImportanceSamplingCv(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv):
+def offPolicyMultipleImportanceSamplingCv(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, n_config_cv, learning_rate):
     """
     Perform transfer from source tasks, using REINFORCE with MIS anc the Control Variate
     :param env: OpenAI environment
@@ -1336,7 +1336,7 @@ def offPolicyMultipleImportanceSamplingCv(env, batch_size, discount_factor, sour
 
     return stats
 
-def offPolicyMultipleImportanceSamplingCvBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv):
+def offPolicyMultipleImportanceSamplingCvBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, n_config_cv, learning_rate):
     """
     Perform transfer from source tasks, using REINFORCE with MIS anc the Control Variate with baseline
     :param env: OpenAI environment
@@ -1446,7 +1446,7 @@ def computeInitialNdefPerDecisionMultipleImportanceWeights(policy_param, env_par
 
     return num_episodes_target
 
-def offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive):
+def offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, learning_rate):
     """
     Perform transfer from source tasks, using REINFORCE with PD-MIS
     :param env: OpenAI environment
@@ -1501,7 +1501,7 @@ def offPolicyMultipleImportanceSamplingPd(env, batch_size, discount_factor, sour
 
     return stats
 
-def offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv):
+def offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, n_config_cv, learning_rate):
     """
     Perform transfer from source tasks, using REINFORCE with PD-MIS and control variates
     :param env: OpenAI environment
@@ -1558,7 +1558,7 @@ def offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, so
 
     return stats
 
-def offPolicyMultipleImportanceSamplingCvPdBaselineApproximated(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv):
+def offPolicyMultipleImportanceSamplingCvPdBaselineApproximated(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, n_config_cv, learning_rate):
     """
     Perform transfer from source tasks, using REINFORCE with PD-MIS with baseline
     :param env: OpenAI environment
@@ -1615,7 +1615,7 @@ def offPolicyMultipleImportanceSamplingCvPdBaselineApproximated(env, batch_size,
 
     return stats
 
-def offPolicyMultipleImportanceSamplingCvPdBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, learning_rate, ess_min, adaptive, n_config_cv):
+def offPolicyMultipleImportanceSamplingCvPdBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, clipped_actions, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, n_config_cv, learning_rate):
     """
     Perform transfer from source tasks, using REINFORCE with PD-MIS with baseline
     :param env: OpenAI environment
