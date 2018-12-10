@@ -997,6 +997,8 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, 
     weights_source_target_ess = computeMultipleImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, n_tgt=0)[0]
     weights_source_target_ess[np.isnan(weights_source_target_ess)] = 0
     ess = np.min(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
+    if np.isnan(ess):
+        print("nan")
     min_index = np.argmin(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
 
     if adaptive=="Yes":
@@ -1071,6 +1073,8 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source
     weights_source_target_ess = computeMultipleImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, n_tgt=0)[0]
     weights_source_target_ess[np.isnan(weights_source_target_ess)] = 0
     ess = np.min(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
+    if np.isnan(ess):
+        print("nan")
     min_index = np.argmin(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
 
     if adaptive=="Yes":

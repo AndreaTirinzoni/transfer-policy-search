@@ -54,7 +54,7 @@ def sourceTaskCreation(episode_length, batch_size, discount_factor, variance_act
     """
 
     policy_param = np.linspace(policy_param_min, policy_param_max, linspace_policy)
-    env_param = np.linspace(env_param_min, env_param_max, linspace_policy)
+    env_param = np.linspace(env_param_min, env_param_max, linspace_env)
     i_episode = 0
     episodes_per_configuration = np.zeros(policy_param.shape[0]*env_param.shape[0])
     i_configuration = 0
@@ -115,7 +115,7 @@ env = gym.make('LQG1D-v0')
 # env_param_max = 1.5
 # policy_param_min = -1
 # policy_param_max = -0.1
-# linspace_env = 10
+# linspace_env = 11
 # linspace_policy = 10
 #
 # [source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = stc.sourceTaskCreation(episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy)

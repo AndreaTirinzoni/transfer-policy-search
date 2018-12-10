@@ -15,10 +15,10 @@ episode_length = 20
 variance_initial_param = 0
 variance_action = 0.1
 batch_size = 1
-num_batch = 300
+num_batch = 400
 discount_factor = 0.99
 runs = 4
-learning_rate = 1e-6
+learning_rate = 1e-5
 ess_min = 100
 adaptive = "No"
 
@@ -27,7 +27,7 @@ env_param_min = 0.5
 env_param_max = 1.5
 policy_param_min = -1
 policy_param_max = 0
-n_config_cv = 19
+n_config_cv = 109
 
 print("Loading files")
 source_task = np.genfromtxt('source_task.csv', delimiter=',')
@@ -103,10 +103,10 @@ for i_run in range(runs):
     #off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyMultipleImportanceSamplingCvPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, n_config_cv, learning_rate) #1e-7
     #
     # print("PD-MIS-CV-BASELINE-APPROXIMATED")
-    off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyMultipleImportanceSamplingCvPdBaselineApproximated(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, n_config_cv, learning_rate) #1e-5
+    #off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyMultipleImportanceSamplingCvPdBaselineApproximated(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, n_config_cv, learning_rate) #1e-5
     #
     # print("PD-MIS-CV-BASELINE")
-    #off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyMultipleImportanceSamplingCvPdBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, n_config_cv, learning_rate) #1e-5
+    off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyMultipleImportanceSamplingCvPdBaseline(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, n_config_cv, learning_rate) #1e-5
 
     # policy_param_off_policy_importance_sampling[i_run,:] = off_policy_importance_sampling.policy_parameter
     # policy_param_off_policy_importance_sampling_pd[i_run,:] = off_policy_importance_sampling_pd.policy_parameter
