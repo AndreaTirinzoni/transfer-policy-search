@@ -20,7 +20,7 @@ discount_factor = 0.99
 runs = 4
 learning_rate = 1e-5
 ess_min = 100
-adaptive = "No"
+adaptive = "Yes"
 
 episodes_per_configuration = 10
 env_param_min = 0.5
