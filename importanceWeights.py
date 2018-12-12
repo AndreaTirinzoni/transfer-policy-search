@@ -241,6 +241,43 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
 
     return [weights, src_distributions]
 
+def computeEssMis(policy_param, env_param, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions):
+    """
+    Compute the ess estimated using mis
+    :param policy_param: current policy parameter
+    :param env_param: current environment parameter
+    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
+    :param variance_action: variance of the action's distribution
+    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
+    :param next_states_unclipped: matrix containing the unclipped next states of every episode for every time step
+    :param clipped_actions: matrix containing the unclipped actions of every episode for every time step
+    :param episodes_per_config: vector containing the number of episodes for each source configuration
+    :param src_distributions: source distributions, (the qj of the MIS denominator policy)
+    :return: return the ESS
+    """
+
+    n = source_task.shape[0]
+    n_no_tgt = n - episodes_per_config[-1]
+
+    B = source_param[:, 3][:, np.newaxis] # environment parameter B of src
+
+    state_t = np.delete(source_task[:, 0::3], -1, axis=1) # state t
+    state_t1 = next_states_unclipped # state t+1
+    unclipped_action_t = source_task[:, 1::3] # action t
+    clipped_actions_t = clipped_actions # unclipped action t
+    variance_env = source_param[:, 4][:, np.newaxis] # variance of the model transition
+
+    policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - policy_param * state_t)**2)/(2*variance_action)), axis = 1)
+    model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - env_param * state_t - B * clipped_actions_t) **2) / (2*variance_env)), axis = 1)
+
+    mis_denominator = np.squeeze(np.asarray(np.dot(episodes_per_config, src_distributions.T).T))
+
+    numerator = (policy_tgt * model_tgt) **2
+    denominator = mis_denominator**2
+    ess_inv = numerator/denominator
+    ess = 1/np.sum(ess_inv)
+    return ess
+
 def computeMultipleImportanceWeightsSourceTargetCv(policy_param, env_param, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, policy_gradients, baseline, n_tgt):
     """
     Compute the multiple importance weights considering policy and transition model
@@ -314,6 +351,44 @@ def computeMultipleImportanceWeightsSourceTargetCv(policy_param, env_param, sour
         control_variate = np.concatenate((control_variate, baseline_covariate), axis=1)
 
     return [weights, src_distributions, control_variate]
+
+def computeEssPdMis(policy_param, env_param, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions):
+    """
+    Compute the ess estimated using pd-mis
+    :param policy_param: current policy parameter
+    :param env_param: current environment parameter
+    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
+    :param variance_action: variance of the action's distribution
+    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
+    :param next_states_unclipped: matrix containing the unclipped next states of every episode for every time step
+    :param clipped_actions: matrix containing the unclipped actions of every episode for every time step
+    :param episodes_per_config: vector containing the number of episodes for each source configuration
+    :param src_distributions: source distributions, (the qj of the MIS denominator policy)
+    :return: return the ESS
+    """
+
+    n = source_task.shape[0]
+    n_no_tgt = n - episodes_per_config[-1]
+
+    B = source_param[:, 3][:, np.newaxis] # environment parameter B of src
+
+    state_t = np.delete(source_task[:, 0::3], -1, axis=1) # state t
+    state_t1 = next_states_unclipped # state t+1
+    unclipped_action_t = source_task[:, 1::3] # action t
+    clipped_actions_t = clipped_actions[:, :] # unclipped action t
+    variance_env = source_param[:, 4][:, np.newaxis] # variance of the model transition
+
+    policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - policy_param * state_t)**2)/(2*variance_action)), axis=1)
+    model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - env_param * state_t - (B * clipped_actions_t))**2) / (2*variance_env)), axis=1)
+
+    mis_denominator = np.sum(episodes_per_config * src_distributions, axis=2)
+
+    numerator = (policy_tgt * model_tgt)**2
+    denominator = mis_denominator**2
+    ess_inv = numerator/denominator
+    ess = 1/np.sum(ess_inv, axis=0)
+
+    return ess
 
 def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_param, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, n_tgt):
     """
@@ -757,7 +832,7 @@ def offPolicyUpdateMultipleImportanceSampling(env, param, source_param, episodes
 
     weights_source_target_ess = computeMultipleImportanceWeightsSourceTarget(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, n_tgt=0)[0]
     weights_source_target_ess[np.isnan(weights_source_target_ess)] = 0
-    ess = np.linalg.norm(weights_source_target_ess, 1)**2 / np.linalg.norm(weights_source_target_ess, 2)**2
+    ess = computeEssPdMis(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions)
 
     if adaptive=="Yes":
         #Number of n_def next iteration
@@ -790,6 +865,8 @@ def regressionFitting(y, x, n_config_cv, baseline_flag):
     y_test = np.delete(y, train_index, axis=0)
     beta = np.squeeze(np.asarray(np.matmul(np.linalg.pinv(x_train[:, 1:]), y_train)))
     error = np.squeeze(np.asarray(y_test - np.dot(x_test[:, 1:], beta)))
+    if abs(np.mean(error))>1e5:
+        print("problem")
     # x_avg = np.squeeze(np.asarray(np.mean(x, axis=0)))
     # beta = np.matmul(np.linalg.inv(np.matmul((x[:, 1:]-x_avg[1:]).T, (x[:, 1:]-x_avg[1:]))), np.matmul((x[:, 1:]-x_avg[1:]).T, (y-y_avg)).T)
     # I = np.identity(y.shape[0])
@@ -846,6 +923,7 @@ def offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episod
 
     discounted_rewards_all = source_param[:,0]
     gradient_estimation = (np.squeeze(np.array(weights_source_target_update)) * gradient_off_policy_update) * discounted_rewards_all
+    ess = computeEssMis(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions)
 
     #Fitting the regression
     gradient = regressionFitting(gradient_estimation, control_variates, n_config_cv, baseline)
@@ -858,7 +936,7 @@ def offPolicyUpdateMultipleImportanceSamplingCv(env, param, source_param, episod
 
     weights_source_target_ess = computeMultipleImportanceWeightsSourceTarget(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, n_tgt=0)[0]
     weights_source_target_ess[np.isnan(weights_source_target_ess)] = 0
-    ess = np.linalg.norm(weights_source_target_ess, 1)**2 / np.linalg.norm(weights_source_target_ess, 2)**2
+    ess = computeEssMis(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions)
     if np.isnan(ess):
         print("nan")
 
@@ -925,8 +1003,8 @@ def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, ep
 
     weights_source_target_ess = computeMultipleImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, n_tgt=0)[0]
     weights_source_target_ess[np.isnan(weights_source_target_ess)] = 0
-    ess = np.min(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
-    min_index = np.argmin(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
+    ess = computeEssPdMis(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions)
+    min_index = np.argmin(ess)
 
     if adaptive=="Yes":
         #Number of n_def next iteration
@@ -935,7 +1013,7 @@ def offPolicyUpdateMultipleImportanceSamplingPerDec(env, param, source_param, ep
     else:
         num_episodes_target = batch_size
 
-    return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, num_episodes_target
+    return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, min(ess), src_distributions, num_episodes_target
 
 def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, approximation, learning_rate, ess_min, adaptive, n_config_cv):
     """
@@ -983,7 +1061,7 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, 
     gradient_off_policy_update = np.cumsum(computeGradientsSourceTargetTimestep(param, source_task, variance_action), axis=1)
     [weights_source_target_update, src_distributions, control_variates] = computeMultipleImportanceWeightsSourceTargetCvPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, gradient_off_policy_update, baseline, approximation, batch_size)
     weights_source_target_update[np.isnan(weights_source_target_update)] = 0
-
+    ess1 = computeEssPdMis(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions)
     discounted_rewards_all = discount_factor_timestep * source_task[:, 2::3]
     gradient_estimation = np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis=1)
 
@@ -996,11 +1074,8 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, 
 
     weights_source_target_ess = computeMultipleImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, n_tgt=0)[0]
     weights_source_target_ess[np.isnan(weights_source_target_ess)] = 0
-    ess = np.min(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
-    if np.isnan(ess):
-        print("nan")
-    min_index = np.argmin(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
-
+    ess = computeEssPdMis(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions)
+    min_index = np.argmin(ess)
     if adaptive=="Yes":
         #Number of n_def next iteration
         num_episodes_target = computeNdef(weights_source_target_ess[:, min_index], ess_min, source_task.shape[0])
@@ -1008,7 +1083,9 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDec(env, param, source_param, 
     else:
         num_episodes_target = batch_size
 
-    return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, num_episodes_target
+    if min(ess1)<ess_min:
+        print("Ess pre: " + str(min(ess)) + " Ess post: " + str(min(ess1)) + " Ndef= " + str(num_episodes_target))
+    return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, min(ess), src_distributions, num_episodes_target
 
 def offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source_param, episodes_per_config, source_task, next_states_unclipped, clipped_actions, src_distributions, variance_action, episode_length, batch_size, t, m_t, v_t, discount_factor, baseline, approximation, learning_rate, ess_min, adaptive, n_config_cv):
     """
@@ -1072,10 +1149,10 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source
 
     weights_source_target_ess = computeMultipleImportanceWeightsSourceTargetPerDecision(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions, n_tgt=0)[0]
     weights_source_target_ess[np.isnan(weights_source_target_ess)] = 0
-    ess = np.min(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
+    ess = computeEssPdMis(param, env.A, source_param, variance_action, source_task, next_states_unclipped, clipped_actions, episodes_per_config, src_distributions)
     if np.isnan(ess):
         print("nan")
-    min_index = np.argmin(np.linalg.norm(weights_source_target_ess, 1, axis=0)**2 / np.linalg.norm(weights_source_target_ess, 2, axis=0)**2, axis=0)
+    min_index = np.argmin(ess)
 
     if adaptive=="Yes":
         #Number of n_def next iteration
@@ -1084,7 +1161,7 @@ def offPolicyUpdateMultipleImportanceSamplingCvPerDecBaseline(env, param, source
     else:
         num_episodes_target = batch_size
 
-    return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, src_distributions, num_episodes_target
+    return source_param, source_task, next_states_unclipped, clipped_actions, episodes_per_config, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, min(ess), src_distributions, num_episodes_target
 
 # Algorithm off policy using different estimators
 
