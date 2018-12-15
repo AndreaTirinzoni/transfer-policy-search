@@ -12,12 +12,8 @@ class BatchStats:
 
         self.total_rewards = np.zeros(num_batch)
         self.disc_rewards = np.zeros(num_batch)
-        #cartpole
         self.policy_parameter = np.zeros((num_batch, param_space_size))
         self.gradient = np.zeros((num_batch, param_space_size))
-        #lqg1d
-        #self.policy_parameter = np.zeros(num_batch)
-        #self.gradient = np.zeros(num_batch)
         self.ess = np.zeros(num_batch)
 
 def optimalPolicy(env, num_batch, batch_size, discount_factor, variance_action, param_space_size):
@@ -56,27 +52,32 @@ def optimalPolicy(env, num_batch, batch_size, discount_factor, variance_action, 
 
     return stats
 
-# Inizialize environment and parameters
+# Initialize environment and parameters
 env = gym.make('cartpolec-v0')
 param_space_size = 4
 state_space_size = 4
+env_space_size = 4
 episode_length = 200
+
+#Initialize simulation parameters
 mean_initial_param = -0.1 * np.ones(param_space_size)
 variance_initial_param = 0
-variance_action = 0.1
-batch_size = 10
-num_batch = 1000
+variance_action = 0.01
+batch_size = 30
+num_batch = 350
 discount_factor = 0.99
-learning_rate = 1e-2
+learning_rate = 1e-4
 
-runs = 2
+runs = 5
 
 reward_reinforce = np.zeros((runs, num_batch))
+total_reward_reinforce = np.zeros((runs, num_batch))
 reward_reinforce_baseline = np.zeros((runs, num_batch))
+total_reward_reinforce_baseline = np.zeros((runs, num_batch))
 reward_gpomdp = np.zeros((runs, num_batch))
+total_reward_gpomdp = np.zeros((runs, num_batch))
 reward_optimal = np.zeros((runs, num_batch))
 
-#cartpole
 policy_reinforce = np.zeros((runs, num_batch, param_space_size))
 policy_reinforce_baseline = np.zeros((runs, num_batch, param_space_size))
 policy_gpomdp = np.zeros((runs, num_batch, param_space_size))
@@ -91,21 +92,27 @@ for i_run in range(runs):
 
     reinforce = alg.reinforce(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, param_space_size, state_space_size, learning_rate) # apply REINFORCE for estimating gradient
     reward_reinforce[i_run, :] = reinforce.disc_rewards
+    total_reward_reinforce[i_run, :] = reinforce.total_rewards
     policy_reinforce[i_run, :, :] = reinforce.policy_parameter
 
-    # reinforce_baseline = alg.reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_length, initial_param, param_space_size, state_space_size, variance_action, learning_rate) # apply REINFORCE with baseline for estimating gradient
-    # reward_reinforce_baseline[i_run, :] = reinforce_baseline.episode_disc_rewards
-    # policy_reinforce_baseline[i_run, :, :] = reinforce_baseline.policy_parameter
-    #
-    # gpomdp = alg.gpomdp(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, learning_rate) # apply G(PO)MDP for estimating gradient
-    # reward_gpomdp[i_run,:] = gpomdp.episode_disc_rewards
-    # policy_gpomdp[i_run,:] = gpomdp.policy_parameter
+    reinforce_baseline = alg.reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, param_space_size, state_space_size, learning_rate) # apply REINFORCE with baseline for estimating gradient
+    reward_reinforce_baseline[i_run, :] = reinforce_baseline.disc_rewards
+    total_reward_reinforce_baseline[i_run, :] = reinforce_baseline.total_rewards
+    policy_reinforce_baseline[i_run, :, :] = reinforce_baseline.policy_parameter
+
+    gpomdp = alg.gpomdp(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, param_space_size, state_space_size, learning_rate) # apply G(PO)MDP for estimating gradient
+    reward_gpomdp[i_run, :] = gpomdp.disc_rewards
+    total_reward_gpomdp[i_run, :] = gpomdp.total_rewards
+    policy_gpomdp[i_run, :, :] = gpomdp.policy_parameter
     #
     # optimal = optimalPolicy(env, num_batch, batch_size, discount_factor, variance_action) # Optimal policy
-    # reward_optimal[i_run,:] = optimal.episode_disc_rewards
+    # reward_optimal[i_run,:] = optimal.disc_rewards
     # policy_optimal[i_run,:] = optimal.policy_parameter
 
 # Compare the statistics of the different algorithms
+
+x = range(num_batch)
+
 mean_alg1 = np.mean(reward_reinforce, axis=0)
 mean_alg2 = np.mean(reward_reinforce_baseline, axis=0)
 mean_alg3 = np.mean(reward_gpomdp, axis=0)
@@ -115,6 +122,18 @@ var_alg2 = np.std(reward_reinforce_baseline, axis=0) / (m.sqrt(runs))
 var_alg3 = np.std(reward_gpomdp, axis=0) / (m.sqrt(runs))
 var_opt = np.zeros(num_batch)
 
+plot.plot_curves([x, x, x, x], [mean_alg1, mean_alg2, mean_alg3, mean_opt], [var_alg1, var_alg2, var_alg3, var_opt], title = "Disc Rewards over batches", x_label = "Batch", y_label = "Discounted reward", names = ["REINFORCE", "REINFORCE with baseline", "G(PO)MDP", "Optimal policy"], file_name = "Rewards policy search")
+
+mean_alg1 = np.mean(total_reward_reinforce, axis=0)
+mean_alg2 = np.mean(total_reward_reinforce_baseline, axis=0)
+mean_alg3 = np.mean(total_reward_gpomdp, axis=0)
+mean_opt = np.mean(reward_optimal, axis=0)
+var_alg1 = np.std(total_reward_reinforce, axis=0) / (m.sqrt(runs))
+var_alg2 = np.std(total_reward_reinforce_baseline, axis=0) / (m.sqrt(runs))
+var_alg3 = np.std(total_reward_gpomdp, axis=0) / (m.sqrt(runs))
+var_opt = np.zeros(num_batch)
+
+plot.plot_curves([x, x, x, x], [mean_alg1, mean_alg2, mean_alg3, mean_opt], [var_alg1, var_alg2, var_alg3, var_opt], title = "Tot Rewards over batches", x_label = "Batch", y_label = "Discounted reward", names = ["REINFORCE", "REINFORCE with baseline", "G(PO)MDP", "Optimal policy"], file_name = "Rewards policy search")
 
 mean_pol1 = np.mean(policy_reinforce, axis=0)
 mean_pol2 = np.mean(policy_reinforce_baseline, axis=0)
@@ -125,9 +144,7 @@ var_pol2 = np.std(policy_reinforce_baseline, axis=0) / (m.sqrt(runs))
 var_pol3 = np.std(policy_gpomdp, axis=0) / (m.sqrt(runs))
 var_pol_opt = np.zeros(num_batch)
 
-x = range(num_batch)
 
-plot.plot_curves([x, x, x, x], [mean_alg1, mean_alg2, mean_alg3, mean_opt], [var_alg1, var_alg2, var_alg3, var_opt], title = "Rewards over batches", x_label = "Batch", y_label = "Discounted reward", names = ["REINFORCE", "REINFORCE with baseline", "G(PO)MDP", "Optimal policy"], file_name = "Rewards policy search")
 for i in range(param_space_size):
     plot.plot_curves([x, x, x, x], [mean_pol1[:, i], mean_pol2[:, i], mean_pol3[:, i], mean_pol_opt[:, i]], [var_pol1[:, i], var_pol2[:, i], var_pol3[:, i], var_pol_opt], title = "Policy parameter over batches", x_label = "Batch", y_label = "Policy parameter", names = ["REINFORCE", "REINFORCE with baseline", "G(PO)MDP", "Optimal policy"], file_name = "Policy parameter policy search")
 # print("Saving files")

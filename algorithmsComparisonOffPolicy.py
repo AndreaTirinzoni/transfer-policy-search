@@ -8,9 +8,12 @@ import math as m
 import sourceTaskCreation as stc
 
 np.set_printoptions(precision=4)
-env = gym.make('cartpolec-v0')
+env = gym.make('LQG1D-v0')
+param_space_size = 1
+state_space_size = 1
+env_param_space_size = 2
 
-mean_initial_param = -0.1
+mean_initial_param = -0.1 * np.ones(param_space_size)
 episode_length = 20
 variance_initial_param = 0
 variance_action = 0.1
@@ -45,19 +48,19 @@ discounted_reward_off_policy_multiple_importance_sampling_cv_baseline = np.zeros
 discounted_reward_off_policy_multiple_importance_sampling_pd = np.zeros((runs, num_batch))
 discounted_reward_reinforce = np.zeros((runs, num_batch))
 
-policy_param_off_policy_importance_sampling = np.zeros((runs, num_batch))
-policy_param_off_policy_importance_sampling_pd = np.zeros((runs, num_batch))
-policy_param_off_policy_multiple_importance_sampling = np.zeros((runs, num_batch))
-policy_param_off_policy_multiple_importance_sampling_cv = np.zeros((runs, num_batch))
-policy_param_off_policy_multiple_importance_sampling_cv_baseline = np.zeros((runs, num_batch))
-policy_param_off_policy_multiple_importance_sampling_pd = np.zeros((runs, num_batch))
-policy_param_reinforce = np.zeros((runs, num_batch))
+policy_param_off_policy_importance_sampling = np.zeros((runs, num_batch, param_space_size))
+policy_param_off_policy_importance_sampling_pd = np.zeros((runs, num_batch, param_space_size))
+policy_param_off_policy_multiple_importance_sampling = np.zeros((runs, num_batch, param_space_size))
+policy_param_off_policy_multiple_importance_sampling_cv = np.zeros((runs, num_batch, param_space_size))
+policy_param_off_policy_multiple_importance_sampling_cv_baseline = np.zeros((runs, num_batch, param_space_size))
+policy_param_off_policy_multiple_importance_sampling_pd = np.zeros((runs, num_batch, param_space_size))
+policy_param_reinforce = np.zeros((runs, num_batch, param_space_size))
 
-gradient_off_policy_importance_sampling = np.zeros((runs, num_batch))
-gradient_off_policy_importance_sampling_pd = np.zeros((runs, num_batch))
-gradient_off_policy_multiple_importance_sampling = np.zeros((runs, num_batch))
-gradient_off_policy_multiple_importance_sampling_pd = np.zeros((runs, num_batch))
-gradient_reinforce = np.zeros((runs, num_batch))
+gradient_off_policy_importance_sampling = np.zeros((runs, num_batch, param_space_size))
+gradient_off_policy_importance_sampling_pd = np.zeros((runs, num_batch, param_space_size))
+gradient_off_policy_multiple_importance_sampling = np.zeros((runs, num_batch, param_space_size))
+gradient_off_policy_multiple_importance_sampling_pd = np.zeros((runs, num_batch, param_space_size))
+gradient_reinforce = np.zeros((runs, num_batch, param_space_size))
 
 ess_off_policy_importance_sampling = np.zeros((runs, num_batch))
 ess_off_policy_importance_sampling_pd = np.zeros((runs, num_batch))
@@ -65,7 +68,7 @@ ess_off_policy_multiple_importance_sampling = np.zeros((runs, num_batch))
 ess_off_policy_multiple_importance_sampling_pd = np.zeros((runs, num_batch))
 
 
-gradient_off_policy_multiple_importance_sampling_cv_baseline = np.zeros((runs, num_batch))
+gradient_off_policy_multiple_importance_sampling_cv_baseline = np.zeros((runs, num_batch, param_space_size))
 
 ess_off_policy_multiple_importance_sampling_cv_baseline = np.zeros((runs, num_batch))
 
@@ -80,13 +83,13 @@ for i_run in range(runs):
     #[source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = stc.sourceTaskCreation(episode_length, episodes_per_configuration, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max)
 
     # print("IS")
-    #off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, learning_rate) #1e-6
+    off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, learning_rate, param_space_size, state_space_size, env_param_space_size) #1e-6
     #
     # print("PD-IS")
     #off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyImportanceSamplingPd(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, learning_rate) #1e-6
     #
     print("REINFORCE")
-    off_policy_multiple_importance_sampling_cv_baseline = alg.reinforce(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, learning_rate)
+    #off_policy_multiple_importance_sampling_cv_baseline = alg.reinforce(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, learning_rate)
 
     print("MIS")
     #off_policy_multiple_importance_sampling_cv_baseline = iw.offPolicyMultipleImportanceSampling(env, batch_size, discount_factor, source_task, next_states_unclipped, actions_clipped, source_param, episodes_per_config, variance_action, episode_length, initial_param, num_batch, ess_min, adaptive, learning_rate) #1e-7

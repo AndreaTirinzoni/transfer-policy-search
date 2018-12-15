@@ -7,7 +7,7 @@ import math as m
 from joblib import Parallel, delayed
 import sourceTaskCreation as stc
 
-def simulation(env, batch_size, discount_factor, variance_action, episode_length, mean_initial_param, variance_initial_param, num_batch, learning_rate, seed, episodes_per_configuration, env_param_min, env_param_max, policy_param_min, policy_param_max):
+def simulation(env, batch_size, discount_factor, variance_action, episode_length, mean_initial_param, variance_initial_param, num_batch, learning_rate, seed, episodes_per_configuration, env_param_min, env_param_max, policy_param_min, policy_param_max, param_space_size, state_space_size, env_param_space_size):
     """
     Function that runs the policy search algorithm for learning the optimal policy
     :param episode_length: length of the episodes
@@ -35,7 +35,7 @@ def simulation(env, batch_size, discount_factor, variance_action, episode_length
     initial_param = np.random.normal(mean_initial_param, m.sqrt(variance_initial_param))
 
     print("Creating source task")
-    [source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = stc.sourceTaskCreation(episode_length, episodes_per_configuration, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy)
+    [source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = stc.sourceTaskCreationAllCombinations(episode_length, episodes_per_configuration, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
 
     print("Learning policy")
 
@@ -84,9 +84,9 @@ variance_initial_param = 0
 variance_action = 0.1
 batch_size = 1
 ess_min = 90
-num_batch = 1000
+num_batch = 2
 discount_factor = 0.99
-runs = 20
+runs = 1
 learning_rate = 1e-6
 adaptive = "Yes"
 
@@ -151,10 +151,13 @@ policy_param_max = -0.1
 linspace_policy = 10
 linspace_env = 11
 n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to use to fit the control variates
+param_space_size = 1
+state_space_size = 1
+env_param_space_size = 2
 
 seeds = [np.random.randint(1000000) for _ in range(runs)]
 
-results = Parallel(n_jobs=5)(delayed(simulation)(env, batch_size, discount_factor, variance_action, episode_length, mean_initial_param, variance_initial_param, num_batch, learning_rate, seed, episodes_per_configuration, env_param_min, env_param_max, policy_param_min, policy_param_max) for seed in seeds)
+results = Parallel(n_jobs=1)(delayed(simulation)(env, batch_size, discount_factor, variance_action, episode_length, mean_initial_param, variance_initial_param, num_batch, learning_rate, seed, episodes_per_configuration, env_param_min, env_param_max, policy_param_min, policy_param_max, param_space_size, state_space_size, env_param_space_size) for seed in seeds)
 
 for i_run in range(runs):
 

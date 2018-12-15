@@ -3,29 +3,36 @@ import envs
 import numpy as np
 import math as m
 
-def createBatch(env, batch_size, episode_length, param, variance_action):
+def createBatch(env, batch_size, episode_length, param, state_space_size, variance_action):
     """
     Create a batch of episodes
     :param env: OpenAI environment
     :param batch_size: size of the batch
     :param episode_length: length of the episode
     :param param: policy parameter
+    :param state_space_size: size of the state space
     :param variance_action: variance of the action's distribution
     :return: A tensor containing [num episodes, timestep, informations] where informations stays for: [state, action, reward, next_state, unclipped_state, unclipped_action]
     """
 
-    batch = np.zeros((batch_size, episode_length, 6)) # [state, action, reward, next_state]
+    information_size = state_space_size+2+state_space_size+state_space_size+1
+    batch = np.zeros((batch_size, episode_length, information_size)) #[state, clipped_action, reward, next_state, unclipped_state, action]
     for i_batch in range(batch_size):
         state = env.reset()
 
         for t in range(episode_length):
             # Take a step
-            mean_action = param*state
+            mean_action = np.dot(param, state)
             action = np.random.normal(mean_action, m.sqrt(variance_action))
             next_state, reward, done, unclipped_state, clipped_action = env.step(action)
             # Keep track of the transition
-
-            batch[i_batch, t, :] = [state, clipped_action, reward, next_state, unclipped_state, action]
+            #env.render()
+            batch[i_batch, t, 0:state_space_size] = state
+            batch[i_batch, t, state_space_size] = clipped_action
+            batch[i_batch, t, state_space_size+1] = reward
+            batch[i_batch, t, state_space_size+2:state_space_size+2+state_space_size] = next_state
+            batch[i_batch, t, state_space_size+2+state_space_size:state_space_size+2+state_space_size+state_space_size] = unclipped_state
+            batch[i_batch, t, -1] = action
 
             if done:
                 break
@@ -34,7 +41,7 @@ def createBatch(env, batch_size, episode_length, param, variance_action):
 
     return batch
 
-def sourceTaskCreation(episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy):
+def sourceTaskCreationAllCombinations(episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size):
     """
     Creates a source dataset
     :param env: OpenAI environment
@@ -60,10 +67,10 @@ def sourceTaskCreation(episode_length, batch_size, discount_factor, variance_act
     i_configuration = 0
     episode_per_param = batch_size
     length_source_task = policy_param.shape[0]*env_param.shape[0]*episode_per_param
-    source_task = np.zeros((length_source_task, episode_length*3+1)) # every line a task, every task has all [clipped_state, action, reward]
-    # Every line is a task, every task has [discounted_return, policy_parameter, A, B, variance, parameter_configuration id] where A and B are the evironment params
-    source_param = np.zeros((length_source_task, 5))
-    next_states_unclipped = np.zeros((length_source_task, episode_length))
+    source_task = np.zeros((length_source_task, episode_length*(state_space_size + 2) + state_space_size)) # every line a task, every task has all [clipped_state, action, reward]
+    # Every line is a task, every task has [discounted_return, policy_parameter, env_params, variance] where A and B are the evironment params
+    source_param = np.zeros((length_source_task, 1+param_space_size+env_param_space_size))
+    next_states_unclipped = np.zeros((length_source_task, episode_length*state_space_size))
     actions_clipped = np.zeros((length_source_task, episode_length))
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
@@ -75,27 +82,31 @@ def sourceTaskCreation(episode_length, batch_size, discount_factor, variance_act
             env.setA(env_param[i_env_param])
 
             # Reset the environment and pick the first action
-            batch = createBatch(env, episode_per_param, episode_length, policy_param[i_policy_param], variance_action) # [state, action, reward, next_state]
+            batch = createBatch(env, episode_per_param, episode_length, policy_param[i_policy_param], state_space_size, variance_action) # [state, action, reward, next_state]
 
             #  Go through the episode and compute estimators
 
-            discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
+            discounted_return = np.sum((discount_factor_timestep * batch[:, :, state_space_size+1]), axis=1)
 
             #I populate the source task
-            source_task[i_episode:i_episode+episode_per_param, 0::3] = np.concatenate((batch[:, :, 0], np.matrix(batch[:, -1, 3]).T), axis=1)
-            source_task[i_episode:i_episode+episode_per_param, 1::3] = batch[:, :, 5]
-            source_task[i_episode:i_episode+episode_per_param, 2::3] = batch[:, :, 2]
+            dim1 = batch[:, :, 0:state_space_size].shape[0]
+            dim2 = batch[:, :, 0:state_space_size].shape[1]
+            dim3 = batch[:, :, 0:state_space_size].shape[2]
+            source_task[i_episode:i_episode+episode_per_param, 0::(state_space_size + 2)] = np.concatenate((np.reshape(batch[:, :, 0:state_space_size], (dim1, dim2*dim3), order='C'), (batch[:, -1, 0:state_space_size])), axis=1)
+            source_task[i_episode:i_episode+episode_per_param, 1::(state_space_size + 2)] = batch[:, :, -1]
+            source_task[i_episode:i_episode+episode_per_param, 2::(state_space_size + 2)] = batch[:, :, state_space_size+1]
 
             #unclipped next_states and actions
-            next_states_unclipped[i_episode:i_episode+episode_per_param, :] = batch[:, :, 4]
-            actions_clipped[i_episode:i_episode+episode_per_param, :] = batch[:, :, 1]
+            dim1 = batch[:, :, 0:state_space_size+2+state_space_size:state_space_size+2+state_space_size+state_space_size].shape[0]
+            dim2 = batch[:, :, 0:state_space_size+2+state_space_size:state_space_size+2+state_space_size+state_space_size].shape[1]
+            dim3 = batch[:, :, 0:state_space_size+2+state_space_size:state_space_size+2+state_space_size+state_space_size].shape[2]
+            next_states_unclipped[i_episode:i_episode+episode_per_param, :] = np.reshape(batch[:, :, state_space_size+2+state_space_size:state_space_size+2+state_space_size+state_space_size], (dim1, dim2*dim3), order='C')
+            actions_clipped[i_episode:i_episode+episode_per_param, :] = batch[:, :, state_space_size]
 
             #I populate the source parameters
             source_param[i_episode:i_episode+episode_per_param, 0] = discounted_return
-            source_param[i_episode:i_episode+episode_per_param, 1] = policy_param[i_policy_param]
-            source_param[i_episode:i_episode+episode_per_param, 2] = env.A
-            source_param[i_episode:i_episode+episode_per_param, 3] = env.B
-            source_param[i_episode:i_episode+episode_per_param, 4] = env.sigma_noise**2
+            source_param[i_episode:i_episode+episode_per_param, 1:1+param_space_size] = policy_param[i_policy_param]
+            source_param[i_episode:i_episode+episode_per_param, 1+param_space_size:1+param_space_size+env_param_space_size] = env.getEnvParam()
 
             i_episode += episode_per_param
 
@@ -117,8 +128,11 @@ env = gym.make('LQG1D-v0')
 # policy_param_max = -0.1
 # linspace_env = 11
 # linspace_policy = 10
+# param_space_size = 1
+# state_space_size = 1
+# env_param_space_size = 3 #include variance as well
 #
-# [source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = stc.sourceTaskCreation(episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy)
+# [source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = sourceTaskCreationAllCombinations(episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
 #
 # np.savetxt("source_task.csv", source_task, delimiter=",")
 # np.savetxt("source_param.csv", source_param, delimiter=",")

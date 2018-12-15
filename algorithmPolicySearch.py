@@ -8,26 +8,23 @@ class BatchStats:
 
         self.total_rewards = np.zeros(num_batch)
         self.disc_rewards = np.zeros(num_batch)
-        self.policy_parameter = np.zeros((num_batch, param_space_size)) #cartpole
-        #self.policy_parameter = np.zeros(num_batch) #lqg1d
+        self.policy_parameter = np.zeros((num_batch, param_space_size))
         self.gradient = np.zeros((num_batch, param_space_size))
-        #self.gradient = np.zeros(num_batch) #lqg1d
         self.ess = np.zeros(num_batch)
 
-def createBatch(env, batch_size, episode_length, param, param_space_size, state_space_size, variance_action):
+def createBatch(env, batch_size, episode_length, param, state_space_size, variance_action):
     """
     Create a batch of episodes
     :param env: OpenAI environment
     :param batch_size: size of the batch
     :param episode_length: length of the episode
     :param param: policy parameter
-    :param param_space_size: size of the parameter space
     :param state_space_size: size of the state space
     :param variance_action: variance of the action's distribution
     :return: A tensor containing [num episodes, timestep, informations] where informations stays for: [state, action, reward, next_state, unclipped_state, unclipped_action]
     """
 
-    information_size = param_space_size + 2 + state_space_size + 1
+    information_size = state_space_size+2+state_space_size+state_space_size+1
     batch = np.zeros((batch_size, episode_length, information_size)) #[state, clipped_action, reward, next_state, unclipped_state, action]
     for i_batch in range(batch_size):
         state = env.reset()
@@ -107,7 +104,7 @@ def reinforce(env, num_batch, batch_size, discount_factor, episode_length, initi
         stats.policy_parameter[i_batch, :] = param
         #stats.policy_parameter[i_batch] = param #unidimensional policy
 
-        batch = createBatch(env, batch_size, episode_length, param, param_space_size, state_space_size, variance_action) # [state, action, reward, next_state]
+        batch = createBatch(env, batch_size, episode_length, param, state_space_size, variance_action) # [state, action, reward, next_state]
 
         # The return after this timestep
         total_return = np.sum(batch[:, :, state_space_size+1], axis=1)
@@ -153,7 +150,7 @@ def reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_lengt
 
     # Keep track of useful statistics#
 
-    stats = BatchStats(num_batch)
+    stats = BatchStats(num_batch, param_space_size)
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
@@ -161,7 +158,7 @@ def reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_lengt
         stats.policy_parameter[i_batch, :] = param
         #stats.policy_parameter[i_batch] = param #unidimensional policy
 
-        batch = createBatch(env, batch_size, episode_length, param, param_space_size, state_space_size, variance_action) # [state, action, reward, next_state]
+        batch = createBatch(env, batch_size, episode_length, param, state_space_size, variance_action) # [state, action, reward, next_state]
 
         # The return after this timestep
         total_return = np.sum(batch[:, :, state_space_size+1], axis=1)
@@ -169,8 +166,8 @@ def reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_lengt
         gradient_est = np.sum((batch[:, :, -1] - np.sum(param[np.newaxis, np.newaxis, :] *  batch[:, :, 0:state_space_size], axis=2))[:, :, np.newaxis] * batch[:, :, 0:state_space_size] / variance_action, axis=1)
 
         #Compute gradients
-        baseline = np.dot((gradient_est)**2, np.squeeze(np.asarray(discounted_return)))/np.sum(np.squeeze(np.asarray(gradient_est))**2)
-        gradient = np.squeeze(np.asarray(1/batch_size * np.matmul(gradient_est.T, discounted_return - baseline)))
+        baseline = np.multiply((gradient_est)**2, discounted_return[:, np.newaxis]) / np.sum(np.squeeze(np.asarray(gradient_est))**2, axis=0)
+        gradient = np.squeeze(np.asarray(1/batch_size * np.sum(np.multiply(gradient_est, discounted_return[:, np.newaxis] - baseline), axis=0)))
 
         tot_reward_batch = np.mean(total_return)
         discounted_reward_batch = np.mean(discounted_return)
@@ -186,7 +183,7 @@ def reinforceBaseline(env, num_batch, batch_size, discount_factor, episode_lengt
 
     return stats
 
-def gpomdp(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, learning_rate):
+def gpomdp(env, num_batch, batch_size, discount_factor, episode_length, initial_param, variance_action, param_space_size, state_space_size, learning_rate):
     """
     G(PO)MDP (Policy Gradient) Algorithm. Optimizes the policy function approximator using ADAM
     :param env: OpenAI environment
@@ -208,36 +205,35 @@ def gpomdp(env, num_batch, batch_size, discount_factor, episode_length, initial_
 
     # Keep track of useful statistics#
 
-    stats = BatchStats(num_batch)
+    stats = BatchStats(num_batch, param_space_size)
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
     for i_batch in range(num_batch):
-        stats.policy_parameter[i_batch] = param
+        stats.policy_parameter[i_batch, :] = param
 
-        batch = createBatch(env, batch_size, episode_length, param, variance_action) # [state, action, reward, next_state]
+        batch = createBatch(env, batch_size, episode_length, param, state_space_size, variance_action) # [state, action, reward, next_state]
 
         # The return after this timestep
-        total_return = np.sum(batch[:, :, 2], axis=1)
-        discounted_return = np.sum((discount_factor_timestep * batch[:, :, 2]), axis=1)
-        #gradient_est_timestep = np.array(list(np.sum(((batch[:, 0:t+1, 1] - param * batch[:, 0:t+1, 0]) * batch[:, 0:t+1, 0]) / variance_action, axis=1) for t in range(episode_length))).T
+        total_return = np.sum(batch[:, :, state_space_size+1], axis=1)
+        discounted_return = np.sum((discount_factor_timestep * batch[:, :, state_space_size+1]), axis=1)
+        gradient_est_timestep = np.cumsum((batch[:, :, -1] - np.sum(param[np.newaxis, np.newaxis, :] * batch[:, :, 0:state_space_size], axis=2))[:, :, np.newaxis] * batch[:, :, 0:state_space_size] / variance_action, axis=1)
 
-        gradient_est_timestep = np.cumsum(((batch[:, :, 5] - param * batch[:, :, 0]) * batch[:, :, 0]) / variance_action, axis=1)
-        episode_informations = np.matrix([total_return, discounted_return]).T
+        #episode_informations = np.matrix([total_return, discounted_return]).T
         #estimate = 0
 
         baseline_den = np.sum(gradient_est_timestep**2, axis=0)
-        baseline = np.sum((gradient_est_timestep**2) * discount_factor_timestep * batch[:, :, 2], axis=0) / baseline_den
+        baseline = np.sum((gradient_est_timestep**2) * (discount_factor_timestep * batch[:, :, state_space_size+1])[:, :, np.newaxis], axis=0) / baseline_den
 
-        gradient = 1/batch_size * np.sum(np.sum(gradient_est_timestep * discount_factor_timestep * (batch[:, :, 2] - baseline), axis=1))
+        gradient = 1/batch_size * np.sum(np.sum(gradient_est_timestep * discount_factor_timestep[np.newaxis, :, np.newaxis] * (batch[:, :, state_space_size+1][:, :, np.newaxis] - baseline[np.newaxis, :, :]), axis=1), axis=0)
         # print(baseline, gradient, param)
         #param, t, m_t, v_t, gradient = adam(param, -gradient, t, m_t, v_t)
         param = param + learning_rate * gradient
-        tot_reward_batch = np.mean(episode_informations[:,0])
-        discounted_reward_batch = np.mean(episode_informations[:,1])
+        tot_reward_batch = np.mean(total_return)
+        discounted_reward_batch = np.mean(discounted_return)
         # Update statistics
         stats.total_rewards[i_batch] = tot_reward_batch
         stats.disc_rewards[i_batch] = discounted_reward_batch
-        stats.gradient[i_batch] = gradient
+        stats.gradient[i_batch, :] = gradient
 
     return stats
