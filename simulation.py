@@ -2,7 +2,7 @@ import gym
 import envs
 import numpy as np
 import algorithmPolicySearch as alg
-import importanceWeights as iw
+import learningAlgorithm as la
 from utils import plot
 import math as m
 
@@ -33,24 +33,21 @@ class SimulationParam:
 
 class SourceDataset:
 
-    def __init__(self, source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped):
+    def __init__(self, source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions):
 
         self.source_task = source_task
         self.source_param = source_param
         self.episodes_per_config = episodes_per_config
         self.next_states_unclipped = next_states_unclipped
-        self.actions_clipped = actions_clipped
-        self.source_distribution = 0
+        self.clipped_actions = clipped_actions
+        self.source_distributions = 0
         self.n_config_cv = episodes_per_config.shape[0]
-
-    def setSrcDistribution(self, source_distribution):
-        self.source_distribution = source_distribution
 
 
 env = gym.make('LQG1D-v0')
 param_space_size = 1
 state_space_size = 1
-env_param_space_size = 2
+env_param_space_size = 3
 episode_length = 20
 
 env_param = EnvParam(env, param_space_size, state_space_size, env_param_space_size, episode_length)
@@ -76,9 +73,6 @@ policy_param_max = -0.1
 linspace_policy = 10
 linspace_env = 11
 n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to use to fit the control variates
-param_space_size = 1
-state_space_size = 1
-env_param_space_size = 2
 
 source_task = np.genfromtxt('source_task.csv', delimiter=',')
 episodes_per_config = np.genfromtxt('episodes_per_config.csv', delimiter=',').astype(int)
@@ -97,40 +91,40 @@ for i_run in range(runs):
 
     print("IS")
     estimator = "IS"
-    off_policy_is = iw.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
+    off_policy_is = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
 
     print("PD-IS")
     estimator = "PD-IS"
-    off_policy_pd_is = iw.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
+    off_policy_pd_is = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
 
     print("MIS")
     estimator = "MIS"
-    off_policy_mis = iw.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
+    off_policy_mis = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
 
     print("MIS-CV")
     estimator = "MIS-CV"
-    off_policy_mis_cv = iw.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
+    off_policy_mis_cv = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
 
     print("MIS-CV-BASELINE")
     estimator = "MIS-CV-BASELINE"
-    off_policy_mis_cv_baseline = iw.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
+    off_policy_mis_cv_baseline = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
 
     print("PD-MIS")
     estimator = "PD-MIS"
-    off_policy_pd_mis = iw.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
+    off_policy_pd_mis = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
 
     print("PD-MIS-CV")
     estimator = "PD-MIS-CV"
-    off_policy_pd_mis_cv = iw.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
+    off_policy_pd_mis_cv = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
 
     print("PD-MIS-CV-BASELINE-APPROXIMATED")
     estimator = "PD-MIS-CV-BASELINE-APPROXIMATED"
-    off_policy_pd_mis_cv_baseline_approx = iw.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
+    off_policy_pd_mis_cv_baseline_approx = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
 
     print("PD-MIS-CV-BASELINE")
     estimator = "PD-MIS-CV-BASELINE"
-    off_policy_pd_mis_cv_baseline = iw.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
+    off_policy_pd_mis_cv_baseline = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
 
     print("REINFORCE")
     estimator = "REINFORCE"
-    reinforce = iw.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
+    reinforce = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6

@@ -106,7 +106,7 @@ def sourceTaskCreationAllCombinations(episode_length, batch_size, discount_facto
             #I populate the source parameters
             source_param[i_episode:i_episode+episode_per_param, 0] = discounted_return
             source_param[i_episode:i_episode+episode_per_param, 1:1+param_space_size] = policy_param[i_policy_param]
-            source_param[i_episode:i_episode+episode_per_param, 1+param_space_size:1+param_space_size+env_param_space_size] = env.getEnvParam()
+            source_param[i_episode:i_episode+episode_per_param, 1+param_space_size:] = env.getEnvParam()
 
             i_episode += episode_per_param
 
