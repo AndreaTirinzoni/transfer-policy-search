@@ -68,7 +68,7 @@ def createBatch(env, batch_size, episode_length, param, state_space_size, varian
 
     return batch
 
-def computeGradientsSourceTargetTimestep(param, source_task, variance_action, env_param):
+def computeGradientsSourceTargetTimestep(param, source_dataset, variance_action, env_param):
     """
     Compute the gradients estimation of the source targets with current policy
     :param param: policy parameters
@@ -78,11 +78,14 @@ def computeGradientsSourceTargetTimestep(param, source_task, variance_action, en
     :param state_space_size: variance of the action's distribution
     :return: A vector containing all the gradients for each timestep
     """
+    dim1 = source_dataset.source_task.shape[0]
+    dim2 = env_param.episode_length
+    dim3 = env_param.state_space_size
 
-    state_t = np.delete(source_task[:, 0::(env_param.state_space_size + 2)], -1, axis=1)# state t
-    action_t = np.squeeze(np.asarray(source_task[:, 1::(env_param.state_space_size + 2)]))# action t
+    state_t = np.delete(np.reshape(source_dataset.source_task[:, 0::(env_param.state_space_size + 2)], (dim1, dim2, dim3), order='C'), -1, axis=1)# state t
+    action_t = np.squeeze(np.asarray(source_dataset.source_task[:, 1::(env_param.state_space_size + 2)]))# action t
 
-    gradient_off_policy = (action_t - np.multiply(np.squeeze(np.asarray(param)),  state_t)) * state_t / variance_action
+    gradient_off_policy = (action_t - np.sum(np.multiply(np.squeeze(np.asarray(param)),  state_t), axis=1)) * state_t / variance_action
 
     return gradient_off_policy
 
@@ -105,6 +108,7 @@ def computeNdef(min_index, param, env_param, source_dataset, simulation_param, a
     return num_episodes_target
 
 #Compute gradients
+
 def onlyGradient(algorithm_configuration, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all, N):
     if(algorithm_configuration.pd == 0):
         gradient = 1/N * np.sum((np.squeeze(np.array(weights_source_target_update)) * gradient_off_policy_update) * np.sum(discounted_rewards_all))
@@ -169,13 +173,18 @@ def gradientPolicySearch(algorithm_configuration, weights_source_target_update, 
 
 def getEpisodesInfoFromSource(source_dataset, env_param):
 
-    param_policy_src = source_dataset.source_param[:, 1:1+env_param.param_space_size] #policy parameter of source
-    state_t = np.delete(source_dataset.source_task[:, 0::(env_param.state_space_size + 2)], -1, axis=1)# state t
+    dim1 = source_dataset.source_task.shape[0]
+    dim2 = env_param.episode_length
+    dim3 = env_param.state_space_size
+
+    param_policy_src = source_dataset.source_param[:, 1:1+env_param.param_space_size][:, :, np.newaxis] #policy parameter of source
+    state_t = np.reshape(np.delete(source_dataset.source_task[:, 0::(env_param.state_space_size + 2)], -1, axis=1), (dim1, dim2, dim3), order='C')# state t
     state_t1 = source_dataset.next_states_unclipped # state t+1
     unclipped_action_t = source_dataset.source_task[:, 1::(env_param.state_space_size + 2)] # action t
     env_param_src = source_dataset.source_param[:, 1+env_param.param_space_size:]
+    clipped_actions = source_dataset.clipped_actions
 
-    return [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src]
+    return [param_policy_src, state_t, state_t1, unclipped_action_t, clipped_actions, env_param_src]
 
 def weightsPolicySearch(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration):
     """
@@ -189,17 +198,11 @@ def weightsPolicySearch(policy_param, env_param, source_dataset, simulation_para
     :param clipped_actions: matrix containing the unclipped actions of every episode for every time step
     :return: Returns the weights of the importance sampling estimator
     """
-    [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src] = getEpisodesInfoFromSource(source_dataset)
 
-    policy_tgt = np.prod(1/m.sqrt(2*m.pi*simulation_param.variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param, state_t))))**2)/(2*variance_action)), axis=1)
-    policy_src = np.prod(1/m.sqrt(2*m.pi*simulation_param.variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(param_policy_src, state_t))))**2)/(2*variance_action)), axis=1)
+    weights = np.zeros(source_dataset.source_task.shape[0]-simulation_param.batch_size)
+    weights = np.concatenate(weights, np.ones(simulation_param.batch_size), axis=0)
 
-    model_tgt = np.prod(1/np.sqrt(2*m.pi*env_param_src.variance_env) * np.exp(-((state_t1 - env_param * state_t - B * clipped_actions) **2) / (2*variance_env)), axis=1)
-    model_src = np.prod(1/np.sqrt(2*m.pi*env_param_src.variance_env) * np.exp(-((state_t1 - A * state_t - B * clipped_actions) **2) / (2*variance_env)), axis=1)
-
-    weights = policy_tgt / policy_src * model_tgt / model_src
-
-    return weights
+    return [weights, 0, 0]
 
 def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration):
     """
@@ -214,26 +217,26 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
     :return: Returns the weights of the importance sampling estimator
     """
 
-    [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src] = getEpisodesInfoFromSource(source_dataset, env_param)
+    [param_policy_src, state_t, state_t1, unclipped_action_t, clipped_actions, env_param_src] = getEpisodesInfoFromSource(source_dataset, env_param)
     variance_action = simulation_param.variance_action
-    variance_env = env_param_src[:, 2][:, np.newaxis]
-    A = env_param_src[:, 0][:, np.newaxis]
-    B = env_param_src[:, 1][:, np.newaxis]
-    clipped_actions = source_dataset.clipped_actions
+    env_param_current = env_param.env.getEnvParam()
+    variance_env = env_param_src[:, -1]
+    state_t1_denoised_current = env_param.env.stepDenoised(env_param_current, state_t, unclipped_action_t)
+    state_t1_denoised = env_param.env.stepDenoised(env_param_src, state_t, unclipped_action_t)
 
     if(algorithm_configuration.pd==0):
-        policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param, state_t))))**2)/(2*variance_action)), axis=1)
-        policy_src = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(param_policy_src, state_t))))**2)/(2*variance_action)), axis=1)
+        policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action)), axis=1)
+        policy_src = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(param_policy_src, state_t), axis=2)))**2)/(2*variance_action)), axis=1)
 
-        model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - env_param.env.A * state_t - B * clipped_actions) **2) / (2*variance_env)), axis=1)
-        model_src = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - A * state_t - B * clipped_actions) **2) / (2*variance_env)), axis=1)
+        model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - state_t1_denoised_current) **2) / (2*variance_env)), axis=1)
+        model_src = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - state_t1_denoised) **2) / (2*variance_env)), axis=1)
 
     else:
-        policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - policy_param * state_t)**2)/(2*variance_action)), axis=1)
-        policy_src = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - param_policy_src * state_t)**2)/(2*variance_action)), axis=1)
+        policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action)), axis=1)
+        policy_src = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(param_policy_src, state_t), axis=2)))**2)/(2*variance_action)), axis=1)
 
-        model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - env_param.env.A * state_t - B * clipped_actions) **2) / (2*variance_env)), axis=1)
-        model_src = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - A * state_t - B * clipped_actions) **2) / (2*variance_env)), axis=1)
+        model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - state_t1_denoised_current) **2) / (2*variance_env)), axis=1)
+        model_src = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - state_t1_denoised) **2) / (2*variance_env)), axis=1)
 
     weights = policy_tgt / policy_src * model_tgt / model_src
 
@@ -254,56 +257,53 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
     :param n_tgt: number of trajectories from target distribution
     :return: Returns the weights of the multiple importance sampling estimator and the new qj of the MIS denominator (policy and model)
     """
+    [param_policy_src, state_t, state_t1, unclipped_action_t, clipped_actions, env_param_src] = getEpisodesInfoFromSource(source_dataset, env_param)
+    variance_action = simulation_param.variance_action
 
-    n = source_task.shape[0]
-    param_indices = np.concatenate(([0], np.cumsum(np.delete(episodes_per_config, -1))))
+    n = state_t.shape[0]
+    param_indices = np.concatenate(([0], np.cumsum(np.delete(source_dataset.episodes_per_config, -1))))
 
-    param_policy_src = source_param[param_indices, 1][np.newaxis, np.newaxis, :]#policy parameter of source not repeated
-    evaluated_trajectories = src_distributions.shape[0]
+    combination_src_parameters = source_dataset.source_param[param_indices, 1:1+env_param.param_space_size][np.newaxis, np.newaxis, :, np.newaxis]#policy parameter of source not repeated
+    evaluated_trajectories = source_dataset.src_distributions.shape[0]
+    env_param_current = env_param.env.getEnvParam()
+    state_t1_denoised_current = env_param.env.stepDenoised(env_param_current, state_t, unclipped_action_t)
+    state_t1_denoised = env_param.env.stepDenoised(env_param_src, state_t, unclipped_action_t)
 
-    if n_tgt != 0:
+    if simulation_param.batch_size != 0:
 
-        A = source_param[param_indices, 2][np.newaxis, np.newaxis, :] # environment parameter A of src
-        B = source_param[param_indices, 3][np.newaxis, np.newaxis, :] # environment parameter B of src
+        state_t = np.repeat(state_t[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t
+        state_t1 = np.repeat(state_t1[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t+1
+        unclipped_action_t = np.repeat(unclipped_action_t[:, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # action t
+        variance_env = env_param_src[:, -1, np.newaxis] # variance of the model transition
+        state_t1_denoised_current = np.repeat(state_t1_denoised_current[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3)
+        state_t1_denoised = np.repeat(state_t1_denoised[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3)
 
-        state_t = np.repeat(np.delete(source_task[:, 0::3], -1, axis=1)[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t
-        state_t1 = np.repeat(next_states_unclipped[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t+1
-        unclipped_action_t = np.repeat(source_task[:, 1::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # action t
-        clipped_actions_t = np.repeat(clipped_actions[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # unclipped action t
-        variance_env = source_param[:, 4][:, np.newaxis, np.newaxis] # variance of the model transition
+        policy_src_new_traj = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :] - np.sum(np.multiply(combination_src_parameters, state_t[evaluated_trajectories:, :, :, :]), axis=2))**2)/(2*variance_action)), axis=1)
+        model_src_new_traj = np.prod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, :, :]) * np.exp(-((state_t1[evaluated_trajectories:, :, :] - state_t1_denoised[evaluated_trajectories:, :, :]) **2) / (2*variance_env[evaluated_trajectories:, :, :])), axis=1)
 
-        policy_src_new_traj = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :] - param_policy_src * state_t[evaluated_trajectories:, :, :])**2)/(2*variance_action)), axis=1)
-        model_src_new_traj = np.prod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, :, :]) * np.exp(-((state_t1[evaluated_trajectories:, :, :] - A * state_t[evaluated_trajectories:, :, :] - B * clipped_actions_t[evaluated_trajectories:, :, :]) **2) / (2*variance_env[evaluated_trajectories:, :, :])), axis=1)
+        policy_src_new_param = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[0:evaluated_trajectories, :, 0] - np.sum(np.multiply(combination_src_parameters[:, :, -1], state_t[0:evaluated_trajectories, :, :, 0]), axis=2))**2)/(2*variance_action)), axis=1)
+        model_src_new_param = np.prod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, :, 0]) * np.exp(-((state_t1[0:evaluated_trajectories, :, 0] - state_t1_denoised[0:evaluated_trajectories, :, 0]) **2) / (2*variance_env[0:evaluated_trajectories, :, 0])), axis=1)
 
-        policy_src_new_param = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[0:evaluated_trajectories, :, 0] - param_policy_src[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0])**2)/(2*variance_action)), axis=1)
-        model_src_new_param = np.prod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, :, 0]) * np.exp(-((state_t1[0:evaluated_trajectories, :, 0] - A[0:evaluated_trajectories, :, -1] * state_t[0:evaluated_trajectories, :, 0] - B[0:evaluated_trajectories, :, -1] * clipped_actions_t[0:evaluated_trajectories, :, 0]) **2) / (2*variance_env[0:evaluated_trajectories, :, 0])), axis=1)
-
-        src_distributions = np.concatenate((src_distributions, np.matrix(policy_src_new_param * model_src_new_param).T), axis=1)
+        src_distributions = np.concatenate((source_dataset.src_distributions, np.matrix(policy_src_new_param * model_src_new_param).T), axis=1)
         src_distributions = np.concatenate((src_distributions, np.matrix(policy_src_new_traj * model_src_new_traj)), axis=0)
 
-        policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - policy_param * state_t[:, :, 0])**2)/(2*variance_action)), axis = 1)
-        model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, :, 0]) * np.exp(-((state_t1[:, :, 0] - env_param * state_t[:, :, 0] - B[:, :, -1] * clipped_actions_t[:, :, 0]) **2) / (2*variance_env[:, :, 0])), axis = 1)
+        policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t[:, :, :, 0]), axis=2))**2)/(2*variance_action)), axis=1)
+        model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, :, 0]) * np.exp(-((state_t1[:, :, :, 0] - state_t1_denoised_current[:, :, :, 0]) **2) / (2*variance_env[:, :, 0])), axis=1)
 
     else:
 
-        B = source_param[:, 3][:, np.newaxis] # environment parameter B of src
+        variance_env = env_param_src[:, -1] # variance of the model transition
 
-        state_t = np.delete(source_task[:, 0::3], -1, axis=1) # state t
-        state_t1 = next_states_unclipped # state t+1
-        unclipped_action_t = source_task[:, 1::3] # action t
-        clipped_actions_t = clipped_actions # unclipped action t
-        variance_env = source_param[:, 4][:, np.newaxis] # variance of the model transition
+        policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t[:, :, :, 0]), axis=2))**2)/(2*variance_action)), axis=1)
+        model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, :, 0]) * np.exp(-((state_t1[:, :, :, 0] - state_t1_denoised_current[:, :, :, 0]) **2) / (2*variance_env[:, :, 0])), axis=1)
 
-        policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - policy_param * state_t)**2)/(2*variance_action)), axis = 1)
-        model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - env_param * state_t - B * clipped_actions_t) **2) / (2*variance_env)), axis = 1)
-
-    mis_denominator = np.squeeze(np.asarray(np.dot(episodes_per_config/n, src_distributions.T).T))
+    mis_denominator = np.squeeze(np.asarray(np.dot(source_dataset.episodes_per_config/n, source_dataset.src_distributions.T).T))
 
     weights = policy_tgt * model_tgt / mis_denominator
 
     return [weights, src_distributions, mis_denominator]
 
-def computeCv(weights, src_distributions, mis_denominator, policy_gradients, algorithm_configuration):
+def computeCv(weights, source_dataset, env_param, mis_denominator, policy_gradients, algorithm_configuration):
     """
     Compute the multiple importance weights considering policy and transition model
     :param policy_param: current policy parameter
@@ -323,17 +323,21 @@ def computeCv(weights, src_distributions, mis_denominator, policy_gradients, alg
     :return: Returns the weights of the multiple importance sampling estimator and the new qj of the MIS denominator (policy and model) and the control variate
     """
     if(algorithm_configuration.pd==0):
-        control_variate = (src_distributions / mis_denominator[:, np.newaxis]) - np.ones(src_distributions.shape)
+        control_variate = (source_dataset.src_distributions / mis_denominator[:, np.newaxis]) - np.ones(source_dataset.src_distributions.shape)
 
+        param_indices = np.concatenate(([0], np.cumsum(np.delete(source_dataset.episodes_per_config, -1))))
         if algorithm_configuration.baseline == 1:
 
             baseline_covariate = np.multiply(weights, policy_gradients)[:, np.newaxis]
             control_variate = np.concatenate((control_variate, baseline_covariate), axis=1)
 
     else:
-        mis_denominator_tensor = np.repeat(mis_denominator[:, :, np.newaxis], param_policy_src.shape[0], axis=2)
+        param_indices = np.concatenate(([0], np.cumsum(np.delete(source_dataset.episodes_per_config, -1))))
 
-        control_variate = (src_distributions / mis_denominator_tensor) - np.ones(src_distributions.shape)
+        combination_src_parameters = source_dataset.source_param[param_indices, 1:1+env_param.param_space_size][np.newaxis, np.newaxis, :, np.newaxis]#policy parameter of source not repeated
+        mis_denominator_tensor = np.repeat(mis_denominator[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2)
+
+        control_variate = (source_dataset.src_distributions / mis_denominator_tensor) - np.ones(source_dataset.src_distributions.shape)
 
         if algorithm_configuration.baseline == 1:
 
@@ -366,8 +370,20 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
     :return: Returns the weights of the per-decision multiple importance sampling estimator and the new qj of the PD-MIS denominator (policy and model)
     """
 
-    n = source_task.shape[0]
-    param_indices = np.concatenate(([0], np.cumsum(np.delete(episodes_per_config, -1))))
+    [param_policy_src, state_t, state_t1, unclipped_action_t, clipped_actions, env_param_src] = getEpisodesInfoFromSource(source_dataset, env_param)
+    variance_action = simulation_param.variance_action
+
+    n = state_t.shape[0]
+    param_indices = np.concatenate(([0], np.cumsum(np.delete(source_dataset.episodes_per_config, -1))))
+
+    combination_src_parameters = source_dataset.source_param[param_indices, 1:1+env_param.param_space_size][np.newaxis, np.newaxis, :, np.newaxis]#policy parameter of source not repeated
+    evaluated_trajectories = source_dataset.src_distributions.shape[0]
+    env_param_current = env_param.env.getEnvParam()
+    state_t1_denoised_current = env_param.env.stepDenoised(env_param_current, state_t, unclipped_action_t)
+    state_t1_denoised = env_param.env.stepDenoised(env_param_src, state_t, unclipped_action_t)
+    n = source_dataset.source_task.shape[0]
+    variance_env = env_param_src[:, -1, np.newaxis]
+
 
     # param_policy_src = source_param[param_indices, 1][np.newaxis, np.newaxis, :]#policy parameter of source not repeated
     #
@@ -396,37 +412,24 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
     # policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - policy_param*state_t[:, :, 0])**2)/(2*variance_action)), axis = 1)
     # model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, :, 0]) * np.exp(-((state_t1[:, :, 0] - env_param * state_t[:, :, 0] - (B[:, :, -1] * clipped_actions_t)[:, :, 0]) **2) / (2*variance_env[:, :, 0])), axis = 1)
 
-    param_policy_src = source_param[param_indices, 1] #policy parameter of source not repeated
-
-    A = source_param[:, 2] # environment parameter A of src
-    B = source_param[:, 3][:, np.newaxis] # environment parameter B of src
-
-    evaluated_trajectories = src_distributions.shape[0]
-
-    state_t = np.delete(source_task[:, 0::3], -1, axis=1) # state t
-    state_t1 = next_states_unclipped # state t+1
-    unclipped_action_t = source_task[:, 1::3] # action t
-    clipped_actions_t = clipped_actions[:, :] # unclipped action t
-    variance_env = source_param[:, 4][:, np.newaxis] # variance of the model transition
-
-    if n_tgt != 0:
-        policy_src_new_traj = np.ones((source_task.shape[0]-evaluated_trajectories, state_t.shape[1], param_policy_src.shape[0]))
-        model_src_new_traj = np.ones((source_task.shape[0]-evaluated_trajectories, state_t.shape[1], param_policy_src.shape[0]))
+    if simulation_param.batch_size != 0:
+        policy_src_new_traj = np.ones((n-evaluated_trajectories, state_t.shape[1], param_policy_src.shape[0]))
+        model_src_new_traj = np.ones((n-evaluated_trajectories, state_t.shape[1], param_policy_src.shape[0]))
 
         for i in range(param_policy_src.shape[0]-1):
-            policy_src_new_traj[:, :, i] = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :] - param_policy_src[i] * state_t[evaluated_trajectories:, :])**2)/(2*variance_action)), axis=1)
-            model_src_new_traj[:, :, i] = np.cumprod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, :]) * np.exp(-((state_t1[evaluated_trajectories:, :] - A[i] * state_t[evaluated_trajectories:, :] - B[i] * clipped_actions_t[evaluated_trajectories:, :])**2) / (2*variance_env[evaluated_trajectories:, :])), axis=1)
+            policy_src_new_traj[:, :, i] = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :] - np.sum(np.multiply(combination_src_parameters[i], state_t[evaluated_trajectories:, :]), axis=2))**2)/(2*variance_action)), axis=1)
+            model_src_new_traj[:, :, i] = np.cumprod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, :]) * np.exp(-((state_t1[evaluated_trajectories:, :] - state_t1_denoised)**2) / (2*variance_env[evaluated_trajectories:, :])), axis=1)
 
-        policy_src_new_param = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[0:evaluated_trajectories, :] - param_policy_src[-1] * state_t[0:evaluated_trajectories, :])**2)/(2*variance_action)), axis=1)
-        model_src_new_param = np.cumprod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, :]) * np.exp(-((state_t1[0:evaluated_trajectories, :] - A[-1] * state_t[0:evaluated_trajectories, :] - B[-1] * clipped_actions_t[0:evaluated_trajectories, :])**2) / (2*variance_env[0:evaluated_trajectories, :])), axis=1)
+        policy_src_new_param = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[0:evaluated_trajectories, :] - np.sum(np.multiply(combination_src_parameters[:, :, -1], state_t[0:evaluated_trajectories, :]), axis=2))**2)/(2*variance_action)), axis=1)
+        model_src_new_param = np.cumprod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, :]) * np.exp(-((state_t1[0:evaluated_trajectories, :] - state_t1_denoised[0:evaluated_trajectories, :])**2) / (2*variance_env[0:evaluated_trajectories, :])), axis=1)
 
-        src_distributions = np.concatenate((src_distributions, (policy_src_new_param * model_src_new_param)[:, :, np.newaxis]), axis=2)
+        src_distributions = np.concatenate((source_dataset.src_distributions, (policy_src_new_param * model_src_new_param)[:, :, np.newaxis]), axis=2)
         src_distributions = np.concatenate((src_distributions, (policy_src_new_traj * model_src_new_traj)), axis=0)
 
     policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - policy_param * state_t)**2)/(2*variance_action)), axis=1)
-    model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - env_param * state_t - (B * clipped_actions_t))**2) / (2*variance_env)), axis=1)
+    model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - state_t1_denoised_current)**2) / (2*variance_env)), axis=1)
 
-    mis_denominator = np.sum(episodes_per_config/n * src_distributions, axis=2)
+    mis_denominator = np.sum(source_dataset.episodes_per_config/n * src_distributions, axis=2)
 
     weights = policy_tgt * model_tgt / mis_denominator
 
@@ -536,7 +539,7 @@ def addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, para
 
     source_param_new[:, 0] = discounted_return
     source_param_new[:, 1:1+env_param.param_space_size] = param
-    source_param_new[:, 1+env_param.param_space_size:] = env_param.env.getEnvParam()
+    source_param_new[:, 1+env_param.param_space_size:1+env_param.param_space_size+env_param.env_param_space_size] = env_param.env.getEnvParam()
 
     #Compute rewards of batch
     tot_reward_batch = np.mean(total_return)
@@ -551,7 +554,7 @@ def addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, para
 
     return source_dataset, tot_reward_batch, discounted_reward_batch
 
-def generateEpisodesAndComputeRewards(env_param, simulation_param, source_dataset, param, discount_factor_timestep):
+def generateEpisodesAndComputeRewards(env_param, simulation_param, param, discount_factor_timestep):
     """
     Generate episodes to compute statistics if there are no episodes from the target distribution
     :param env: openAI environment
@@ -591,27 +594,28 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
         [source_dataset, tot_reward_batch, discounted_reward_batch] = addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, num_episodes_target, discount_factor_timestep)
     else:
         #Generate episodes and compute rewards
-        [tot_reward_batch, discounted_reward_batch] = generateEpisodesAndComputeRewards(env_param, simulation_param, source_dataset, param, discount_factor_timestep)
+        [tot_reward_batch, discounted_reward_batch] = generateEpisodesAndComputeRewards(env_param, simulation_param, param, discount_factor_timestep)
 
 
     #Compute gradients per timestep
     if(algorithm_configuration.pd == 1):
-        gradient_off_policy_update = np.cumsum(computeGradientsSourceTargetTimestep(param, source_dataset.source_task, simulation_param.variance_action, env_param), axis=1)
+        gradient_off_policy_update = np.cumsum(computeGradientsSourceTargetTimestep(param, source_dataset, simulation_param.variance_action, env_param), axis=1)
     else:
-        gradient_off_policy_update = np.sum(computeGradientsSourceTargetTimestep(param, source_dataset.source_task, simulation_param.variance_action, env_param), axis=1)
+        gradient_off_policy_update = np.sum(computeGradientsSourceTargetTimestep(param, source_dataset, simulation_param.variance_action, env_param), axis=1)
 
     #Compute importance weights
     [weights_source_target_update, src_distributions, mis_denominator] = algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration)
-    if(algorithm_configuration.cv == 1):
-        control_variates = computeCv(weights_source_target_update, src_distributions, mis_denominator, gradient_off_policy_update, algorithm_configuration)
-    else:
-        control_variates = 0
 
     source_dataset.source_distributions = src_distributions
 
+    if(algorithm_configuration.cv == 1):
+        control_variates = computeCv(weights_source_target_update, source_dataset, env_param, mis_denominator, gradient_off_policy_update, algorithm_configuration)
+    else:
+        control_variates = 0
+
     weights_source_target_update[np.isnan(weights_source_target_update)] = 0
 
-    discounted_rewards_all = discount_factor_timestep * source_dataset.source_task[:, 2::3]
+    discounted_rewards_all = discount_factor_timestep * source_dataset.source_task[:, env_param.state_space_size+1::(env_param.state_space_size + 2)]
 
     #Compute gradient for the update
     if(algorithm_configuration.cv == 1):
@@ -635,7 +639,7 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
 
 # Algorithm off policy using different estimators
 
-def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance_action, algorithm_configuration):
+def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance_action, algorithm_configuration, env_param):
     """
     Compute the qj of the MIS denominator
     :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
@@ -646,25 +650,25 @@ def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance
     :param episodes_per_config: vector containing the number of episodes for every policy_parameter - env_parameter configuration
     :return: a matrix (N trajectories * M parameters) containing the qj related to the denominator of the MIS weights
     """
+    [param_policy_src, state_t, state_t1, unclipped_action_t, clipped_actions, env_param_src] = getEpisodesInfoFromSource(source_dataset, env_param)
 
     param_indices = np.concatenate(([0], np.cumsum(np.delete(source_dataset.episodes_per_config, -1))))
 
-    param_policy_src = source_dataset.source_param[param_indices, 1][np.newaxis, np.newaxis, :]#policy parameter of source not repeated
-    variance_env = source_dataset.source_param[:, 4][:, np.newaxis, np.newaxis] # variance of the model transition
-    A = source_dataset.source_param[param_indices, 2][np.newaxis, np.newaxis, :] # environment parameter A of src
-    B = source_dataset.source_param[param_indices, 3][np.newaxis, np.newaxis, :] # environment parameter B of src
+    combination_src_parameters = param_policy_src[param_indices, 1:1+env_param.param_space_size][np.newaxis, np.newaxis, :, np.newaxis]#policy parameter of source not repeated
+    state_t1_denoised = env_param.env.stepDenoised(env_param_src, state_t, unclipped_action_t)
 
-    state_t = np.repeat(np.delete(source_dataset.source_task[:, 0::3], -1, axis=1)[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t
-    state_t1 = np.repeat(source_dataset.next_states_unclipped[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # state t+1
-    unclipped_action_t = np.repeat(source_dataset.source_task[:, 1::3][:, :, np.newaxis], param_policy_src.shape[2], axis=2) # action t
-    clipped_actions_t = np.repeat(source_dataset.clipped_actions[:, :, np.newaxis], param_policy_src.shape[2], axis=2) # action t
+    state_t = np.repeat(state_t[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t
+    state_t1 = np.repeat(state_t1[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t+1
+    unclipped_action_t = np.repeat(unclipped_action_t[:, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # action t
+    variance_env = env_param_src[:, -1, np.newaxis] # variance of the model transition
+    state_t1_denoised = np.repeat(state_t1_denoised[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3)
 
     if(algorithm_configuration.pd == 0):
-        src_distributions_policy = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - param_policy_src * state_t)**2)/(2*variance_action)), axis=1)
-        src_distributions_model = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - A * state_t - B * clipped_actions_t) **2) / (2*variance_env)), axis=1)
+        src_distributions_policy = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(combination_src_parameters, state_t), axis=2)**2))/(2*variance_action)), axis=1)
+        src_distributions_model = np.prod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - state_t1_denoised) **2) / (2*variance_env)), axis=1)
     else:
-        src_distributions_policy = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - param_policy_src * state_t)**2)/(2*variance_action)), axis=1)
-        src_distributions_model = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - A * state_t - B * clipped_actions_t) **2) / (2*variance_env)), axis=1)
+        src_distributions_policy = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(combination_src_parameters, state_t), axis=2)**2))/(2*variance_action)), axis=1)
+        src_distributions_model = np.cumprod(1/np.sqrt(2*m.pi*variance_env) * np.exp(-((state_t1 - state_t1_denoised) **2) / (2*variance_env)), axis=1)
 
     return src_distributions_model * src_distributions_policy
 
@@ -889,20 +893,19 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator):
 
     # Keep track of useful statistics#
     stats = BatchStats(simulation_param.num_batch, env_param.param_space_size)
-    src_distributions = 0
     n_def = simulation_param.batch_size
 
     algorithm_configuration = switch_estimator(estimator, simulation_param.adaptive)
 
     if simulation_param.adaptive=="Yes":
         if(re.match("^.*MIS.*", estimator)):
-            source_dataset.source_distributions = computeMultipleImportanceWeightsSourceDistributions(source_dataset, simulation_param.variance_action, algorithm_configuration)
+            source_dataset.source_distributions = computeMultipleImportanceWeightsSourceDistributions(source_dataset, simulation_param.variance_action, algorithm_configuration, env_param)
             [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param.variance_action)
 
         else:
             [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, algorithm_configuration, simulation_param)
 
-    n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)
+        n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)
 
     for i_batch in range(simulation_param.num_batch):
 

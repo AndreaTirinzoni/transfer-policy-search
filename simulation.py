@@ -3,6 +3,7 @@ import envs
 import numpy as np
 import algorithmPolicySearch as alg
 import learningAlgorithm as la
+import sourceTaskCreation as stc
 from utils import plot
 import math as m
 
@@ -74,11 +75,29 @@ linspace_policy = 10
 linspace_env = 11
 n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to use to fit the control variates
 
-source_task = np.genfromtxt('source_task.csv', delimiter=',')
-episodes_per_config = np.genfromtxt('episodes_per_config.csv', delimiter=',').astype(int)
-source_param = np.genfromtxt('source_param.csv', delimiter=',')
-next_states_unclipped = np.genfromtxt('next_states_unclipped.csv', delimiter=',')
-actions_clipped = np.genfromtxt('actions_clipped.csv', delimiter=',')
+#source task
+variance_action = 0.1
+episode_length = 20
+np.random.seed(2000)
+batch_size = 20
+discount_factor = 0.99
+env_param_min = 0.6
+env_param_max = 1.5
+policy_param_min = -1
+policy_param_max = -0.1
+linspace_env = 11
+linspace_policy = 10
+param_space_size = 1
+state_space_size = 1
+env_param_space_size = 3
+
+[source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = stc.sourceTaskCreationAllCombinations(episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
+
+# source_task = np.genfromtxt('source_task.csv', delimiter=',')
+# episodes_per_config = np.genfromtxt('episodes_per_config.csv', delimiter=',').astype(int)
+# source_param = np.genfromtxt('source_param.csv', delimiter=',')
+# next_states_unclipped = np.genfromtxt('next_states_unclipped.csv', delimiter=',')
+# actions_clipped = np.genfromtxt('actions_clipped.csv', delimiter=',')
 
 source_dataset = SourceDataset(source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped)
 
@@ -90,12 +109,12 @@ for i_run in range(runs):
     #[source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = stc.sourceTaskCreation(episode_length, episodes_per_configuration, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max)
 
     print("IS")
-    estimator = "IS"
-    off_policy_is = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
+    # estimator = "IS"
+    # off_policy_is = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
 
     print("PD-IS")
-    estimator = "PD-IS"
-    off_policy_pd_is = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
+    # estimator = "PD-IS"
+    # off_policy_pd_is = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
 
     print("MIS")
     estimator = "MIS"

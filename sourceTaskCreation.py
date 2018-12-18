@@ -68,9 +68,9 @@ def sourceTaskCreationAllCombinations(episode_length, batch_size, discount_facto
     episode_per_param = batch_size
     length_source_task = policy_param.shape[0]*env_param.shape[0]*episode_per_param
     source_task = np.zeros((length_source_task, episode_length*(state_space_size + 2) + state_space_size)) # every line a task, every task has all [clipped_state, action, reward]
-    # Every line is a task, every task has [discounted_return, policy_parameter, env_params, variance] where A and B are the evironment params
+    # Every line is a task, every task has [discounted_return, policy_parameter, env_params, variance]
     source_param = np.zeros((length_source_task, 1+param_space_size+env_param_space_size))
-    next_states_unclipped = np.zeros((length_source_task, episode_length*state_space_size))
+    next_states_unclipped = np.zeros((length_source_task, episode_length, state_space_size))
     actions_clipped = np.zeros((length_source_task, episode_length))
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
@@ -93,20 +93,17 @@ def sourceTaskCreationAllCombinations(episode_length, batch_size, discount_facto
             dim2 = batch[:, :, 0:state_space_size].shape[1]
             dim3 = batch[:, :, 0:state_space_size].shape[2]
             source_task[i_episode:i_episode+episode_per_param, 0::(state_space_size + 2)] = np.concatenate((np.reshape(batch[:, :, 0:state_space_size], (dim1, dim2*dim3), order='C'), (batch[:, -1, 0:state_space_size])), axis=1)
-            source_task[i_episode:i_episode+episode_per_param, 1::(state_space_size + 2)] = batch[:, :, -1]
-            source_task[i_episode:i_episode+episode_per_param, 2::(state_space_size + 2)] = batch[:, :, state_space_size+1]
+            source_task[i_episode:i_episode+episode_per_param, state_space_size::(state_space_size + 2)] = batch[:, :, -1]
+            source_task[i_episode:i_episode+episode_per_param, state_space_size+1::(state_space_size + 2)] = batch[:, :, state_space_size+1]
 
             #unclipped next_states and actions
-            dim1 = batch[:, :, 0:state_space_size+2+state_space_size:state_space_size+2+state_space_size+state_space_size].shape[0]
-            dim2 = batch[:, :, 0:state_space_size+2+state_space_size:state_space_size+2+state_space_size+state_space_size].shape[1]
-            dim3 = batch[:, :, 0:state_space_size+2+state_space_size:state_space_size+2+state_space_size+state_space_size].shape[2]
-            next_states_unclipped[i_episode:i_episode+episode_per_param, :] = np.reshape(batch[:, :, state_space_size+2+state_space_size:state_space_size+2+state_space_size+state_space_size], (dim1, dim2*dim3), order='C')
+            next_states_unclipped[i_episode:i_episode+episode_per_param, :] = batch[:, :, state_space_size+2+state_space_size:state_space_size+2+state_space_size+state_space_size]
             actions_clipped[i_episode:i_episode+episode_per_param, :] = batch[:, :, state_space_size]
 
             #I populate the source parameters
             source_param[i_episode:i_episode+episode_per_param, 0] = discounted_return
             source_param[i_episode:i_episode+episode_per_param, 1:1+param_space_size] = policy_param[i_policy_param]
-            source_param[i_episode:i_episode+episode_per_param, 1+param_space_size:] = env.getEnvParam()
+            source_param[i_episode:i_episode+episode_per_param, 1+param_space_size:1+param_space_size+env_param_space_size] = env.getEnvParam()
 
             i_episode += episode_per_param
 
@@ -133,7 +130,7 @@ env = gym.make('LQG1D-v0')
 # env_param_space_size = 3 #include variance as well
 #
 # [source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = sourceTaskCreationAllCombinations(episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
-#
+
 # np.savetxt("source_task.csv", source_task, delimiter=",")
 # np.savetxt("source_param.csv", source_param, delimiter=",")
 # np.savetxt("episodes_per_config.csv", episodes_per_config, delimiter=",")

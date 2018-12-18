@@ -72,8 +72,23 @@ class LQG1D(gym.Env):
         # We return the unclipped state and the clipped action as the last argument (to be used for computing the importance weights only)
         return self.get_state(), -np.asscalar(cost), False, np.array(xn_unclipped.ravel()), u
 
+    #Custom param for transfer
+
     def getEnvParam(self):
         return [self.A, self.B, self.sigma_noise**2]
+
+    def stepDenoised(self, env_parameters, state, action):
+        u = np.clip(action, -self.max_action, self.max_action)
+        A = env_parameters[0][np.newaxis, :]
+        B = env_parameters[1]
+        xn_unclipped = np.matmul(A, state, axis=2) + np.multiply(B, u)
+        xn = np.clip(xn_unclipped, -self.max_pos, self.max_pos)
+        cost = np.multiply(state, np.sum(np.multiply(self.Q[np.newaxis, :], state), axis=2)[:, :, np.newaxis]) + np.multiply(u, np.multiply(self.R, u))[:, :, np.newaxis]
+
+        state = np.matrix(xn.ravel())
+
+        # We return the unclipped state and the clipped action as the last argument (to be used for computing the importance weights only)
+        return state, -np.asscalar(cost), False, np.array(xn_unclipped.ravel()), u
 
     def reset(self, state=None):
         if state is None:
