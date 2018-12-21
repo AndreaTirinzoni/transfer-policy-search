@@ -62,10 +62,11 @@ class ContinuousCartPoleEnv(gym.Env):
         return [seed]
 
     def getEnvParam(self):
-        return [self.masscart, self.length, self.sigma_env**2]
+        return np.asarray([np.ravel(self.masscart), np.ravel(self.length), np.ravel(self.sigma_env**2)])
 
     def setParams(self, env_param):
-        [self.masscart, self.length] = env_param[0:1]
+        self.masscart = env_param[0]
+        self.length = env_param[1]
         self.sigma_env = np.sqrt(env_param[-1])
 
     def stepPhysics(self, force):
@@ -111,6 +112,55 @@ Any further steps are undefined behavior.
             reward = 0.0
 
         return [np.array(self.state), float(reward), done, np.array(self.state), u]
+
+    def stepDenoised(self, env_parameters, state, action):
+        force = self.force_mag * action
+        state_t1 = self.stepPhysicsDenoised(env_parameters, state, force)
+        return state_t1
+
+    def stepPhysicsDenoised(self, env_parameters, state, force):
+        x = state[:, :, 0, :]
+        x_dot = state[:, :, 1, :]
+        theta = state[:, :, 2, :]
+        theta_dot = state[:, :, 3, :]
+        costheta = np.cos(theta)
+        sintheta = np.sin(theta)
+        masscart = env_parameters[:, 0]
+        length = env_parameters[:, 1]
+        total_mass = (self.masspole * np.ones(masscart.shape[0]) + masscart)
+        polemass_length = (self.masspole * length)
+        temp = (np.repeat(force[:, :, :, np.newaxis], masscart.shape[0], axis=3) + polemass_length[np.newaxis, np.newaxis, np.newaxis, :] * theta_dot * theta_dot * sintheta) / total_mass[np.newaxis, np.newaxis, np.newaxis, :]
+        thetaacc = (self.gravity * sintheta - costheta * temp) / \
+            (length[np.newaxis, np.newaxis, np.newaxis, :] * (4.0/3.0 - self.masspole * costheta * costheta / total_mass[np.newaxis, np.newaxis, np.newaxis, :]))
+        xacc = temp - polemass_length * thetaacc * costheta / total_mass[np.newaxis, np.newaxis, np.newaxis, :]
+        x = x + self.tau * x_dot
+        x_dot = x_dot + self.tau * xacc
+        theta = theta + self.tau * theta_dot
+        theta_dot = theta_dot + self.tau * thetaacc
+        return (x, x_dot, theta, theta_dot)
+
+    def stepCurrentDenoised(self, state, action):
+        force = self.force_mag * action
+        state_t1 = self.stepPhysicsDenoised(state, force)
+        return state_t1
+
+    def stepPhysicsCurrentDenoised(self, state, force):
+        x = state[:, :, 0]
+        x_dot = state[:, :, 1]
+        theta = state[:, :, 2]
+        theta_dot = state[:, :, 3]
+        costheta = np.cos(theta)
+        sintheta = np.sin(theta)
+        temp = (force + self.polemass_length * theta_dot * theta_dot * sintheta) / self.total_mass
+        thetaacc = (self.gravity * sintheta - costheta * temp) / \
+            (self.length * (4.0/3.0 - self.masspole * costheta * costheta / self.total_mass))
+        xacc = temp - self.polemass_length * thetaacc * costheta / self.total_mass
+        x = x + self.tau * x_dot
+        x_dot = x_dot + self.tau * xacc
+        theta = theta + self.tau * theta_dot
+        theta_dot = theta_dot + self.tau * thetaacc
+
+        return (x, x_dot, theta, theta_dot)
 
     def reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))

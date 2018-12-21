@@ -24,7 +24,7 @@ def createBatch(env, batch_size, episode_length, param, state_space_size, varian
             # Take a step
             mean_action = np.sum(np.multiply(param, state))
             action = np.random.normal(mean_action, m.sqrt(variance_action))
-            next_state, reward, done, unclipped_state, clipped_action, state_denoised = env.step(action)
+            next_state, reward, done, unclipped_state, clipped_action = env.step(action)
             # Keep track of the transition
             #env.render()
             batch[i_batch, t, 0:state_space_size] = state
@@ -67,11 +67,10 @@ def sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_
     i_configuration = 0
     episode_per_param = batch_size
     length_source_task = policy_param.shape[0]*env_param.shape[0]*episode_per_param
-    source_task = np.zeros((length_source_task, episode_length*(state_space_size + 2) + state_space_size)) # every line a task, every task has all [clipped_state, action, reward]
+    source_task = np.zeros((length_source_task, episode_length, state_space_size + 2 + state_space_size)) # every line a task, every task has all [clipped_state, action, reward]
     # Every line is a task, every task has [discounted_return, policy_parameter, env_params, variance]
     source_param = np.zeros((length_source_task, 1+param_space_size+env_param_space_size))
     next_states_unclipped = np.zeros((length_source_task, episode_length, state_space_size))
-    next_states_denoised = np.zeros((length_source_task, episode_length, state_space_size))
     actions_clipped = np.zeros((length_source_task, episode_length))
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
@@ -80,32 +79,29 @@ def sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_
 
         for i_env_param in range(env_param.shape[0]):
 
-            env.setParams(np.array([env_param[i_env_param], env.B, env.sigma_noise**2]))
+            env.setParams(np.concatenate(([env_param[i_env_param]], np.ravel(env.B), [env.sigma_noise**2])))
 
             # Reset the environment and pick the first action
             batch = createBatch(env, episode_per_param, episode_length, policy_param[i_policy_param], state_space_size, variance_action) # [state, action, reward, next_state]
 
             #  Go through the episode and compute estimators
-
+            #I populate the source task
             discounted_return = np.sum((discount_factor_timestep * batch[:, :, state_space_size+1]), axis=1)
 
             #I populate the source task
-            dim1 = batch[:, :, 0:state_space_size].shape[0]
-            dim2 = batch[:, :, 0:state_space_size].shape[1]
-            dim3 = batch[:, :, 0:state_space_size].shape[2]
-            source_task[i_episode:i_episode+episode_per_param, 0::(state_space_size + 2)] = np.concatenate((np.reshape(batch[:, :, 0:state_space_size], (dim1, dim2*dim3), order='C'), (batch[:, -1, 0:state_space_size])), axis=1)
-            source_task[i_episode:i_episode+episode_per_param, state_space_size::(state_space_size + 2)] = batch[:, :, -1]
-            source_task[i_episode:i_episode+episode_per_param, state_space_size+1::(state_space_size + 2)] = batch[:, :, state_space_size+1]
+            source_task[i_episode:i_episode+episode_per_param, :, 0:state_space_size] = batch[:, :, 0:state_space_size]
+            source_task[i_episode:i_episode+episode_per_param, :, state_space_size] = batch[:, :, state_space_size+2+state_space_size+state_space_size]
+            source_task[i_episode:i_episode+episode_per_param, :, state_space_size+1] = batch[:, :, state_space_size+1]
+            source_task[i_episode:i_episode+episode_per_param, :, state_space_size+2:] = batch[:, :, state_space_size+2:state_space_size+2+state_space_size]
 
             #unclipped next_states and actions
             next_states_unclipped[i_episode:i_episode+episode_per_param, :] = batch[:, :, state_space_size+2+state_space_size:state_space_size+2+state_space_size+state_space_size]
-            next_states_denoised[i_episode:i_episode+episode_per_param, :] = batch[:, :, -1]
             actions_clipped[i_episode:i_episode+episode_per_param, :] = batch[:, :, state_space_size]
 
             #I populate the source parameters
             source_param[i_episode:i_episode+episode_per_param, 0] = discounted_return
-            source_param[i_episode:i_episode+episode_per_param, 1:1+param_space_size] = policy_param[:, i_policy_param]
-            source_param[i_episode:i_episode+episode_per_param, 1+param_space_size:1+param_space_size+env_param_space_size] = env.getEnvParam()
+            source_param[i_episode:i_episode+episode_per_param, 1:1+param_space_size] = policy_param[i_policy_param]
+            source_param[i_episode:i_episode+episode_per_param, 1+param_space_size:1+param_space_size+env_param_space_size] = env.getEnvParam().T
 
             i_episode += episode_per_param
 
@@ -113,7 +109,7 @@ def sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_
             i_configuration += 1
 
 
-    return source_task, source_param, episodes_per_configuration.astype(int), next_states_unclipped, actions_clipped, next_states_denoised
+    return source_task, source_param, episodes_per_configuration.astype(int), next_states_unclipped, actions_clipped
 
 def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size):
     """

@@ -16,6 +16,7 @@ class BatchStats:
         self.ess = np.zeros(num_batch)
         self.n_def = np.zeros(num_batch)
 
+
 class AlgorithmConfiguration:
 
     def __init__(self, estimator, cv, pd, baseline, approximation, adaptive, computeWeights, computeGradientUpdate, computeEss):
@@ -30,7 +31,8 @@ class AlgorithmConfiguration:
         self.computeEss = computeEss
         self.computeGradientUpdate = computeGradientUpdate
         self.off_policy = None
-        self.multid_approximation = None
+        self.multid_approx = None
+
 
 def createBatch(env, batch_size, episode_length, param, state_space_size, variance_action):
     """
@@ -53,7 +55,7 @@ def createBatch(env, batch_size, episode_length, param, state_space_size, varian
             # Take a step
             mean_action = np.sum(np.multiply(param, state))
             action = np.random.normal(mean_action, m.sqrt(variance_action))
-            next_state, reward, done, unclipped_state, clipped_action, state_denoised = env.step(action)
+            next_state, reward, done, unclipped_state, clipped_action = env.step(action)
             # Keep track of the transition
             #env.render()
             batch[i_batch, t, 0:state_space_size] = state
@@ -70,6 +72,7 @@ def createBatch(env, batch_size, episode_length, param, state_space_size, varian
 
     return batch
 
+
 def computeGradientsSourceTargetTimestep(param, source_dataset, variance_action, env_param):
     """
     Compute the gradients estimation of the source targets with current policy
@@ -81,12 +84,13 @@ def computeGradientsSourceTargetTimestep(param, source_dataset, variance_action,
     :return: A vector containing all the gradients for each timestep
     """
 
-    state_t = source_dataset.source_task[:, :, 0:env_param.state_space_size]# state t
+    state_t = source_dataset.source_task[:, :, 0:env_param.state_space_size] # state t
     action_t = source_dataset.source_task[:, :, env_param.state_space_size]
 
     gradient_off_policy = (action_t - np.sum(np.multiply(param[np.newaxis, np.newaxis, :],  state_t), axis=2))[:, :, np.newaxis] * state_t / variance_action
 
     return gradient_off_policy
+
 
 def computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration):
     """
@@ -106,7 +110,7 @@ def computeNdef(min_index, param, env_param, source_dataset, simulation_param, a
 
     return num_episodes_target
 
-#Compute gradients
+# Compute gradients
 
 def onlyGradient(algorithm_configuration, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all, N):
     if(algorithm_configuration.pd == 0):
@@ -116,6 +120,7 @@ def onlyGradient(algorithm_configuration, weights_source_target_update, gradient
 
     return gradient
 
+
 def regressionFitting(y, x, n_config_cv, baseline_flag):
     """
     Fit a regression with the control variates
@@ -124,7 +129,7 @@ def regressionFitting(y, x, n_config_cv, baseline_flag):
     :param n_config_cv: number of control variates to fit
     :return: returns the error of the fitted regression
     """
-    if baseline_flag==1:
+    if baseline_flag == 1:
         baseline = np.squeeze(np.asarray(x[:, -1]))[:, np.newaxis]
         x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
     else:
@@ -146,40 +151,70 @@ def regressionFitting(y, x, n_config_cv, baseline_flag):
 
     return np.mean(error)
 
+
 def gradientAndRegression(algorithm_configuration, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all, control_variates, n_config_cv):
 
-    #Fitting the regression
-    if(algorithm_configuration.pd==1 and algorithm_configuration.approximation==0):
-        gradient_estimation = (weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all
-        gradient = 0
-        #Fitting the regression for every t 0...T-1
-        for t in range(control_variates.shape[1]):
-            gradient += regressionFitting(gradient_estimation[:, t], control_variates[:, t, :], n_config_cv, algorithm_configuration.baseline) #always the same, only the MIS with CV changes format of the x_avg array
-    else:
-        if(algorithm_configuration.pd == 0):
-            gradient_estimation = (np.squeeze(np.array(weights_source_target_update))[:, np.newaxis] * gradient_off_policy_update) * np.sum(discounted_rewards_all, axis=1)[:, np.newaxis]
+    # Compute the gradient to fit according to the estimator properties
+    if algorithm_configuration.pd == 1:
+        # The algorithm is pd
+        gradient_estimation = weights_source_target_update[:, :, np.newaxis] * gradient_off_policy_update * discounted_rewards_all[:, :, np.newaxis]
+        if algorithm_configuration.multid_approx == 1:
+            # I use a multidimensional approximation, therefore I sum over the different directions of the gradient
+            gradient_estimation = np.sum(gradient_estimation, axis=2)
 
+    else:
+        gradient_estimation = weights_source_target_update[:, np.newaxis] * gradient_off_policy_update * np.sum(discounted_rewards_all, axis=1)[:, np.newaxis]
+        if algorithm_configuration.multid_approx == 1:
+            # I use a multidimensional approximation, therefore I sum over the different directions of the gradient
+            gradient_estimation = np.sum(gradient_estimation, axis=1)
+
+    #Fitting the regression
+    if algorithm_configuration.pd == 1 and algorithm_configuration.approximation == 0:
+        # Per decision and no approximation, I fit a regression for every timestep and sum
+        if algorithm_configuration.multid_approx == 0:
+            # Multidimensional policy parameter and no approximation, I compute a gradient for every parameter's direction
+            gradient = np.zeros(gradient_estimation.shape[2])
+            for i in range(gradient_estimation.shape[2]):
+            # Fitting the regression for every t 0...T-1
+                for t in range(control_variates.shape[1]):
+                    gradient[i] += regressionFitting(gradient_estimation[:, t, i], control_variates[:, t, :, i], n_config_cv, algorithm_configuration.baseline) #always the same, only the MIS with CV changes format of the x_avg array
         else:
-            gradient_estimation = np.sum((weights_source_target_update * gradient_off_policy_update) * discounted_rewards_all, axis=1)
-        gradient = regressionFitting(gradient_estimation, control_variates, n_config_cv, algorithm_configuration.baseline)
+            gradient = 0
+            # Fitting the regression for every t 0...T-1
+            for t in range(control_variates.shape[1]):
+                gradient += regressionFitting(gradient_estimation[:, t], control_variates[:, t, :], n_config_cv, algorithm_configuration.baseline) #always the same, only the MIS with CV changes format of the x_avg array
+
+    else:
+        # No per decision or there is an approximation for the time direction, I some over it
+        if algorithm_configuration.pd == 1:
+            # Sum over time direction
+            gradient_estimation = np.sum(gradient_estimation, axis=1)
+        if algorithm_configuration.multid_approx == 0:
+            # Multidimensional policy parameter, compute a gradient for every parameter direction
+            gradient = np.zeros(gradient_estimation.shape[1])
+            for i in range(gradient_estimation.shape[1]):
+                gradient[i] = regressionFitting(gradient_estimation[:, i], control_variates[:, :, i], n_config_cv, algorithm_configuration.baseline)
+        else:
+            gradient = regressionFitting(gradient_estimation, control_variates, n_config_cv, algorithm_configuration.baseline)
 
     return gradient
 
-def gradientPolicySearch(algorithm_configuration, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all, N):
-    N = weights_source_target_update[weights_source_target_update==1].shape[0]
 
-    if(algorithm_configuration.pd == 0):
-        if(algorithm_configuration.baseline==0):
-            baseline = np.multiply((weights_source_target_update * gradient_off_policy_update)**2, np.sum(discounted_rewards_all)[:, np.newaxis]) / np.sum(np.squeeze(np.asarray(gradient_off_policy_update))**2, axis=0)
-        else:
-            baseline=0
-        gradient = 1/N * np.sum((np.squeeze(np.array(weights_source_target_update)) * gradient_off_policy_update) * (np.sum(discounted_rewards_all)-baseline))
+def gradientPolicySearch(algorithm_configuration, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all, N):
+
+    n = weights_source_target_update[weights_source_target_update == 1].shape[0]
+    if algorithm_configuration.pd == 0:
+        baseline = 0
+        if algorithm_configuration.baseline == 1:
+            baseline = np.sum(np.multiply((weights_source_target_update[:, np.newaxis] * gradient_off_policy_update)**2, (weights_source_target_update * np.sum(discounted_rewards_all, axis=1))[:, np.newaxis]), axis=0) / np.sum(gradient_off_policy_update**2, axis=0)
+        gradient = 1/n * np.sum((np.squeeze(np.array(weights_source_target_update))[:, np.newaxis] * gradient_off_policy_update) * (np.sum(discounted_rewards_all, axis=1)[:, np.newaxis]-baseline[np.newaxis, :]), axis=0)
 
     else:
-        if(algorithm_configuration.baseline==0):
-            baseline_den = np.sum(weights_source_target_update * gradient_off_policy_update**2, axis=0)
-            baseline = np.sum(((weights_source_target_update * gradient_off_policy_update)**2) * (discounted_rewards_all)[:, :, np.newaxis], axis=0) / baseline_den
-            gradient = 1/N * np.sum(np.sum((weights_source_target_update * gradient_off_policy_update) * (discounted_rewards_all-baseline), axis = 1), axis=0)
+        baseline = 0
+        if algorithm_configuration.baseline == 1:
+            baseline_den = np.sum(weights_source_target_update[:, :, np.newaxis] * gradient_off_policy_update**2, axis=0)
+            baseline = np.sum(((weights_source_target_update[:, :, np.newaxis] * gradient_off_policy_update)**2) * discounted_rewards_all[:, :, np.newaxis], axis=0) / baseline_den
+        gradient = 1/n * np.sum(np.sum((weights_source_target_update[:, :, np.newaxis] * gradient_off_policy_update) * (discounted_rewards_all[:, :, np.newaxis]-baseline[np.newaxis, :, :]), axis=1), axis=0)
 
     return gradient
 
@@ -196,6 +231,7 @@ def getEpisodesInfoFromSource(source_dataset, env_param):
 
     return [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src, clipped_actions]
 
+
 def weightsPolicySearch(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration):
     """
     Compute the importance weights considering policy and transition model
@@ -209,8 +245,12 @@ def weightsPolicySearch(policy_param, env_param, source_dataset, simulation_para
     :return: Returns the weights of the importance sampling estimator
     """
 
-    weights = np.zeros(source_dataset.source_task.shape[0]-simulation_param.batch_size)
-    weights = np.concatenate(weights, np.ones(simulation_param.batch_size), axis=0)
+    if algorithm_configuration.pd == 0:
+        weights = np.zeros(source_dataset.source_task.shape[0]-simulation_param.batch_size)
+        weights = np.concatenate((weights, np.ones(simulation_param.batch_size)), axis=0)
+    else:
+        weights = np.zeros((source_dataset.source_task.shape[0]-simulation_param.batch_size, env_param.episode_length))
+        weights = np.concatenate((weights, np.ones((simulation_param.batch_size, env_param.episode_length))), axis=0)
 
     return [weights, 0, 0]
 
@@ -230,8 +270,10 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
     [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src, clipped_action_t] = getEpisodesInfoFromSource(source_dataset, env_param)
     variance_action = simulation_param.variance_action
     variance_env = env_param_src[:, -1]
-    state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_action_t)
-    state_t1_denoised = env_param.env.stepDenoised(env_param_src, state_t, clipped_action_t)
+    param_indices = np.concatenate(([0], np.cumsum(np.delete(source_dataset.episodes_per_config, -1))))
+    combination_src_parameters_env = env_param_src[param_indices, :]#policy parameter of source not repeated
+    state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_action_t) #change to source dataset . states denoised
+    state_t1_denoised = env_param.env.stepDenoised(combination_src_parameters_env, state_t[:, :, :, np.newaxis], clipped_action_t[:, :, np.newaxis])
 
     if(algorithm_configuration.pd==0):
         policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action)), axis=1)
@@ -250,6 +292,7 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
     weights = policy_tgt / policy_src * model_tgt / model_src
 
     return [weights, 0, 0]
+
 
 def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration):
     """
@@ -284,6 +327,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
         state_t = np.repeat(state_t[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t
         state_t1 = np.repeat(state_t1[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t+1
         unclipped_action_t = np.repeat(unclipped_action_t[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # action t
+        clipped_actions = np.repeat(clipped_actions[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # clipped action t
         state_t1_denoised = env_param.env.stepDenoised(combination_src_parameters_env, state_t, clipped_actions)
 
         policy_src_new_traj = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :], state_t[evaluated_trajectories:, :, :, :]), axis=2))**2)/(2*variance_action)), axis=1)
@@ -310,6 +354,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
     weights = policy_tgt * model_tgt / mis_denominator
 
     return [weights, src_distributions, mis_denominator]
+
 
 def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration):
     """
@@ -371,6 +416,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
 
     return [weights, src_distributions, mis_denominator]
 
+
 def computeCv(weights, source_dataset, mis_denominator, policy_gradients, algorithm_configuration):
     """
     Compute the multiple importance weights considering policy and transition model
@@ -395,54 +441,32 @@ def computeCv(weights, source_dataset, mis_denominator, policy_gradients, algori
         control_variate = np.asarray((source_dataset.source_distributions / mis_denominator[:, np.newaxis]) - np.ones(source_dataset.source_distributions.shape))
 
         if algorithm_configuration.baseline == 1:
+            baseline_covariate = np.multiply(weights[:, np.newaxis], policy_gradients)
+            if algorithm_configuration.multid_approx == 0:
+                control_variate = np.repeat(control_variate[:, :, np.newaxis], policy_gradients.shape[1], axis=2)
+                control_variate = np.concatenate((control_variate, baseline_covariate[:, np.newaxis, :]), axis=1)
+            else:
+                control_variate = np.concatenate((control_variate, np.sum(baseline_covariate, axis=1)[:, np.newaxis]), axis=1)
 
-            if policy_gradients.shape[1]>1:
-                baseline_covariate = np.multiply(weights[:, np.newaxis], policy_gradients)
-                if algorithm_configuration.multid_approximation == 0:
-                    control_variate = np.repeat(control_variate[:, :, np.newaxis], policy_gradients.shape[1], axis=2)
+    else:
+        control_variate = (source_dataset.source_distributions / mis_denominator[:, :, np.newaxis]) - np.ones(source_dataset.source_distributions.shape)
+        if algorithm_configuration.baseline == 1:
+            if algorithm_configuration.approximation == 0:
+                baseline_covariate = np.multiply(weights[:, :, np.newaxis], policy_gradients)
+                if algorithm_configuration.multid_approx == 0:
+                    control_variate = np.repeat(control_variate[:, :, :, np.newaxis], policy_gradients.shape[2], axis=3)
+                    control_variate = np.concatenate((control_variate, baseline_covariate[:, :, np.newaxis, :]), axis=2)
+                else:
+                    control_variate = np.concatenate((control_variate, np.sum(baseline_covariate, axis=2)[:, :, np.newaxis]), axis=2)
+
+            else:
+                baseline_covariate = np.sum(np.multiply(weights[:, :, np.newaxis], policy_gradients), axis=1)
+                control_variate = np.sum(control_variate, axis=1)
+                if algorithm_configuration.multid_approx == 0:
+                    control_variate = np.repeat(control_variate[:, :, np.newaxis], policy_gradients.shape[2], axis=2)
                     control_variate = np.concatenate((control_variate, baseline_covariate[:, np.newaxis, :]), axis=1)
                 else:
                     control_variate = np.concatenate((control_variate, np.sum(baseline_covariate, axis=1)[:, np.newaxis]), axis=1)
-            else:
-                baseline_covariate = np.multiply(weights, policy_gradients)
-                control_variate = np.concatenate((control_variate, baseline_covariate[:, np.newaxis]), axis=1)
-
-    else:
-        # param_indices = np.concatenate(([0], np.cumsum(np.delete(source_dataset.episodes_per_config, -1))))
-        #
-        # combination_src_parameters = source_dataset.source_param[param_indices, 1:1+env_param.param_space_size][np.newaxis, np.newaxis, :, np.newaxis]#policy parameter of source not repeated
-        # mis_denominator_tensor = np.repeat(mis_denominator[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2)
-
-        control_variate = (source_dataset.source_distributions / mis_denominator[:, :, np.newaxis]) - np.ones(source_dataset.source_distributions.shape)
-
-        if algorithm_configuration.baseline == 1:
-
-            if algorithm_configuration.approximation == 0:
-
-                if policy_gradients.shape[1] > 1:
-                    baseline_covariate = np.multiply(weights[:, :, np.newaxis], policy_gradients)
-                    if algorithm_configuration.multid_approximation == 0:
-                        control_variate = np.repeat(control_variate[:, :, :, np.newaxis], policy_gradients.shape[2], axis=3)
-                        control_variate = np.concatenate((control_variate, baseline_covariate[:, np.newaxis, :, :]), axis=2)
-                    else:
-                        control_variate = np.concatenate((control_variate, np.sum(baseline_covariate, axis=2)[:, :, np.newaxis]), axis=2)
-                else:
-                    baseline_covariate = np.multiply(weights, policy_gradients)
-                    control_variate = np.concatenate((control_variate, baseline_covariate), axis=2)
-
-            else:
-                if policy_gradients.shape[1] > 1:
-                    baseline_covariate = np.sum(np.multiply(weights[:, :, np.newaxis], policy_gradients), axis=1)
-                    control_variate = np.sum(control_variate, axis=1)
-                    if algorithm_configuration.multid_approximation == 0:
-                        control_variate = np.repeat(control_variate[:, :, np.newaxis], policy_gradients.shape[2], axis=2)
-                        control_variate = np.concatenate((control_variate, baseline_covariate[:, np.newaxis, :]), axis=1)
-                    else:
-                        control_variate = np.concatenate((control_variate, np.sum(baseline_covariate, axis=1)[:, np.newaxis]), axis=1)
-                else:
-                    baseline_covariate = np.sum(np.multiply(weights, policy_gradients), axis=1)
-                    control_variate = np.sum(control_variate, axis=1)
-                    control_variate = np.concatenate((control_variate, baseline_covariate), axis=1)
 
     return control_variate
 
@@ -450,6 +474,7 @@ def computeCv(weights, source_dataset, mis_denominator, policy_gradients, algori
 
 def computeEssPolicySearch(policy_param, env_param, source_dataset, variance_action, algorithm_configuration, weights):
     return [0, 0]
+
 
 def computeEssIs(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration):
     weights = computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration)[0]
@@ -460,6 +485,7 @@ def computeEssIs(policy_param, env_param, source_dataset, simulation_param, algo
     else:
         min_index = 0
     return [ess, min_index]
+
 
 def computeEss(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration):
     """
@@ -502,6 +528,7 @@ def computeEss(policy_param, env_param, source_dataset, simulation_param, algori
         min_index = 0
 
     return [ess, min_index]
+
 
 def addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, num_episodes_target, discount_factor_timestep):
     """
@@ -562,6 +589,7 @@ def addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, para
 
     return source_dataset, tot_reward_batch, discounted_reward_batch
 
+
 def generateEpisodesAndComputeRewards(env_param, simulation_param, param, discount_factor_timestep):
     """
     Generate episodes to compute statistics if there are no episodes from the target distribution
@@ -591,6 +619,7 @@ def generateEpisodesAndComputeRewards(env_param, simulation_param, param, discou
 
     return tot_reward_batch, discounted_reward_batch
 
+
 def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size):
 
     num_episodes_target = simulation_param.batch_size
@@ -608,8 +637,12 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
     #Compute gradients per timestep
     if(algorithm_configuration.pd == 1):
         gradient_off_policy_update = np.cumsum(computeGradientsSourceTargetTimestep(param, source_dataset, simulation_param.variance_action, env_param), axis=1)
+        if gradient_off_policy_update.ndim == 2:
+            gradient_off_policy_update = gradient_off_policy_update[:, :, np.newaxis]
     else:
         gradient_off_policy_update = np.sum(computeGradientsSourceTargetTimestep(param, source_dataset, simulation_param.variance_action, env_param), axis=1)
+        if gradient_off_policy_update.ndim == 1:
+            gradient_off_policy_update = gradient_off_policy_update[:, np.newaxis]
 
     #Compute importance weights
     [weights_source_target_update, src_distributions, mis_denominator] = algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration)
@@ -634,18 +667,23 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
     #param, t, m_t, v_t, gradient = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
     param = param + simulation_param.learning_rate * gradient
 
-    [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)
+    if algorithm_configuration.off_policy == 1:
+        [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)
 
-    if(np.isnan(ess)):
+        if np.isnan(ess):
+            ess = 0
+        else:
+            if algorithm_configuration.pd == 1:
+                ess = min(ess)
+
+        if algorithm_configuration.adaptive == "Yes":
+            #Number of n_def next iteration
+            num_episodes_target = computeNdef(min_index, param, env_param, source_dataset, simulation_param, batch_size, simulation_param.ess_min, algorithm_configuration)
+        else:
+            num_episodes_target = simulation_param.batch_size
+
+    else:
         ess = 0
-    else:
-        if(algorithm_configuration.pd==1):
-            ess = min(ess)
-
-    if algorithm_configuration.adaptive=="Yes":
-        #Number of n_def next iteration
-        num_episodes_target = computeNdef(min_index, param, env_param, source_dataset, simulation_param, batch_size, simulation_param.ess_min, algorithm_configuration)
-    else:
         num_episodes_target = simulation_param.batch_size
 
     return source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target
@@ -673,6 +711,7 @@ def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance
     state_t = np.repeat(state_t[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t
     state_t1 = np.repeat(state_t1[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t+1
     unclipped_action_t = np.repeat(unclipped_action_t[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # action t
+    clipped_actions = np.repeat(clipped_actions[:, :, np.newaxis], combination_src_parameters_env.shape[0], axis=2) # action t
     variance_env = env_param_src[:, -1] # variance of the model transition
     state_t1_denoised = env_param.env.stepDenoised(combination_src_parameters_env, state_t, clipped_actions)
 
@@ -684,6 +723,7 @@ def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance
         src_distributions_model = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis, np.newaxis]) * np.exp(-np.sum(((state_t1 - state_t1_denoised)**2), axis=2) / (2*variance_env[:, np.newaxis, np.newaxis])), axis=1)
 
     return src_distributions_model * src_distributions_policy
+
 
 def importanceSampling(estimator, adaptive):
     cv=0
@@ -698,6 +738,7 @@ def importanceSampling(estimator, adaptive):
 
     return algorithm_configuration
 
+
 def pdImportanceSampling(estimator, adaptive):
     cv=0
     pd=1
@@ -710,6 +751,7 @@ def pdImportanceSampling(estimator, adaptive):
     algorithm_configuration = AlgorithmConfiguration(estimator, cv, pd, baseline, approximation, adaptive, computeWeights, computeGradientUpdate, ess)
 
     return algorithm_configuration
+
 
 def multipleImportanceSampling(estimator, adaptive):
     cv=0
@@ -724,6 +766,7 @@ def multipleImportanceSampling(estimator, adaptive):
 
     return algorithm_configuration
 
+
 def multipleImportanceSamplingCv(estimator, adaptive):
     cv=1
     pd=0
@@ -736,6 +779,7 @@ def multipleImportanceSamplingCv(estimator, adaptive):
     algorithm_configuration = AlgorithmConfiguration(estimator, cv, pd, baseline, approximation, adaptive, computeWeights, computeGradientUpdate, ess)
 
     return algorithm_configuration
+
 
 def multipleImportanceSamplingCvBaseline(estimator, adaptive):
     cv=1
@@ -750,6 +794,7 @@ def multipleImportanceSamplingCvBaseline(estimator, adaptive):
 
     return algorithm_configuration
 
+
 def pdMultipleImportanceSampling(estimator, adaptive):
     cv=0
     pd=1
@@ -762,6 +807,7 @@ def pdMultipleImportanceSampling(estimator, adaptive):
     algorithm_configuration = AlgorithmConfiguration(estimator, cv, pd, baseline, approximation, adaptive, computeWeights, computeGradientUpdate, ess)
 
     return algorithm_configuration
+
 
 def pdMultipleImportanceSamplingCv(estimator, adaptive):
     cv=1
@@ -776,6 +822,7 @@ def pdMultipleImportanceSamplingCv(estimator, adaptive):
 
     return algorithm_configuration
 
+
 def pdMultipleImportanceSamplingCvBaselineApprox(estimator, adaptive):
     cv=1
     pd=1
@@ -789,6 +836,7 @@ def pdMultipleImportanceSamplingCvBaselineApprox(estimator, adaptive):
 
     return algorithm_configuration
 
+
 def pdMultipleImportanceSamplingCvBaseline(estimator, adaptive):
     cv=1
     pd=1
@@ -801,6 +849,7 @@ def pdMultipleImportanceSamplingCvBaseline(estimator, adaptive):
     algorithm_configuration = AlgorithmConfiguration(estimator, cv, pd, baseline, approximation, adaptive, computeWeights, computeGradientUpdate, ess)
 
     return algorithm_configuration
+
 
 def reinforce(estimator, adaptive):
     cv=0
@@ -816,6 +865,7 @@ def reinforce(estimator, adaptive):
 
     return algorithm_configuration
 
+
 def reinforceBaseline(estimator, adaptive):
     cv=0
     pd=0
@@ -829,6 +879,7 @@ def reinforceBaseline(estimator, adaptive):
     algorithm_configuration = AlgorithmConfiguration(estimator, cv, pd, baseline, approximation, adaptive_alg, computeWeights, computeGradientUpdate, ess)
 
     return algorithm_configuration
+
 
 def gpomdp(estimator, adaptive):
     cv=0
@@ -844,36 +895,38 @@ def gpomdp(estimator, adaptive):
 
     return algorithm_configuration
 
+
 def switch_estimator(estimator, adaptive):
 
-    if(estimator=="IS"):
+    if estimator == "IS":
         algorithm_configuration = importanceSampling(estimator, adaptive)
-    if(estimator=="PD-IS"):
+    if estimator== "PD-IS":
         algorithm_configuration = pdImportanceSampling(estimator, adaptive)
-    if(estimator=="MIS"):
+    if estimator == "MIS":
         algorithm_configuration = multipleImportanceSampling(estimator, adaptive)
-    if(estimator=="MIS-CV"):
+    if estimator == "MIS-CV":
         algorithm_configuration = multipleImportanceSamplingCv(estimator, adaptive)
-    if(estimator=="MIS-CV-BASELINE"):
+    if estimator == "MIS-CV-BASELINE":
         algorithm_configuration = multipleImportanceSamplingCvBaseline(estimator, adaptive)
-    if(estimator=="PD-MIS"):
+    if estimator == "PD-MIS":
         algorithm_configuration = pdMultipleImportanceSampling(estimator, adaptive)
-    if(estimator=="PD-MIS-CV"):
+    if estimator == "PD-MIS-CV":
         algorithm_configuration = pdMultipleImportanceSamplingCv(estimator, adaptive)
-    if(estimator=="PD-MIS-CV-BASELINE-APPROXIMATED"):
+    if estimator == "PD-MIS-CV-BASELINE-APPROXIMATED":
         algorithm_configuration = pdMultipleImportanceSamplingCvBaselineApprox(estimator, adaptive)
-    if(estimator=="PD-MIS-CV-BASELINE"):
+    if estimator == "PD-MIS-CV-BASELINE":
         algorithm_configuration = pdMultipleImportanceSamplingCvBaseline(estimator, adaptive)
-    if(estimator=="REINFORCE"):
+    if estimator == "REINFORCE":
         algorithm_configuration = reinforce(estimator, adaptive)
-    if(estimator=="REINFORCE-BASELINE"):
+    if estimator == "REINFORCE-BASELINE":
         algorithm_configuration = reinforceBaseline(estimator, adaptive)
-    if(estimator=="GPOMDP"):
+    if estimator == "GPOMDP":
         algorithm_configuration = gpomdp(estimator, adaptive)
 
     return algorithm_configuration
 
-def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy = 1, multid_approximation = 0):
+
+def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy = 1, multid_approx = 0):
     """
     Perform transfer from source tasks, using REINFORCE with PD-MIS with baseline
     :param env: OpenAI environment
@@ -911,7 +964,7 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
 
     algorithm_configuration = switch_estimator(estimator, simulation_param.adaptive)
     algorithm_configuration.off_policy = off_policy
-    algorithm_configuration.multid_approximation = multid_approximation
+    algorithm_configuration.multid_approx = multid_approx
 
     if(off_policy==1):
         if(re.match("^.*MIS.*", estimator)):

@@ -54,8 +54,13 @@ class LQG1D(gym.Env):
         self.reset()
 
     def setParams(self, env_param):
-        [A, B] = env_param[0:2]
-        self.sigma_noise = env_param[-1]
+        dim1a = self.A.shape[0]
+        dim2a = self.A.shape[1]
+        self.A = env_param[0:(dim1a*dim2a)].reshape((dim1a, dim2a))
+        dim1b = self.B.shape[0]
+        dim2b = self.B.shape[1]
+        self.B = env_param[(dim1a*dim2a):(dim1a*dim2a)+(dim1b*dim2b)].reshape((dim1b, dim2b))
+        self.sigma_noise = m.sqrt(env_param[-1])
 
     def step(self, action, render=False):
         u = np.clip(action, -self.max_action, self.max_action)
@@ -72,20 +77,24 @@ class LQG1D(gym.Env):
     #Custom param for transfer
 
     def getEnvParam(self):
-        return [self.A, self.B, self.sigma_noise**2]
+        return np.asarray([np.ravel(self.A, order="C"), np.ravel(self.B, order="C"), np.ravel(self.sigma_noise**2, order="C")])
 
     def stepDenoised(self, env_parameters, state, action):
-        u = np.clip(action, -self.max_action, self.max_action)
-        A = env_parameters[0:self.param_dim][np.newaxis, :]
-        B = env_parameters[self.param_dim:self.param_dim+self.param_dim]
-        xn_unclipped = np.matmul(A, state, axis=2) + np.multiply(B, u)
-        xn = np.clip(xn_unclipped, -self.max_pos, self.max_pos)
-        cost = np.multiply(state, np.sum(np.multiply(self.Q[np.newaxis, :], state), axis=2)[:, :, np.newaxis]) + np.multiply(u, np.multiply(self.R, u))[:, :, np.newaxis]
+        num_episodes = env_parameters.shape[0]
+        dim1a = self.A.shape[0]
+        dim2a = self.A.shape[1]
+        A = env_parameters[:, 0:(dim1a*dim2a)].reshape((num_episodes, dim1a, dim2a))
+        dim1b = self.B.shape[0]
+        dim2b = self.B.shape[1]
+        B = env_parameters[:, (dim1a*dim2a):(dim1a*dim2a)+(dim1b*dim2b)].reshape((num_episodes, dim1b, dim2b))
+        xn_unclipped = np.multiply((A.T)[:, :, np.newaxis, :], state) + np.multiply(B.T, action)[:, :, np.newaxis, :]
+        return xn_unclipped
 
-        state = np.matrix(xn.ravel())
-
-        # We return the unclipped state and the clipped action as the last argument (to be used for computing the importance weights only)
-        return state, -np.asscalar(cost), False, np.array(xn_unclipped.ravel()), u
+    def stepDenoisedCurrent(self, state, action):
+        A = self.A
+        B = self.A
+        xn_unclipped = np.multiply((A.T)[np.newaxis, :, :], state) + np.multiply(B, action)[:, :, np.newaxis]
+        return xn_unclipped
 
     def reset(self, state=None):
         if state is None:
