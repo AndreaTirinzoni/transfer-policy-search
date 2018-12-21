@@ -8,21 +8,12 @@ import numpy as np
 import math as m
 
 """
-Linear quadratic gaussian regulator task.
+Testing env
 
-References
-----------
-  - Simone Parisi, Matteo Pirotta, Nicola Smacchia,
-    Luca Bascetta, Marcello Restelli,
-    Policy gradient approaches for multi-objective sequential decision making
-    2014 International Joint Conference on Neural Networks (IJCNN)
-  - Jan  Peters  and  Stefan  Schaal,
-    Reinforcement  learning of motor  skills  with  policy  gradients,
-    Neural  Networks, vol. 21, no. 4, pp. 682-697, 2008.
 
 """
 
-class LQG1D(gym.Env):
+class TestEnv(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second': 30
@@ -35,11 +26,7 @@ class LQG1D(gym.Env):
         self.max_pos = 10.0
         self.max_action = 8.0
         self.sigma_noise = 0.3
-        self.param_dim = 1
         self.A = np.array([1]).reshape((1, 1))
-        self.B = np.array([1]).reshape((1, 1))
-        self.Q = np.array([0.9]).reshape((1, 1))
-        self.R = np.array([0.9]).reshape((1, 1))
 
         # gym attributes
         self.viewer = None
@@ -54,43 +41,46 @@ class LQG1D(gym.Env):
         self.reset()
 
     def setParams(self, env_param):
-        [A, B] = env_param[0:2]
-        self.sigma_noise = env_param[-1]
+        self.A = env_param[0, :]
+        self.sigma_noise = env_param[-1, :]
 
     def step(self, action, render=False):
         u = np.clip(action, -self.max_action, self.max_action)
-        noise = self.np_random.randn() * self.sigma_noise
-        xn_unclipped = np.dot(self.A, self.state) + np.dot(self.B, u) + noise
+        xn_unclipped = self.state + u
         xn = np.clip(xn_unclipped, -self.max_pos, self.max_pos)
-        cost = np.dot(self.state, np.dot(self.Q, self.state)) + np.dot(u, np.dot(self.R, u))
+        cost = 1
 
         self.state = np.array(xn.ravel())
 
         # We return the unclipped state and the clipped action as the last argument (to be used for computing the importance weights only)
-        return self.get_state(), -np.asscalar(cost), False, np.array(xn_unclipped.ravel()), u
+        return self.get_state(), cost, False, np.array(xn_unclipped.ravel()), u, xn_unclipped
 
+    def stepDenoised(self, env_parameters, state, action):
+
+        A = env_parameters[:, 0]
+        xn_unclipped = np.multiply(A[np.newaxis, np.newaxis, np.newaxis, :], state)
+
+        xn = np.clip(xn_unclipped, -self.max_pos, self.max_pos)
+
+        # We return the unclipped state and the clipped action as the last argument (to be used for computing the importance weights only)
+        return xn
+
+    def stepDenoisedCurrent(self, state, action):
+
+        A = np.ravel((self.A))
+        xn_unclipped = np.multiply(A, state)
+        xn = np.clip(xn_unclipped, -self.max_pos, self.max_pos)
+
+        # We return the unclipped state and the clipped action as the last argument (to be used for computing the importance weights only)
+        return xn
     #Custom param for transfer
 
     def getEnvParam(self):
-        return [self.A, self.B, self.sigma_noise**2]
-
-    def stepDenoised(self, env_parameters, state, action):
-        u = np.clip(action, -self.max_action, self.max_action)
-        A = env_parameters[0:self.param_dim][np.newaxis, :]
-        B = env_parameters[self.param_dim:self.param_dim+self.param_dim]
-        xn_unclipped = np.matmul(A, state, axis=2) + np.multiply(B, u)
-        xn = np.clip(xn_unclipped, -self.max_pos, self.max_pos)
-        cost = np.multiply(state, np.sum(np.multiply(self.Q[np.newaxis, :], state), axis=2)[:, :, np.newaxis]) + np.multiply(u, np.multiply(self.R, u))[:, :, np.newaxis]
-
-        state = np.matrix(xn.ravel())
-
-        # We return the unclipped state and the clipped action as the last argument (to be used for computing the importance weights only)
-        return state, -np.asscalar(cost), False, np.array(xn_unclipped.ravel()), u
+        return np.asarray([np.ravel(self.A, order="C"), np.ravel(self.sigma_noise**2, order="C")])
 
     def reset(self, state=None):
         if state is None:
-            self.state = np.array([self.np_random.uniform(low=-self.max_pos,
-                                                          high=self.max_pos)])
+            self.state = np.array([self.np_random.uniform(low=-0.05, high=0.05, size=(2,))])
         else:
             self.state = np.array(state)
 

@@ -34,6 +34,7 @@ class ContinuousCartPoleEnv(gym.Env):
         # Angle at which to fail the episode
         self.theta_threshold_radians = 12 * 2 * math.pi / 360
         self.x_threshold = 2.4
+        self.sigma_env = 0.03
 
         # Angle limit set to 2 * theta_threshold_radians so failing observation
         # is still within bounds
@@ -59,6 +60,13 @@ class ContinuousCartPoleEnv(gym.Env):
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
+
+    def getEnvParam(self):
+        return [self.masscart, self.length, self.sigma_env**2]
+
+    def setParams(self, env_param):
+        [self.masscart, self.length] = env_param[0:1]
+        self.sigma_env = np.sqrt(env_param[-1])
 
     def stepPhysics(self, force):
         x, x_dot, theta, theta_dot = self.state
