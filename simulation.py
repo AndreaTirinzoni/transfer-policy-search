@@ -34,12 +34,13 @@ class SimulationParam:
 
 class SourceDataset:
 
-    def __init__(self, source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions):
+    def __init__(self, source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, next_states_unclipped_denoised):
 
         self.source_task = source_task
         self.source_param = source_param
         self.episodes_per_config = episodes_per_config
         self.next_states_unclipped = next_states_unclipped
+        self.next_states_unclipped_denoised = next_states_unclipped_denoised
         self.clipped_actions = clipped_actions
         self.n_config_cv = episodes_per_config.shape[0]
         self.initial_size = source_task.shape[0]
@@ -67,31 +68,24 @@ adaptive = "No"
 
 simulation_param = SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
-episodes_per_configuration = 20
-env_param_min = 0.5
-env_param_max = 1.5
-policy_param_min = -1
-policy_param_max = -0.1
-linspace_policy = 10
-linspace_env = 11
-n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to use to fit the control variates
-
-#source task
-variance_action = 0.1
+# source task for lqg1d
 np.random.seed(2000)
-batch_size = 20
-episode_lengthd = 20
+episodes_per_configuration = 2
 discount_factor = 0.99
 env_param_min = 0.5
 env_param_max = 1.5
 policy_param_min = -1
 policy_param_max = -0.1
-linspace_env = 11
-linspace_policy = 10
+linspace_env = 2
+linspace_policy = 2
+n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to use to fit the control variates
+
+[source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationAllCombinations(env, episode_length, episodes_per_configuration, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
+
+# source task for cartpole
 # policy_params = np.matrix([[2, 2], [2, 2]])
 # env_params = np.matrix([[2, 0.09], [1, 0.09]])
-
-[source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = stc.sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
+# n_config_cv = policy_params.shape[0] * env_params.shape[0] - 1
 # [source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = stc.sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size)
 
 # source_task = np.genfromtxt('source_task.csv', delimiter=',')
@@ -100,7 +94,7 @@ linspace_policy = 10
 # next_states_unclipped = np.genfromtxt('next_states_unclipped.csv', delimiter=',')
 # actions_clipped = np.genfromtxt('actions_clipped.csv', delimiter=',')
 
-source_dataset = SourceDataset(source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped)
+source_dataset = SourceDataset(source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
 
 for i_run in range(runs):
 
@@ -125,9 +119,9 @@ for i_run in range(runs):
     # estimator = "MIS-CV"
     # off_policy_mis_cv = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
     #
-    print("MIS-CV-BASELINE")
-    estimator = "MIS-CV-BASELINE"
-    off_policy_mis_cv_baseline = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
+    # print("MIS-CV-BASELINE")
+    # estimator = "MIS-CV-BASELINE"
+    # off_policy_mis_cv_baseline = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
 
     # print("PD-MIS")
     # estimator = "PD-MIS"
@@ -141,9 +135,9 @@ for i_run in range(runs):
     # estimator = "PD-MIS-CV-BASELINE-APPROXIMATED"
     # off_policy_pd_mis_cv_baseline_approx = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
     # #
-    # print("PD-MIS-CV-BASELINE")
-    # estimator = "PD-MIS-CV-BASELINE"
-    # off_policy_pd_mis_cv_baseline = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
+    print("PD-MIS-CV-BASELINE")
+    estimator = "PD-MIS-CV-BASELINE"
+    off_policy_pd_mis_cv_baseline = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
 
     # print("REINFORCE")
     # estimator = "REINFORCE"

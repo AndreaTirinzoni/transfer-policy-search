@@ -66,13 +66,14 @@ class LQG1D(gym.Env):
         u = np.clip(action, -self.max_action, self.max_action)
         noise = self.np_random.randn() * self.sigma_noise
         xn_unclipped = np.dot(self.A, self.state) + np.dot(self.B, u) + noise
+        xn_unclipped_denoised = np.dot(self.A, self.state) + np.dot(self.B, u)
         xn = np.clip(xn_unclipped, -self.max_pos, self.max_pos)
         cost = np.dot(self.state, np.dot(self.Q, self.state)) + np.dot(u, np.dot(self.R, u))
 
         self.state = np.array(xn.ravel())
 
         # We return the unclipped state and the clipped action as the last argument (to be used for computing the importance weights only)
-        return self.get_state(), -np.asscalar(cost), False, np.array(xn_unclipped.ravel()), u
+        return self.get_state(), -np.asscalar(cost), False, np.array(xn_unclipped.ravel()), u, xn_unclipped_denoised
 
     #Custom param for transfer
 
@@ -87,7 +88,7 @@ class LQG1D(gym.Env):
         dim1b = self.B.shape[0]
         dim2b = self.B.shape[1]
         B = env_parameters[:, (dim1a*dim2a):(dim1a*dim2a)+(dim1b*dim2b)].reshape((num_episodes, dim1b, dim2b))
-        xn_unclipped = np.multiply((A.T)[:, :, np.newaxis, :], state) + np.multiply(B.T, action)[:, :, np.newaxis, :]
+        xn_unclipped = np.sum(np.multiply((A.T)[np.newaxis, np.newaxis, :, :, :], state[:, :, :, np.newaxis, :]), axis=3) + np.multiply(B.T, action)[:, :, np.newaxis, :]
         return xn_unclipped
 
     def stepDenoisedCurrent(self, state, action):
