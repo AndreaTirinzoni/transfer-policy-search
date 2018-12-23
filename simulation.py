@@ -53,11 +53,11 @@ class SourceDataset:
 # env_param_space_size = 3
 # episode_length = 20
 
-env = gym.make('cartpolec-v0')
-param_space_size = 4
-state_space_size = 4
+env = gym.make('LQG1D-v0')
+param_space_size = 1
+state_space_size = 1
 env_param_space_size = 3
-episode_length = 200
+episode_length = 20
 
 env_param = EnvParam(env, param_space_size, state_space_size, env_param_space_size, episode_length)
 
@@ -75,25 +75,28 @@ adaptive = "Yes"
 simulation_param = SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
 # source task for lqg1d
-# np.random.seed(2000)
-# episodes_per_configuration = 15
-# discount_factor = 0.99
-# env_param_min = 0.9
-# env_param_max = 1
-# policy_param_min = -1
-# policy_param_max = -0.1
-# linspace_env = 2
-# linspace_policy = 10
-# n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to use to fit the control variates
-#
-# [source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationAllCombinations(env, episode_length, episodes_per_configuration, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
+episodes_per_configuration = 20
+discount_factor = 0.99
+env_param_min = 0.9
+env_param_max = 1
+policy_param_min = -1
+policy_param_max = -0.1
+linspace_env = 2
+linspace_policy = 2
+n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to use to fit the control variates
+
+[source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationAllCombinations(env, episode_length, episodes_per_configuration, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
 
 # source task for cartpole
-policy_params = np.array([[-0.05, 0.19, 0.22, 0.6], [, -0.05, 0.05, 0.3], [1, 2, 3, 4]])
-env_params = np.array([[1, 0.5, 0.09], [0.5, 1, 0.09], [1.5, 1.5, 0.09], [0.5, 2, 0.09]])
-episodes_per_configuration = 1
-n_config_cv = policy_params.shape[0] * env_params.shape[0] - 1
-[source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env, episode_length, episodes_per_configuration, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size)
+# policy_params = np.array([[-0.045, 0.20, 0.24, 0.6], [-0.05, 0.1, 0.1, 0.4]])
+# env_params = np.array([[1, 0.5, 0.09], [1, 0.5, 0.09]])
+#
+# # policy_params = np.array([[-0.045, 0.20, 0.24, 0.6], [-0.05, 0.1, 0.1, 0.4], [-0.06, 0.21, 0.24, 0.73], [-0.08, -0.05, 0.05, 0.35], [-0.09, 0.16, 0.36, 0.7], [-0.11, -0.17, 0.007, 0.15]])
+# # env_params = np.array([[1, 0.5, 0.09], [1, 0.5, 0.09], [0.5, 1, 0.09], [0.5, 1, 0.09], [1.5, 1, 0.09], [1.5, 1, 0.09]])
+#
+# episodes_per_configuration = 1
+# n_config_cv = policy_params.shape[0] * env_params.shape[0] - 1
+# [source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env, episode_length, episodes_per_configuration, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size)
 
 # source_task = np.genfromtxt('source_task.csv', delimiter=',')
 # episodes_per_config = np.genfromtxt('episodes_per_config.csv', delimiter=',').astype(int)

@@ -35,16 +35,6 @@ class AlgorithmConfiguration:
 
 
 def createBatch(env, batch_size, episode_length, param, state_space_size, variance_action):
-    """
-    Create a batch of episodes
-    :param env: OpenAI environment
-    :param batch_size: size of the batch
-    :param episode_length: length of the episode
-    :param param: policy parameter
-    :param state_space_size: size of the state space
-    :param variance_action: variance of the action's distribution
-    :return: A tensor containing [num episodes, timestep, informations] where informations stays for: [state, action, reward, next_state, unclipped_state, unclipped_action]
-    """
 
     information_size = state_space_size+2+state_space_size+state_space_size+1+state_space_size
     batch = np.zeros((batch_size, episode_length, information_size)) #[state, clipped_action, reward, next_state, unclipped_state, action]
@@ -75,15 +65,6 @@ def createBatch(env, batch_size, episode_length, param, state_space_size, varian
 
 
 def computeGradientsSourceTargetTimestep(param, source_dataset, variance_action, env_param):
-    """
-    Compute the gradients estimation of the source targets with current policy
-    :param param: policy parameters
-    :param source_task: source tasks [state, action, reward, ...... , reward, state]
-    :param variance_action: variance of the action's distribution
-    :param param_space_size: variance of the action's distribution
-    :param state_space_size: variance of the action's distribution
-    :return: A vector containing all the gradients for each timestep
-    """
 
     state_t = source_dataset.source_task[:, :, 0:env_param.state_space_size] # state t
     action_t = source_dataset.source_task[:, :, env_param.state_space_size]
@@ -94,12 +75,6 @@ def computeGradientsSourceTargetTimestep(param, source_dataset, variance_action,
 
 
 def computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration):
-    """
-    Compute the number of samples to generare from the target
-    :param weights: the weights
-    :param ess_min: the minimum effective sample size
-    :return:
-    """
 
     weights = algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration, 0)[0]
     n = source_dataset.source_task.shape[0]
@@ -107,7 +82,7 @@ def computeNdef(min_index, param, env_param, source_dataset, simulation_param, a
         weights = weights[:, min_index]
     w_1 = np.linalg.norm(weights, 1)
     w_2 = np.linalg.norm(weights, 2)
-    num_episodes_target = int(max(0, np.ceil((simulation_param.ess_min * w_1 / n) - (w_1 / (w_2 ** 2) * n))))
+    num_episodes_target = int(max(0, np.ceil((simulation_param.ess_min * w_1 / n) - (w_1 * n / (w_2 ** 2)))))
 
     return num_episodes_target
 
@@ -123,13 +98,7 @@ def onlyGradient(algorithm_configuration, weights_source_target_update, gradient
 
 
 def regressionFitting(y, x, n_config_cv, baseline_flag):
-    """
-    Fit a regression with the control variates
-    :param y: the target
-    :param x: the parameters
-    :param n_config_cv: number of control variates to fit
-    :return: returns the error of the fitted regression
-    """
+
     if baseline_flag == 1:
         baseline = np.squeeze(np.asarray(x[:, -1]))[:, np.newaxis]
         x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
@@ -234,17 +203,7 @@ def getEpisodesInfoFromSource(source_dataset, env_param):
 
 
 def weightsPolicySearch(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, batch_size):
-    """
-    Compute the importance weights considering policy and transition model
-    :param policy_param: current policy parameter
-    :param env_param: current environment parameter
-    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
-    :param variance_action: variance of the action's distribution
-    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
-    :param next_states_unclipped: matrix containing the unclipped next states of every episode for every time step
-    :param clipped_actions: matrix containing the unclipped actions of every episode for every time step
-    :return: Returns the weights of the importance sampling estimator
-    """
+
 
     if algorithm_configuration.pd == 0:
         weights = np.zeros(source_dataset.source_task.shape[0]-simulation_param.batch_size)
@@ -256,17 +215,6 @@ def weightsPolicySearch(policy_param, env_param, source_dataset, simulation_para
     return [weights, 0]
 
 def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, batch_size):
-    """
-    Compute the importance weights considering policy and transition model
-    :param policy_param: current policy parameter
-    :param env_param: current environment parameter
-    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
-    :param variance_action: variance of the action's distribution
-    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
-    :param next_states_unclipped: matrix containing the unclipped next states of every episode for every time step
-    :param clipped_actions: matrix containing the unclipped actions of every episode for every time step
-    :return: Returns the weights of the importance sampling estimator
-    """
 
     [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src, clipped_action_t] = getEpisodesInfoFromSource(source_dataset, env_param)
     variance_action = simulation_param.variance_action
@@ -296,20 +244,7 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
 
 
 def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, batch_size):
-    """
-    Compute the multiple importance weights considering policy and transition model
-    :param policy_param: current policy parameter
-    :param env_param: current environment parameter
-    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
-    :param variance_action: variance of the action's distribution
-    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
-    :param next_states_unclipped: matrix containing the unclipped next states of every episode for every time step
-    :param clipped_actions: matrix containing the unclipped actions of every episode for every time step
-    :param episodes_per_config: vector containing the number of episodes for each source configuration
-    :param src_distributions: source distributions, (the qj of the MIS denominator policy)
-    :param n_tgt: number of trajectories from target distribution
-    :return: Returns the weights of the multiple importance sampling estimator and the new qj of the MIS denominator (policy and model)
-    """
+
     [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src, clipped_actions] = getEpisodesInfoFromSource(source_dataset, env_param)
     variance_action = simulation_param.variance_action
 
@@ -359,20 +294,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
 
 
 def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, batch_size):
-    """
-    Compute the per-decision multiple importance weights considering policy and transition model
-    :param policy_param: current policy parameter
-    :param env_param: current environment parameter
-    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
-    :param variance_action: variance of the action's distribution
-    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
-    :param next_states_unclipped: matrix containing the unclipped next states of every episode for every time step
-    :param clipped_actions: matrix containing the unclipped actions of every episode for every time step
-    :param episodes_per_config: vector containing the number of episodes for each source configuration
-    :param src_distributions: source distributions, (the qj of the PD-MIS denominator policy)
-    :param n_tgt: number of episodes from target distribution
-    :return: Returns the weights of the per-decision multiple importance sampling estimator and the new qj of the PD-MIS denominator (policy and model)
-    """
+
     [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src, clipped_actions] = getEpisodesInfoFromSource(source_dataset, env_param)
     variance_action = simulation_param.variance_action
 
@@ -422,24 +344,6 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
 
 
 def computeCv(weights, source_dataset, mis_denominator, policy_gradients, algorithm_configuration):
-    """
-    Compute the multiple importance weights considering policy and transition model
-    :param policy_param: current policy parameter
-    :param env_param: current environment parameter
-    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
-    :param variance_action: variance of the action's distribution
-    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
-    :param next_states_unclipped: matrix containing the unclipped next states of every episode for every time step
-    :param clipped_actions: matrix containing the unclipped actions of every episode for every time step
-    :param episodes_per_config: vector containing the number of episodes for each source configuration
-    :param src_distributions: source distributions, (the qj of the MIS denominator policy)
-    :param batch_size: size of the batch
-    :param episode_length: length of the episode
-    :param policy_gradients: the gradientf of the policy (nabla log pi)
-    :param baseline: 0 the algorithm doesn't require the baseline, 1 if it does
-    :param n_tgt: number of episodes from the target distribution
-    :return: Returns the weights of the multiple importance sampling estimator and the new qj of the MIS denominator (policy and model) and the control variate
-    """
 
     if algorithm_configuration.pd == 0:
         control_variate = np.asarray((source_dataset.source_distributions / mis_denominator[:, np.newaxis]) - np.ones(source_dataset.source_distributions.shape))
@@ -492,19 +396,7 @@ def computeEssIs(policy_param, env_param, source_dataset, simulation_param, algo
 
 
 def computeEss(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration):
-    """
-    Compute the ess estimated using mis
-    :param policy_param: current policy parameter
-    :param env_param: current environment parameter
-    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
-    :param variance_action: variance of the action's distribution
-    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
-    :param next_states_unclipped: matrix containing the unclipped next states of every episode for every time step
-    :param clipped_actions: matrix containing the unclipped actions of every episode for every time step
-    :param episodes_per_config: vector containing the number of episodes for each source configuration
-    :param src_distributions: source distributions, (the qj of the MIS denominator policy)
-    :return: return the ESS
-    """
+
     [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src, clipped_actions] = getEpisodesInfoFromSource(source_dataset, env_param)
     variance_env = env_param_src[:, -1]
     state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_actions)
@@ -536,24 +428,6 @@ def computeEss(policy_param, env_param, source_dataset, simulation_param, algori
 
 
 def addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, num_episodes_target, discount_factor_timestep):
-    """
-    Generate a batch of episodes and update the source dataset
-    :param env: openAI environment
-    :param num_episodes_target: number of episodes of the target environment
-    :param episode_length: length of every episode
-    :param param: policy param
-    :param variance_action: variance of the action's distribution
-    :param discount_factor_timestep: discount factor for every timestep gamma^t
-    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
-    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
-    :param episodes_per_config: number of episodes for every policy_parameter - env_parameter
-    :param next_states_unclipped: matrix containing the unclipped next states of every episode for every time step
-    :param clipped_actions: matrix containing the unclipped actions of every episode for every time step
-    :param estimator: the estimator of the current algorithm
-    :param weights_source_target: current weights of the source dataset
-    :param gradient_off_policy: gradients of the current dataset
-    :return: returns the updated dataset and the new informations to update the statistics
-    """
 
     batch_size = num_episodes_target
 
@@ -598,19 +472,7 @@ def addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, para
 
 
 def generateEpisodesAndComputeRewards(env_param, simulation_param, param, discount_factor_timestep):
-    """
-    Generate episodes to compute statistics if there are no episodes from the target distribution
-    :param env: openAI environment
-    :param episode_length: length of every episode
-    :param param: policy parameter
-    :param variance_action: variance of the action's distribution
-    :param discount_factor_timestep: discount factor for every timestep gamma^t
-    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
-    :param estimator:
-    :param weights_source_target: current weights of the source dataset
-    :param gradient_off_policy: gradients of the current dataset
-    :return: rewards of the batch
-    """
+
     batch_size = 5
     # Iterate for every episode in batch
 
@@ -642,7 +504,7 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
 
 
     #Compute gradients per timestep
-    if(algorithm_configuration.pd == 1):
+    if algorithm_configuration.pd == 1:
         gradient_off_policy_update = np.cumsum(computeGradientsSourceTargetTimestep(param, source_dataset, simulation_param.variance_action, env_param), axis=1)
         if gradient_off_policy_update.ndim == 2:
             gradient_off_policy_update = gradient_off_policy_update[:, :, np.newaxis]
@@ -693,16 +555,7 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
 # Algorithm off policy using different estimators
 
 def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance_action, algorithm_configuration, env_param):
-    """
-    Compute the qj of the MIS denominator
-    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
-    :param variance_action: variance of the action's distribution
-    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
-    :param next_states_unclipped: matrix containing the unclipped next states of every episode for every time step
-    :param clipped_actions: matrix containing the unclipped actions of every episode for every time step
-    :param episodes_per_config: vector containing the number of episodes for every policy_parameter - env_parameter configuration
-    :return: a matrix (N trajectories * M parameters) containing the qj related to the denominator of the MIS weights
-    """
+
     [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src, clipped_actions] = getEpisodesInfoFromSource(source_dataset, env_param)
 
     param_indices = np.concatenate(([0], np.cumsum(np.delete(source_dataset.episodes_per_config, -1))))
@@ -719,7 +572,7 @@ def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance
 
     if algorithm_configuration.pd == 0:
         src_distributions_policy = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :], state_t), axis=2))**2)/(2*variance_action)), axis=1)
-        src_distributions_model = np.prod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis, np.newaxis]) * np.exp(-np.sum(((state_t1 - state_t1_denoised)**2), axis=2) / (2*variance_env[:, np.newaxis, np.newaxis])), axis=1)
+        src_distributions_model = np.prod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis, np.newaxis]) * np.exp(-np.sum((np.power((state_t1 - state_t1_denoised), 2)), axis=2) / (2*variance_env[:, np.newaxis, np.newaxis])), axis=1)
     else:
         src_distributions_policy = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :], state_t), axis=2))**2)/(2*variance_action)), axis=1)
         src_distributions_model = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis, np.newaxis]) * np.exp(-np.sum(((state_t1 - state_t1_denoised)**2), axis=2) / (2*variance_env[:, np.newaxis, np.newaxis])), axis=1)
@@ -929,28 +782,6 @@ def switch_estimator(estimator, adaptive):
 
 
 def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy = 1, multid_approx = 0):
-    """
-    Perform transfer from source tasks, using REINFORCE with PD-MIS with baseline
-    :param env: OpenAI environment
-    :param batch_size: size of the batch
-    :param discount_factor: the discout factor
-    :param source_task: data structure to collect informations about the episodes, every row contains all [state, action, reward, .....]
-    :param next_states_unclipped: matrix containing the unclipped next states of every episode for every time step
-    :param clipped_actions: matrix containing the unclipped actions of every episode for every time step
-    :param source_param: data structure to collect the parameters of the episode [policy_parameter, environment_parameter, environment_variance]
-    :param episodes_per_config: vector containing the number of episodes for every policy_parameter - env_parameter configuration
-    :param variance_action: variance of the action's distribution
-    :param episode_length: length of the episodes
-    :param initial_param: initial policy parameter
-    :param num_batch: number of batch of the algorithm
-    :param learning_rate: learning rate of the update rule
-    :param ess_min: minimum effective sample size
-    :param adaptive: yes if the algorithms has n_def adaptive, no if it hasn't, param_space_size, state_space_size, env_param_space_size
-    :param param_space_size: size of the parameter space of the current environment
-    :param state_space_size: size of the state space of the current environment
-    :param env_param_space_size: size of the environment space of the current environment
-    :return: Return a BatchStats object
-    """
 
     param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
 

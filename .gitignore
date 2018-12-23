@@ -9,6 +9,7 @@ __pycache__/
 # Ingore files
 *.csv
 *.idea
+*.xml
 
 # Distribution / packaging
 .Python
