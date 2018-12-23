@@ -34,7 +34,7 @@ class ContinuousCartPoleEnv(gym.Env):
         # Angle at which to fail the episode
         self.theta_threshold_radians = 12 * 2 * math.pi / 360
         self.x_threshold = 2.4
-        self.sigma_env = 0.03
+        self.sigma_env = 0.3
 
         # Angle limit set to 2 * theta_threshold_radians so failing observation
         # is still within bounds

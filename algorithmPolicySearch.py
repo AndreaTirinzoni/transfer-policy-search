@@ -33,7 +33,7 @@ def createBatch(env, batch_size, episode_length, param, state_space_size, varian
             # Take a step
             mean_action = np.dot(param, state)
             action = np.random.normal(mean_action, m.sqrt(variance_action))
-            next_state, reward, done, unclipped_state, clipped_action = env.step(action)
+            next_state, reward, done, unclipped_state, clipped_action, state_denoised = env.step(action)
             # Keep track of the transition
             #env.render()
             batch[i_batch, t, 0:state_space_size] = state
