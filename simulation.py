@@ -64,7 +64,7 @@ env_param = EnvParam(env, param_space_size, state_space_size, env_param_space_si
 mean_initial_param = -0.1 * np.ones(param_space_size)
 variance_initial_param = 0
 variance_action = 0.1
-batch_size = 1
+batch_size = 20
 num_batch = 400
 discount_factor = 0.99
 runs = 4
@@ -75,9 +75,9 @@ adaptive = "Yes"
 simulation_param = SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
 # source task for lqg1d
-episodes_per_configuration = 20
+episodes_per_configuration = 2
 discount_factor = 0.99
-env_param_min = 0.9
+env_param_min = 0.95
 env_param_max = 1
 policy_param_min = -1
 policy_param_max = -0.1
@@ -160,3 +160,22 @@ for i_run in range(runs):
     print("GPOMDP")
     estimator = "GPOMDP"
     gpomdp = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=0) #1e-6
+
+x = range(num_batch)
+
+mean_pol1 = np.mean(off_policy_mis_cv_baseline.disc_rewards, axis=0)
+mean_pol3 = np.mean(gpomdp.disc_rewards, axis=0)
+var_pol1 = np.std(off_policy_mis_cv_baseline.disc_rewards, axis=0) / (m.sqrt(runs))
+var_pol3 = np.std(gpomdp.disc_rewards, axis=0) / (m.sqrt(runs))
+
+plot.plot_curves([x, x], [mean_pol1, mean_pol3], [var_pol1, var_pol3], title="Discounted rewards over batches", x_label="Batch", y_label="Rewards", names=["MIS-CV-BASELINE", "G(PO)MDP"])
+
+mean_pol1 = np.mean(off_policy_mis_cv_baseline.policy_parameter, axis=0)
+mean_pol3 = np.mean(gpomdp.policy_parameter, axis=0)
+var_pol1 = np.std(off_policy_mis_cv_baseline.policy_parameter, axis=0) / (m.sqrt(runs))
+var_pol3 = np.std(gpomdp.policy_parameter, axis=0) / (m.sqrt(runs))
+
+
+for i in range(param_space_size):
+    plot.plot_curves([x, x], [mean_pol1[:, i], mean_pol3[:, i]], [var_pol1[:, i], var_pol3[:, i]], title = "Policy parameter over batches", x_label = "Batch", y_label = "Policy parameter", names = ["MIS-CV-BASELINE", "G(PO)MDP"])
+    #print("optimal: " + str(mean_pol3[-1, i]) + " middle: " + str(mean_pol3[100, i]))

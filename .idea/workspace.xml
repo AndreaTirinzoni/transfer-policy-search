@@ -2,8 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4263835c-fd92-417b-afad-0a299f6d3721" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/learningAlgorithm.py" beforeDir="false" afterPath="$PROJECT_DIR$/learningAlgorithm.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/simulation.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulation.py" afterDir="false" />
     </list>
@@ -92,15 +90,15 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="Python Console" value="15407" />
+          <entry key="Python Console" value="15768" />
           <entry key="dummy" value="3" />
-          <entry key="py" value="39597" />
+          <entry key="py" value="39856" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="3" />
-          <entry key="Python" value="55004" />
+          <entry key="Python" value="55624" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
@@ -118,17 +116,17 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="95">
-              <caret line="783" column="107" selection-start-line="783" selection-start-column="107" selection-end-line="783" selection-end-column="107" />
+            <state relative-caret-position="215">
+              <caret line="554" selection-start-line="554" selection-end-line="554" />
               <folding>
-                <marker date="1545570343243" expanded="true" signature="3873:5367" ph="..." />
-                <marker date="1545570343243" expanded="true" signature="8679:9972" ph="..." />
-                <marker date="1545570343243" expanded="true" signature="10071:10723" ph="..." />
-                <marker date="1545570343243" expanded="true" signature="37678:42952" ph="..." />
-                <marker date="1545570343243" expanded="true" signature="42994:44421" ph="..." />
+                <marker date="1545575868061" expanded="true" signature="3873:5367" ph="..." />
+                <marker date="1545575868061" expanded="true" signature="8679:9972" ph="..." />
+                <marker date="1545575868061" expanded="true" signature="10071:10723" ph="..." />
+                <marker date="1545575868061" expanded="true" signature="37788:43062" ph="..." />
+                <marker date="1545575868061" expanded="true" signature="43104:44531" ph="..." />
               </folding>
             </state>
           </provider>
@@ -137,8 +135,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/algorithmComparisonPolicySearch.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="189">
-              <caret line="9" lean-forward="true" selection-start-line="9" selection-end-line="9" />
+            <state relative-caret-position="399">
+              <caret line="113" selection-start-line="113" selection-end-line="113" selection-end-column="20" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -193,11 +191,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/simulation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="257">
-              <caret line="133" selection-start-line="133" selection-end-line="133" />
+            <state relative-caret-position="359">
+              <caret line="131" column="13" lean-forward="true" selection-start-line="131" selection-start-column="13" selection-end-line="131" selection-end-column="13" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -312,8 +310,8 @@
         <option value="$PROJECT_DIR$/algorithmPolicySearch.py" />
         <option value="$PROJECT_DIR$/envs/continuousCartpole.py" />
         <option value="$PROJECT_DIR$/algorithmComparisonPolicySearch.py" />
-        <option value="$PROJECT_DIR$/simulation.py" />
         <option value="$PROJECT_DIR$/learningAlgorithm.py" />
+        <option value="$PROJECT_DIR$/simulation.py" />
       </list>
     </option>
   </component>
@@ -653,28 +651,18 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/learningAlgorithm.py</url>
-          <line>807</line>
+          <line>809</line>
           <option name="timeStamp" value="263" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/learningAlgorithm.py</url>
-          <line>804</line>
+          <line>806</line>
           <option name="timeStamp" value="265" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/simulation.py</url>
           <line>106</line>
           <option name="timeStamp" value="266" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/learningAlgorithm.py</url>
-          <line>537</line>
-          <option name="timeStamp" value="268" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/learningAlgorithm.py</url>
-          <line>416</line>
-          <option name="timeStamp" value="269" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/simulation.py</url>
@@ -688,8 +676,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/learningAlgorithm.py</url>
-          <line>558</line>
+          <line>560</line>
           <option name="timeStamp" value="273" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/learningAlgorithm.py</url>
+          <line>554</line>
+          <option name="timeStamp" value="274" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -941,16 +934,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/algorithmComparisonPolicySearch.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="189">
-          <caret line="9" lean-forward="true" selection-start-line="9" selection-end-line="9" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/sourceTaskCreation.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1501">
@@ -971,10 +954,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/simulation.py">
+    <entry file="file://$PROJECT_DIR$/algorithmComparisonPolicySearch.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="257">
-          <caret line="133" selection-start-line="133" selection-end-line="133" />
+        <state relative-caret-position="399">
+          <caret line="113" selection-start-line="113" selection-end-line="113" selection-end-column="20" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
@@ -983,14 +966,24 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="95">
-          <caret line="783" column="107" selection-start-line="783" selection-start-column="107" selection-end-line="783" selection-end-column="107" />
+        <state relative-caret-position="215">
+          <caret line="554" selection-start-line="554" selection-end-line="554" />
           <folding>
-            <marker date="1545570343243" expanded="true" signature="3873:5367" ph="..." />
-            <marker date="1545570343243" expanded="true" signature="8679:9972" ph="..." />
-            <marker date="1545570343243" expanded="true" signature="10071:10723" ph="..." />
-            <marker date="1545570343243" expanded="true" signature="37678:42952" ph="..." />
-            <marker date="1545570343243" expanded="true" signature="42994:44421" ph="..." />
+            <marker date="1545575868061" expanded="true" signature="3873:5367" ph="..." />
+            <marker date="1545575868061" expanded="true" signature="8679:9972" ph="..." />
+            <marker date="1545575868061" expanded="true" signature="10071:10723" ph="..." />
+            <marker date="1545575868061" expanded="true" signature="37788:43062" ph="..." />
+            <marker date="1545575868061" expanded="true" signature="43104:44531" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/simulation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="359">
+          <caret line="131" column="13" lean-forward="true" selection-start-line="131" selection-start-column="13" selection-end-line="131" selection-end-column="13" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
           </folding>
         </state>
       </provider>
