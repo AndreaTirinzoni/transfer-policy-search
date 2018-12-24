@@ -77,11 +77,11 @@ simulation_param = SimulationParam(mean_initial_param, variance_initial_param, v
 # source task for lqg1d
 episodes_per_configuration = 2
 discount_factor = 0.99
-env_param_min = 0.95
-env_param_max = 1
+env_param_min = 0.9
+env_param_max = 1.1
 policy_param_min = -1
 policy_param_max = -0.1
-linspace_env = 2
+linspace_env = 3
 linspace_policy = 2
 n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to use to fit the control variates
 
@@ -163,9 +163,9 @@ for i_run in range(runs):
 
 x = range(num_batch)
 
-mean_pol1 = np.mean(off_policy_mis_cv_baseline.disc_rewards, axis=0)
+#mean_pol1 = np.mean(off_policy_mis_cv_baseline.disc_rewards, axis=0)
 mean_pol3 = np.mean(gpomdp.disc_rewards, axis=0)
-var_pol1 = np.std(off_policy_mis_cv_baseline.disc_rewards, axis=0) / (m.sqrt(runs))
+#var_pol1 = np.std(off_policy_mis_cv_baseline.disc_rewards, axis=0) / (m.sqrt(runs))
 var_pol3 = np.std(gpomdp.disc_rewards, axis=0) / (m.sqrt(runs))
 
 plot.plot_curves([x, x], [mean_pol1, mean_pol3], [var_pol1, var_pol3], title="Discounted rewards over batches", x_label="Batch", y_label="Rewards", names=["MIS-CV-BASELINE", "G(PO)MDP"])

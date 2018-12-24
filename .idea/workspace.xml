@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4263835c-fd92-417b-afad-0a299f6d3721" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/learningAlgorithm.py" beforeDir="false" afterPath="$PROJECT_DIR$/learningAlgorithm.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/simulation.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulation.py" afterDir="false" />
     </list>
@@ -75,7 +77,7 @@
     <session id="211049904">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="73" />
+          <entry key="project.closed" value="74" />
           <entry key="project.open.time.0" value="4" />
           <entry key="project.open.time.1" value="13" />
           <entry key="project.open.time.17" value="1" />
@@ -83,50 +85,50 @@
           <entry key="project.open.time.4" value="23" />
           <entry key="project.open.time.5" value="19" />
           <entry key="project.open.time.6" value="4" />
-          <entry key="project.open.time.7" value="2" />
+          <entry key="project.open.time.7" value="3" />
           <entry key="project.open.time.9" value="1" />
-          <entry key="project.opened" value="76" />
+          <entry key="project.opened" value="77" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="Python Console" value="15768" />
+          <entry key="Python Console" value="16499" />
           <entry key="dummy" value="3" />
-          <entry key="py" value="39856" />
+          <entry key="py" value="39927" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="3" />
-          <entry key="Python" value="55624" />
+          <entry key="Python" value="56426" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
-          <entry key="Python" value="171" />
+          <entry key="Python" value="172" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.vcs.git.usages" />
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="py" value="171" />
+          <entry key="py" value="172" />
         </counts>
       </usages-collector>
     </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="215">
-              <caret line="554" selection-start-line="554" selection-end-line="554" />
+            <state relative-caret-position="458">
+              <caret line="822" selection-start-line="822" selection-end-line="822" />
               <folding>
-                <marker date="1545575868061" expanded="true" signature="3873:5367" ph="..." />
-                <marker date="1545575868061" expanded="true" signature="8679:9972" ph="..." />
-                <marker date="1545575868061" expanded="true" signature="10071:10723" ph="..." />
-                <marker date="1545575868061" expanded="true" signature="37788:43062" ph="..." />
-                <marker date="1545575868061" expanded="true" signature="43104:44531" ph="..." />
+                <marker date="1545647561236" expanded="true" signature="3873:5367" ph="..." />
+                <marker date="1545647561236" expanded="true" signature="8679:10012" ph="..." />
+                <marker date="1545647561236" expanded="true" signature="10111:10763" ph="..." />
+                <marker date="1545647561236" expanded="true" signature="37439:42713" ph="..." />
+                <marker date="1545647561236" expanded="true" signature="42755:44182" ph="..." />
               </folding>
             </state>
           </provider>
@@ -135,7 +137,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/algorithmComparisonPolicySearch.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="399">
+            <state relative-caret-position="2247">
               <caret line="113" selection-start-line="113" selection-end-line="113" selection-end-column="20" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
@@ -156,7 +158,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/envs/continuousCartpole.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2002">
+            <state relative-caret-position="2940">
               <caret line="144" selection-start-line="144" selection-end-line="144" />
               <folding>
                 <marker date="1545522373989" expanded="true" signature="3930:6459" ph="..." />
@@ -168,8 +170,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/sourceTaskCreation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1501">
-              <caret line="176" column="145" selection-start-line="176" selection-start-column="145" selection-end-line="176" selection-end-column="145" />
+            <state relative-caret-position="3633">
+              <caret line="176" column="145" selection-start-line="162" selection-start-column="12" selection-end-line="176" selection-end-column="145" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -191,14 +193,23 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/simulation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="359">
-              <caret line="131" column="13" lean-forward="true" selection-start-line="131" selection-start-column="13" selection-end-line="131" selection-end-column="13" />
+            <state relative-caret-position="215">
+              <caret line="133" selection-start-line="133" selection-end-line="133" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydevd_bundle/pydevd_comm.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="7812">
+              <caret line="381" selection-start-line="381" selection-end-line="381" />
             </state>
           </provider>
         </entry>
@@ -310,8 +321,8 @@
         <option value="$PROJECT_DIR$/algorithmPolicySearch.py" />
         <option value="$PROJECT_DIR$/envs/continuousCartpole.py" />
         <option value="$PROJECT_DIR$/algorithmComparisonPolicySearch.py" />
-        <option value="$PROJECT_DIR$/learningAlgorithm.py" />
         <option value="$PROJECT_DIR$/simulation.py" />
+        <option value="$PROJECT_DIR$/learningAlgorithm.py" />
       </list>
     </option>
   </component>
@@ -325,7 +336,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Course" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -342,6 +352,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Course" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -495,7 +506,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="1440" y="0" width="1920" height="1080" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.13954712" />
       <window_info id="Structure" order="1" weight="0.25" />
@@ -651,12 +661,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/learningAlgorithm.py</url>
-          <line>809</line>
+          <line>806</line>
           <option name="timeStamp" value="263" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/learningAlgorithm.py</url>
-          <line>806</line>
+          <line>803</line>
           <option name="timeStamp" value="265" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -676,13 +686,18 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/learningAlgorithm.py</url>
-          <line>560</line>
-          <option name="timeStamp" value="273" />
+          <line>551</line>
+          <option name="timeStamp" value="274" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/learningAlgorithm.py</url>
-          <line>554</line>
-          <option name="timeStamp" value="274" />
+          <line>498</line>
+          <option name="timeStamp" value="275" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/simulation.py</url>
+          <line>117</line>
+          <option name="timeStamp" value="276" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -880,13 +895,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydevd_bundle/pydevd_comm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1296">
-          <caret line="381" selection-start-line="381" selection-end-line="381" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/Library/Python/3.7/lib/python/site-packages/gym/envs/registration.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3171">
@@ -901,10 +909,40 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/algorithmComparisonPolicySearch.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2247">
+          <caret line="113" selection-start-line="113" selection-end-line="113" selection-end-column="20" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/algorithmPolicySearch.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="693">
           <caret line="35" column="85" selection-start-line="35" selection-start-column="85" selection-end-line="35" selection-end-column="85" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/envs/continuousCartpole.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2940">
+          <caret line="144" selection-start-line="144" selection-end-line="144" />
+          <folding>
+            <marker date="1545522373989" expanded="true" signature="3930:6459" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sourceTaskCreation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3633">
+          <caret line="176" column="145" selection-start-line="162" selection-start-column="12" selection-end-line="176" selection-end-column="145" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -917,6 +955,13 @@
             <marker date="1545487910494" expanded="true" signature="2791:3781" ph="..." />
             <marker date="1545487910494" expanded="true" signature="3776:3781" ph="..." />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydevd_bundle/pydevd_comm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="7812">
+          <caret line="381" selection-start-line="381" selection-end-line="381" />
         </state>
       </provider>
     </entry>
@@ -934,30 +979,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/sourceTaskCreation.py">
+    <entry file="file://$PROJECT_DIR$/simulation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1501">
-          <caret line="176" column="145" selection-start-line="176" selection-start-column="145" selection-end-line="176" selection-end-column="145" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/envs/continuousCartpole.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2002">
-          <caret line="144" selection-start-line="144" selection-end-line="144" />
-          <folding>
-            <marker date="1545522373989" expanded="true" signature="3930:6459" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/algorithmComparisonPolicySearch.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="399">
-          <caret line="113" selection-start-line="113" selection-end-line="113" selection-end-column="20" />
+        <state relative-caret-position="215">
+          <caret line="133" selection-start-line="133" selection-end-line="133" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
@@ -966,24 +991,14 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="215">
-          <caret line="554" selection-start-line="554" selection-end-line="554" />
+        <state relative-caret-position="458">
+          <caret line="822" selection-start-line="822" selection-end-line="822" />
           <folding>
-            <marker date="1545575868061" expanded="true" signature="3873:5367" ph="..." />
-            <marker date="1545575868061" expanded="true" signature="8679:9972" ph="..." />
-            <marker date="1545575868061" expanded="true" signature="10071:10723" ph="..." />
-            <marker date="1545575868061" expanded="true" signature="37788:43062" ph="..." />
-            <marker date="1545575868061" expanded="true" signature="43104:44531" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/simulation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="359">
-          <caret line="131" column="13" lean-forward="true" selection-start-line="131" selection-start-column="13" selection-end-line="131" selection-end-column="13" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
+            <marker date="1545647561236" expanded="true" signature="3873:5367" ph="..." />
+            <marker date="1545647561236" expanded="true" signature="8679:10012" ph="..." />
+            <marker date="1545647561236" expanded="true" signature="10111:10763" ph="..." />
+            <marker date="1545647561236" expanded="true" signature="37439:42713" ph="..." />
+            <marker date="1545647561236" expanded="true" signature="42755:44182" ph="..." />
           </folding>
         </state>
       </provider>

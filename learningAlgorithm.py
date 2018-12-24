@@ -172,7 +172,7 @@ def gradientAndRegression(algorithm_configuration, weights_source_target_update,
 
 def gradientPolicySearch(algorithm_configuration, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all, N):
 
-    n = weights_source_target_update[weights_source_target_update == 1].shape[0]
+    n = weights_source_target_update[weights_source_target_update == 1].shape[0] / weights_source_target_update.shape[1]
     if algorithm_configuration.pd == 0:
         baseline = 0
         if algorithm_configuration.baseline == 1:
@@ -220,7 +220,6 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
     variance_action = simulation_param.variance_action
     variance_env = env_param_src[:, -1]
     param_indices = np.concatenate(([0], np.cumsum(np.delete(source_dataset.episodes_per_config, -1))))
-    combination_src_parameters_env = env_param_src[param_indices, :]#policy parameter of source not repeated
     state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_action_t) #change to source dataset . states denoised
     state_t1_denoised = source_dataset.next_states_unclipped_denoised
 
@@ -286,7 +285,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
         policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2))**2)/(2*variance_action)), axis=1)
         model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis]) * np.exp(-np.sum((state_t1 - state_t1_denoised_current)**2, axis=2) / (2*variance_env[:, np.newaxis])), axis=1)
 
-    mis_denominator = np.squeeze(np.asarray(np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, :], source_dataset.source_distributions), axis=1)))
+    mis_denominator = np.squeeze(np.asarray(np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, :]/n, source_dataset.source_distributions), axis=1)))
 
     weights = policy_tgt * model_tgt / mis_denominator
 
@@ -403,7 +402,7 @@ def computeEss(policy_param, env_param, source_dataset, simulation_param, algori
     variance_action = simulation_param.variance_action
     n = state_t1_denoised_current.shape[0]
 
-    if algorithm_configuration.pd == 0 :
+    if algorithm_configuration.pd == 0:
         policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action)), axis=1)
         model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis]) * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*variance_env[:, np.newaxis])), axis=1)
         mis_denominator = np.squeeze(np.asarray(np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, :], source_dataset.source_distributions), axis=1)))
@@ -416,7 +415,7 @@ def computeEss(policy_param, env_param, source_dataset, simulation_param, algori
     numerator = np.power(policy_tgt * model_tgt, 2)
     denominator = np.power(mis_denominator, 2)
     ess_inv = numerator/denominator
-    ess = 1/np.sum(ess_inv, axis=0)
+    ess = 1/np.sum(ess_inv)
 
     if(algorithm_configuration.pd==1):
         min_index = np.argmin(ess)
@@ -454,7 +453,7 @@ def addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, para
 
     source_param_new[:, 0] = discounted_return
     source_param_new[:, 1:1+env_param.param_space_size] = param
-    source_param_new[:, 1+env_param.param_space_size:1+env_param.param_space_size+env_param.env_param_space_size] = np.repeat(env_param.env.getEnvParam().T, batch_size, axis=0)
+    source_param_new[:, 1+env_param.param_space_size:1+env_param.param_space_size+env_param.env_param_space_size] = env_param.env.getEnvParam().T
 
     #Compute rewards of batch
     tot_reward_batch = np.mean(total_return)
@@ -464,9 +463,9 @@ def addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, para
     source_dataset.source_param = np.concatenate((source_dataset.source_param, source_param_new), axis=0)
     source_dataset.source_task = np.concatenate((source_dataset.source_task, source_task_new), axis=0)
     source_dataset.episodes_per_config = np.concatenate((source_dataset.episodes_per_config, [batch_size]))
-    source_dataset.next_states_unclipped = np.concatenate((source_dataset.next_states_unclipped, next_states_unclipped_new))
-    source_dataset.next_states_unclipped_denoised = np.concatenate((source_dataset.next_states_unclipped_denoised, next_states_unclipped_denoised_new))
-    source_dataset.clipped_actions = np.concatenate((source_dataset.clipped_actions, clipped_actions_new))
+    source_dataset.next_states_unclipped = np.concatenate((source_dataset.next_states_unclipped, next_states_unclipped_new), axis=0)
+    source_dataset.next_states_unclipped_denoised = np.concatenate((source_dataset.next_states_unclipped_denoised, next_states_unclipped_denoised_new), axis=0)
+    source_dataset.clipped_actions = np.concatenate((source_dataset.clipped_actions, clipped_actions_new), axis=0)
 
     return source_dataset, tot_reward_batch, discounted_reward_batch
 
@@ -506,17 +505,15 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
     #Compute gradients per timestep
     if algorithm_configuration.pd == 1:
         gradient_off_policy_update = np.cumsum(computeGradientsSourceTargetTimestep(param, source_dataset, simulation_param.variance_action, env_param), axis=1)
-        if gradient_off_policy_update.ndim == 2:
-            gradient_off_policy_update = gradient_off_policy_update[:, :, np.newaxis]
+
     else:
         gradient_off_policy_update = np.sum(computeGradientsSourceTargetTimestep(param, source_dataset, simulation_param.variance_action, env_param), axis=1)
-        if gradient_off_policy_update.ndim == 1:
-            gradient_off_policy_update = gradient_off_policy_update[:, np.newaxis]
+
 
     #Compute importance weights
     [weights_source_target_update, mis_denominator] = algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration, batch_size)
 
-    if(algorithm_configuration.cv == 1):
+    if algorithm_configuration.cv == 1:
         control_variates = computeCv(weights_source_target_update, source_dataset, mis_denominator, gradient_off_policy_update, algorithm_configuration)
     else:
         control_variates = 0
