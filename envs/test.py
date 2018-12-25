@@ -42,10 +42,10 @@ class TestEnv(gym.Env):
         noise = np.random.randn() * self.sigma_noise
 
         next_state_deterministic = -np.sign(self.state) * self.omega
-        next_state_unclipped = -np.sign(self.state) * self.omega + noise
+        next_state_unclipped = next_state_deterministic if self.deterministic else next_state_deterministic + noise
         next_state_clipped = np.clip(next_state_unclipped, -1, 1)
 
-        self.state = next_state_deterministic if self.deterministic else next_state_clipped
+        self.state = next_state_clipped
 
         reward = -np.asscalar(action_clipped ** 2)
 
@@ -55,14 +55,11 @@ class TestEnv(gym.Env):
         return np.array([self.omega, self.sigma_noise**2])
 
     def stepDenoised(self, env_parameters, state, action):
-        print("stepDenoised")
-        print(env_parameters.shape, state.shape, action.shape)
-        assert False
+        omegas = env_parameters[:, 0].squeeze()
+        return -np.sign(state) * omegas[np.newaxis, np.newaxis, np.newaxis, :]
 
     def stepDenoisedCurrent(self, state, action):
-        print("stepDenoisedCurrent")
-        print(state.shape, action.shape)
-        assert False
+        return -np.sign(state) * self.omega
 
     def reset(self, state=None):
         if state is None:

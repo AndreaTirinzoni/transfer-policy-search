@@ -14,3 +14,8 @@ register(
     id='testing-v0',
     entry_point='envs.test_env:TestEnv'
 )
+
+register(
+    id='testenv-v0',
+    entry_point='envs.test:TestEnv'
+)

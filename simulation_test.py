@@ -65,77 +65,38 @@ adaptive = "No"
 simulation_param = SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
 policy_params = np.array([[0.5, 0.5], [0.1, 0.1]])
-env_params = np.array([[0.9, 0.09]])
+env_params = np.array([[0.9, 1]])
 
 episodes_per_configuration = 1
 n_config_cv = policy_params.shape[0] * env_params.shape[0] - 1
-[source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env, episode_length, episodes_per_configuration, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size)
 
-source_dataset = SourceDataset(source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
+estimators = ["GPOMDP", "IS", "MIS"]
+results = {}
+for estimator in estimators:
+    results[estimator] = []
 
-rews = []
+for _ in range(runs):
+    # TODO generiamo nuove traiettorie source per ogni run
+    [source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped,
+     next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env, episode_length, episodes_per_configuration,
+                                                                  discount_factor, variance_action, policy_params,
+                                                                  env_params, param_space_size, state_space_size,
+                                                                  env_param_space_size)
+    # TODO resettiamo l'env prima di iniziare l'apprendimento
+    env_param.env = gym.make('testenv-v0')
 
-for i_run in range(runs):
-
-    # print("Run: " + str(i_run))
-    # initial_param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
-    #
-    # #[source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = stc.sourceTaskCreation(episode_length, episodes_per_configuration, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max)
-    #
-    # print("IS")
-    # estimator = "IS"
-    # off_policy_is = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
-
-    # print("PD-IS")
-    # estimator = "PD-IS"
-    # off_policy_pd_is = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
-    #
-    # print("MIS")
-    # estimator = "MIS"
-    # off_policy_mis = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
-
-    # print("MIS-CV")
-    # estimator = "MIS-CV"
-    # off_policy_mis_cv = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
-    #
-    #print("MIS-CV-BASELINE")
-    #estimator = "MIS-CV-BASELINE"
-    #off_policy_mis_cv_baseline = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
-
-    # print("PD-MIS")
-    # estimator = "PD-MIS"
-    # off_policy_pd_mis = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
-    #
-    # print("PD-MIS-CV")
-    # estimator = "PD-MIS-CV"
-    # off_policy_pd_mis_cv = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
-    #
-    # print("PD-MIS-CV-BASELINE-APPROXIMATED")
-    # estimator = "PD-MIS-CV-BASELINE-APPROXIMATED"
-    # off_policy_pd_mis_cv_baseline_approx = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
-    # #
-    # print("PD-MIS-CV-BASELINE")
-    # estimator = "PD-MIS-CV-BASELINE"
-    # off_policy_pd_mis_cv_baseline = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
-
-    #print("REINFORCE")
-    #estimator = "REINFORCE"
-    #reinforce = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=0) #1e-6
-    #
-    print("REINFORCE-BASELINE")
-    estimator = "REINFORCE-BASELINE"
-    reinforce_baseline = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=0) #1e-6
-    rews.append(reinforce_baseline.disc_rewards)
-
-    #print("GPOMDP")
-    #estimator = "GPOMDP"
-    #gpomdp = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=0) #1e-6
+    for estimator in estimators:
+        print(estimator)
+        off_policy = 0 if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"] else 1
+        # TODO Resettiamo il source dataset
+        source_dataset = SourceDataset(source_task, source_param, episodes_per_config, next_states_unclipped,
+                                       actions_clipped, next_states_unclipped_denoised)
+        result = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=off_policy)
+        results[estimator].append(result.disc_rewards)
 
 x = range(num_batch)
 
-rews = np.array(rews)
-mean1 = np.mean(rews, axis=0)
-var1 = np.std(rews, axis=0) / (np.sqrt(runs))
+means = [np.mean(results[estimator], axis=0) for estimator in estimators]
+stds = [np.std(results[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
 
-plot.plot_curves([x], [mean1], [var1], x_label="Iteration", y_label="Return", names=["Reinforce"])
-print(reinforce_baseline.policy_parameter)
+plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="Return", names=estimators)

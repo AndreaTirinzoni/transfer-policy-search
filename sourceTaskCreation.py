@@ -168,7 +168,7 @@ def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, var
 
             #unclipped next_states and actions
             next_states_unclipped[i_episode:i_episode+episode_per_param, :] = batch[:, :, state_space_size+2+state_space_size:state_space_size+2+state_space_size+state_space_size]
-            next_states_unclipped_denoised[i_episode:i_episode+episode_per_param, :] = batch[:, :, state_space_size:state_space_size+2+state_space_size+state_space_size+1:state_space_size+2+state_space_size+state_space_size+1+state_space_size]
+            next_states_unclipped_denoised[i_episode:i_episode+episode_per_param, :] = batch[:, :, state_space_size+2+state_space_size+state_space_size+1:state_space_size+2+state_space_size+state_space_size+1+state_space_size]
             actions_clipped[i_episode:i_episode+episode_per_param, :] = batch[:, :, state_space_size]
 
             #I populate the source parameters
