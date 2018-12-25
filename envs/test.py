@@ -57,12 +57,16 @@ class TestEnv(gym.Env):
     def stepDenoised(self, env_parameters, state, action):
         print("stepDenoised")
         print(env_parameters.shape, state.shape, action.shape)
-        assert False
+        #assert False
+
+        return state
 
     def stepDenoisedCurrent(self, state, action):
         print("stepDenoisedCurrent")
         print(state.shape, action.shape)
-        assert False
+        #assert False
+
+        return state
 
     def reset(self, state=None):
         if state is None:

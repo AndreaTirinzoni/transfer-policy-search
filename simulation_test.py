@@ -69,7 +69,7 @@ env_params = np.array([[0.9, 0.09]])
 
 episodes_per_configuration = 1
 n_config_cv = policy_params.shape[0] * env_params.shape[0] - 1
-[source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env, episode_length, episodes_per_configuration, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size)
+[source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(episode_length, episodes_per_configuration, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size)
 
 source_dataset = SourceDataset(source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
 
@@ -98,9 +98,9 @@ for i_run in range(runs):
     # estimator = "MIS-CV"
     # off_policy_mis_cv = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
     #
-    #print("MIS-CV-BASELINE")
-    #estimator = "MIS-CV-BASELINE"
-    #off_policy_mis_cv_baseline = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
+    print("MIS-CV-BASELINE")
+    estimator = "MIS-CV-BASELINE"
+    off_policy_mis_cv_baseline = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
 
     # print("PD-MIS")
     # estimator = "PD-MIS"

@@ -93,8 +93,8 @@ class LQG1D(gym.Env):
 
     def stepDenoisedCurrent(self, state, action):
         A = self.A
-        B = self.A
-        xn_unclipped = np.multiply((A.T)[np.newaxis, :, :], state) + np.multiply(B, action)[:, :, np.newaxis]
+        B = self.B
+        xn_unclipped = np.sum(np.multiply((A.T)[np.newaxis, np.newaxis, :, :], state[:, :, :, np.newaxis]), axis=2) + np.multiply(B, action)[:, :, np.newaxis]
         return xn_unclipped
 
     def reset(self, state=None):
