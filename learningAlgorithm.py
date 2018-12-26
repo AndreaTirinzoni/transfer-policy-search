@@ -98,14 +98,15 @@ def onlyGradient(algorithm_configuration, weights_source_target_update, gradient
 
 
 def regressionFitting(y, x, n_config_cv, baseline_flag):
-
+    #n_config_cv = min(n_config_cv, 100)
     if baseline_flag == 1:
+        #x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
         baseline = np.squeeze(np.asarray(x[:, -1]))[:, np.newaxis]
-        x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
-    else:
-        x = x[:, 0:n_config_cv]
+        x = np.concatenate([x, baseline], axis=1)
+    # else:
+    #     x = x[:, 0:n_config_cv]
 
-    train_size = int(np.ceil(x.shape[0]/3*2))
+    train_size = int(np.ceil(x.shape[0]/6*5))
     train_index = random.sample(range(x.shape[0]), train_size)
     x_train = x[train_index]
     y_train = y[train_index]
@@ -402,7 +403,9 @@ def computeEss(policy_param, env_param, source_dataset, simulation_param, algori
     numerator = np.power(policy_tgt * model_tgt, 2)
     denominator = np.power(mis_denominator, 2)
     ess_inv = numerator/denominator
-    ess = 1/np.sum(ess_inv)
+    if np.sum(ess_inv) == 0:
+        print("problem")
+    ess = 1/np.sum(ess_inv, axis=0)
 
     if(algorithm_configuration.pd==1):
         min_index = np.argmin(ess)
@@ -442,10 +445,6 @@ def addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, para
     source_param_new[:, 1:1+env_param.param_space_size] = param
     source_param_new[:, 1+env_param.param_space_size:1+env_param.param_space_size+env_param.env_param_space_size] = env_param.env.getEnvParam().T
 
-    #Compute rewards of batch
-    tot_reward_batch = np.mean(total_return)
-    discounted_reward_batch = np.mean(discounted_return)
-
     # Concatenate new episodes to source tasks
     source_dataset.source_param = np.concatenate((source_dataset.source_param, source_param_new), axis=0)
     source_dataset.source_task = np.concatenate((source_dataset.source_task, source_task_new), axis=0)
@@ -453,8 +452,6 @@ def addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, para
     source_dataset.next_states_unclipped = np.concatenate((source_dataset.next_states_unclipped, next_states_unclipped_new), axis=0)
     source_dataset.next_states_unclipped_denoised = np.concatenate((source_dataset.next_states_unclipped_denoised, next_states_unclipped_denoised_new), axis=0)
     source_dataset.clipped_actions = np.concatenate((source_dataset.clipped_actions, clipped_actions_new), axis=0)
-
-    return tot_reward_batch, discounted_reward_batch
 
 
 def generateEpisodesAndComputeRewards(env_param, simulation_param, param, discount_factor_timestep):
@@ -483,10 +480,10 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
     #Collect new episodes
     if num_episodes_target != 0:
         #Generate the episodes and compute the rewards over the batch
-        [tot_reward_batch, discounted_reward_batch] = addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, num_episodes_target, discount_factor_timestep)
-    else:
-        #Generate episodes and compute rewards
-        [tot_reward_batch, discounted_reward_batch] = generateEpisodesAndComputeRewards(env_param, simulation_param, param, discount_factor_timestep)
+        addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, num_episodes_target, discount_factor_timestep)
+
+    #Generate episodes and compute rewards
+    [tot_reward_batch, discounted_reward_batch] = generateEpisodesAndComputeRewards(env_param, simulation_param, param, discount_factor_timestep)
 
 
     #Compute gradients per timestep
@@ -535,6 +532,7 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
         num_episodes_target = simulation_param.batch_size
 
     #print("Problems: n_def-" + str(num_episodes_target) + " ess-" + str(ess) + " gradient-" + str(gradient))
+    print("param: " + str(param) + " gradient: " + str(gradient) + " ess: " + str(ess))
 
     return source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target
 

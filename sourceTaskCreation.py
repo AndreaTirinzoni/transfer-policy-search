@@ -42,7 +42,7 @@ def createBatch(env, batch_size, episode_length, param, state_space_size, varian
 
     return batch
 
-def sourceTaskCreationAllCombinations(episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size):
+def sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size):
     """
     Creates a source dataset
     :param env: OpenAI environment
@@ -114,7 +114,7 @@ def sourceTaskCreationAllCombinations(episode_length, batch_size, discount_facto
 
     return source_task, source_param, episodes_per_configuration.astype(int), next_states_unclipped, actions_clipped, next_states_unclipped_denoised
 
-def sourceTaskCreationSpec(episode_length, batch_size, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size):
+def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size):
     """
     Creates a source dataset
     :param env: OpenAI environment
@@ -184,7 +184,7 @@ def sourceTaskCreationSpec(episode_length, batch_size, discount_factor, variance
 
     return source_task, source_param, episodes_per_configuration.astype(int), next_states_unclipped, actions_clipped, next_states_unclipped_denoised
 
-env = gym.make('LQG1D-v0')
+#env = gym.make('LQG1D-v0')
 # variance_action = 0.1
 # episode_length = 20
 # np.random.seed(2000)
