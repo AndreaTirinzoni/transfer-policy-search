@@ -57,7 +57,7 @@ variance_action = 0.01
 batch_size = 100
 num_batch = 100
 discount_factor = 1
-runs = 10
+runs = 20
 learning_rate = 1e-1
 ess_min = 10
 adaptive = "No"
@@ -70,7 +70,7 @@ env_params = np.array([[0.9, 1]])
 episodes_per_configuration = 1
 n_config_cv = policy_params.shape[0] * env_params.shape[0] - 1
 
-estimators = ["GPOMDP", "IS", "MIS"]
+estimators = ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]
 results = {}
 for estimator in estimators:
     results[estimator] = []
@@ -78,12 +78,10 @@ for estimator in estimators:
 for _ in range(runs):
     # TODO generiamo nuove traiettorie source per ogni run
     [source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped,
-     next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env, episode_length, episodes_per_configuration,
+     next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(episode_length, episodes_per_configuration,
                                                                   discount_factor, variance_action, policy_params,
                                                                   env_params, param_space_size, state_space_size,
                                                                   env_param_space_size)
-    # TODO resettiamo l'env prima di iniziare l'apprendimento
-    env_param.env = gym.make('testenv-v0')
 
     for estimator in estimators:
         print(estimator)
@@ -96,7 +94,10 @@ for _ in range(runs):
 
 x = range(num_batch)
 
+from scipy.stats import t
+alpha = t.interval(0.95, runs-1, loc=0, scale=1)[1] if runs > 1 else 1
+
 means = [np.mean(results[estimator], axis=0) for estimator in estimators]
-stds = [np.std(results[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
+stds = [alpha * np.std(results[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
 
 plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="Return", names=estimators)
