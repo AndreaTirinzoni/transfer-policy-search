@@ -101,12 +101,12 @@ def regressionFitting(y, x, n_config_cv, baseline_flag):
     n_config_cv = min(n_config_cv, 100)
     if baseline_flag == 1:
         baseline = np.squeeze(np.asarray(x[:, -1]))[:, np.newaxis]
-        x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
-        #x = np.concatenate([x, baseline], axis=1)
-    else:
-        x = x[:, 0:n_config_cv]
+        #x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
+        x = np.concatenate([x, baseline], axis=1)
+    # else:
+    #     x = x[:, 0:n_config_cv]
 
-    train_size = int(np.ceil(x.shape[0]/6*5))
+    train_size = int(np.ceil(x.shape[0]/3*2))
     train_index = random.sample(range(x.shape[0]), train_size)
     x_train = x[train_index]
     y_train = y[train_index]

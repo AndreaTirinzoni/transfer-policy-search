@@ -43,13 +43,14 @@ class SourceDataset:
         self.initial_size = source_task.shape[0]
         self.source_distributions = None
 
-env = gym.make('testenv-v0')
+env_src = gym.make('testenv-v0')
+env_tgt = gym.make('testenv-v0')
 param_space_size = 2
 state_space_size = 2
 env_param_space_size = 2
 episode_length = 2
 
-env_param = EnvParam(env, param_space_size, state_space_size, env_param_space_size, episode_length)
+env_param = EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length)
 
 mean_initial_param = np.array([1, -1])
 variance_initial_param = 0
@@ -57,7 +58,7 @@ variance_action = 0.01
 batch_size = 100
 num_batch = 100
 discount_factor = 1
-runs = 20
+runs = 10
 learning_rate = 1e-1
 ess_min = 10
 adaptive = "No"
@@ -70,7 +71,7 @@ env_params = np.array([[0.9, 1]])
 episodes_per_configuration = 1
 n_config_cv = policy_params.shape[0] * env_params.shape[0] - 1
 
-estimators = ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]
+estimators = ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE", "MIS", "MIS-CV"]
 results = {}
 for estimator in estimators:
     results[estimator] = []
@@ -78,7 +79,7 @@ for estimator in estimators:
 for _ in range(runs):
     # TODO generiamo nuove traiettorie source per ogni run
     [source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped,
-     next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(episode_length, episodes_per_configuration,
+     next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env_tgt, episode_length, episodes_per_configuration,
                                                                   discount_factor, variance_action, policy_params,
                                                                   env_params, param_space_size, state_space_size,
                                                                   env_param_space_size)
