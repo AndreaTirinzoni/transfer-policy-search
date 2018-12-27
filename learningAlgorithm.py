@@ -98,13 +98,13 @@ def onlyGradient(algorithm_configuration, weights_source_target_update, gradient
 
 
 def regressionFitting(y, x, n_config_cv, baseline_flag):
-    #n_config_cv = min(n_config_cv, 100)
+    n_config_cv = min(n_config_cv, 100)
     if baseline_flag == 1:
-        #x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
         baseline = np.squeeze(np.asarray(x[:, -1]))[:, np.newaxis]
-        x = np.concatenate([x, baseline], axis=1)
-    # else:
-    #     x = x[:, 0:n_config_cv]
+        x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
+        #x = np.concatenate([x, baseline], axis=1)
+    else:
+        x = x[:, 0:n_config_cv]
 
     train_size = int(np.ceil(x.shape[0]/6*5))
     train_index = random.sample(range(x.shape[0]), train_size)
@@ -343,25 +343,31 @@ def computeCv(weights, source_dataset, mis_denominator, policy_gradients, algori
 
     else:
         control_variate = (source_dataset.source_distributions / mis_denominator[:, :, np.newaxis]) - np.ones(source_dataset.source_distributions.shape)
-        if algorithm_configuration.baseline == 1:
-            if algorithm_configuration.approximation == 0:
+
+        if algorithm_configuration.approximation == 0:
+            if algorithm_configuration.baseline == 1:
                 baseline_covariate = np.multiply(weights[:, :, np.newaxis], policy_gradients)
-                if algorithm_configuration.multid_approx == 0:
+                if algorithm_configuration.multid_approx == 1:
+                    control_variate = np.concatenate((control_variate, np.sum(baseline_covariate, axis=2)[:, :, np.newaxis]), axis=2)
+                    control_variate = np.repeat(control_variate[:, :, :, np.newaxis], policy_gradients.shape[2], axis=3)
+                else:
                     control_variate = np.repeat(control_variate[:, :, :, np.newaxis], policy_gradients.shape[2], axis=3)
                     control_variate = np.concatenate((control_variate, baseline_covariate[:, :, np.newaxis, :]), axis=2)
-                else:
-                    control_variate = np.concatenate((control_variate, np.sum(baseline_covariate, axis=2)[:, :, np.newaxis]), axis=2)
-
             else:
+                control_variate = np.repeat(control_variate[:, :, :, np.newaxis], policy_gradients.shape[2], axis=3)
+
+        else:
+            control_variate = np.sum(control_variate, axis=1)
+            if algorithm_configuration.baseline == 1:
                 baseline_covariate = np.sum(np.multiply(weights[:, :, np.newaxis], policy_gradients), axis=1)
-                control_variate = np.sum(control_variate, axis=1)
                 if algorithm_configuration.multid_approx == 0:
                     control_variate = np.repeat(control_variate[:, :, np.newaxis], policy_gradients.shape[2], axis=2)
                     control_variate = np.concatenate((control_variate, baseline_covariate[:, np.newaxis, :]), axis=1)
                 else:
                     control_variate = np.concatenate((control_variate, np.sum(baseline_covariate, axis=1)[:, np.newaxis]), axis=1)
-        else:
-            control_variate = np.repeat(control_variate[:, :, np.newaxis], policy_gradients.shape[1], axis=2)
+                    control_variate = np.repeat(control_variate[:, :, np.newaxis], policy_gradients.shape[2], axis=2)
+            else:
+                control_variate = np.repeat(control_variate[:, :, np.newaxis], policy_gradients.shape[2], axis=2)
 
     return control_variate
 
@@ -652,7 +658,7 @@ def pdMultipleImportanceSamplingCv(estimator, adaptive):
     cv = 1
     pd = 1
     baseline = 0
-    approximation = 0
+    approximation = 1
     computeWeights = computeMultipleImportanceWeightsSourceTargetPerDecision
     ess = computeEss
     computeGradientUpdate = gradientAndRegression
@@ -765,7 +771,7 @@ def switch_estimator(estimator, adaptive):
     return algorithm_configuration
 
 
-def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy = 1, multid_approx = 0):
+def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1, multid_approx=0):
 
     param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
 

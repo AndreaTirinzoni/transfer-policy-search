@@ -65,11 +65,11 @@ env_param = EnvParam(env_tgt, param_space_size, state_space_size, env_param_spac
 mean_initial_param = -0.1 * np.ones(param_space_size)
 variance_initial_param = 0
 variance_action = 0.1
-batch_size = 5
-num_batch = 300
+batch_size = 2
+num_batch = 400
 discount_factor = 0.99
 runs = 5
-learning_rate = 1e-6
+learning_rate = 1e-5
 ess_min = 50
 adaptive = "No"
 
@@ -78,12 +78,12 @@ simulation_param = SimulationParam(mean_initial_param, variance_initial_param, v
 # source task for lqg1d
 episodes_per_configuration = 2
 discount_factor = 0.99
-env_param_min = 0.9
-env_param_max = 1
+env_param_min = 0.5
+env_param_max = 1.5
 policy_param_min = -1
 policy_param_max = -0.1
-linspace_env = 2
-linspace_policy = 2
+linspace_env = 11
+linspace_policy = 10
 n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to use to fit the control variates
 
 [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationAllCombinations(env_src, episode_length, episodes_per_configuration, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
@@ -117,29 +117,29 @@ source_dataset = SourceDataset(source_task, source_param, episodes_per_configura
 
 for i_run in range(runs):
 
-    # print("Run: " + str(i_run))
-    # initial_param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
-    #
-    # #[source_task, source_param, episodes_per_config, next_states_unclipped, actions_clipped] = stc.sourceTaskCreation(episode_length, episodes_per_configuration, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max)
-    #
+    print("Run: " + str(i_run))
+    initial_param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
+
+    [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationAllCombinations(env_src, episode_length, episodes_per_configuration, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
+
     # print("IS")
     # estimator = "IS"
     # off_policy_is = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
-
+    #
     # source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
     # print("PD-IS")
     # estimator = "PD-IS"
     # off_policy_pd_is = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
 
     source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
-    simulation_param.learning_rate = 1e-6
+    simulation_param.learning_rate = 1e-5
 
     print("MIS")
     estimator = "MIS"
     off_policy_mis = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
     #print(off_policy_mis.policy_parameter)
-    disc_mis = off_policy_mis.disc_rewards
-    policy_mis = off_policy_mis.policy_parameter
+    disc_mis[i_run, :] = off_policy_mis.disc_rewards
+    policy_mis[i_run, :, :] = off_policy_mis.policy_parameter
 
     source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
     simulation_param.learning_rate = 1e-6
@@ -148,8 +148,8 @@ for i_run in range(runs):
     estimator = "MIS-CV"
     off_policy_mis_cv = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #5e-6
     #print(off_policy_mis_cv.policy_parameter)
-    disc_mis_cv = off_policy_mis_cv.disc_rewards
-    policy_mis_cv = off_policy_mis_cv.policy_parameter
+    disc_mis_cv[i_run, :] = off_policy_mis_cv.disc_rewards
+    policy_mis_cv[i_run, :, :] = off_policy_mis_cv.policy_parameter
 
     source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
     simulation_param.learning_rate = 1e-5
@@ -158,54 +158,64 @@ for i_run in range(runs):
     estimator = "MIS-CV-BASELINE"
     off_policy_mis_cv_baseline = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-5
     #print(off_policy_mis_cv_baseline.policy_parameter)
-    disc_mis_cv_baseline = off_policy_mis_cv_baseline.disc_rewards
-    policy_mis_cv_baseline = off_policy_mis_cv_baseline.policy_parameter
-
-    # source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
-
-    # print("PD-MIS")
-    # estimator = "PD-MIS"
-    # off_policy_pd_mis = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
-    #
-    # source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
-
-    # print("PD-MIS-CV")
-    # estimator = "PD-MIS-CV"
-    # off_policy_pd_mis_cv = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
-    #
-    # source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
-
-    # print("PD-MIS-CV-BASELINE-APPROXIMATED")
-    # estimator = "PD-MIS-CV-BASELINE-APPROXIMATED"
-    # off_policy_pd_mis_cv_baseline_approx = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
-    #
-    # source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
-
-    # print("PD-MIS-CV-BASELINE")
-    # estimator = "PD-MIS-CV-BASELINE"
-    # off_policy_pd_mis_cv_baseline = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-6
-
-    # source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
-
-    # print("REINFORCE")
-    # estimator = "REINFORCE"
-    # reinforce = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=0) #1e-6
+    disc_mis_cv_baseline[i_run, :] = off_policy_mis_cv_baseline.disc_rewards
+    policy_mis_cv_baseline[i_run, :, :] = off_policy_mis_cv_baseline.policy_parameter
 
     source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
+    simulation_param.learning_rate = 1e-5
+
+    print("PD-MIS")
+    estimator = "PD-MIS"
+    off_policy_pd_mis = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1) #1e-6
+
+    source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
+    simulation_param.learning_rate = 1e-5
+
+    print("PD-MIS-CV")
+    estimator = "PD-MIS-CV"
+    off_policy_pd_mis_cv = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-5
+
+    source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
+    simulation_param.learning_rate = 8e-6
+
+    print("PD-MIS-CV-BASELINE-APPROXIMATED")
+    estimator = "PD-MIS-CV-BASELINE-APPROXIMATED"
+    off_policy_pd_mis_cv_baseline_approx = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #8e-6
+
+    source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
+    simulation_param.learning_rate = 1e-5
+
+    print("PD-MIS-CV-BASELINE")
+    estimator = "PD-MIS-CV-BASELINE"
+    off_policy_pd_mis_cv_baseline = la.learnPolicy(env_param, simulation_param, source_dataset, estimator) #1e-5
+
+    source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
+    simulation_param.learning_rate = 1e-6
     simulation_param.batch_size = 20
+
+    print("REINFORCE")
+    estimator = "REINFORCE"
+    reinforce = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=0) #1e-6
+
+    source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
+    simulation_param.learning_rate = 1e-6
+    simulation_param.batch_size = 20
+
     print("REINFORCE-BASELINE")
     estimator = "REINFORCE-BASELINE"
     reinforce_baseline = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=0) #1e-6
-    disc_reinforce_baseline = reinforce_baseline.disc_rewards
-    policy_reinforce_baseline = reinforce_baseline.policy_parameter
+    disc_reinforce_baseline[i_run, :] = reinforce_baseline.disc_rewards
+    policy_reinforce_baseline[i_run, :, :] = reinforce_baseline.policy_parameter
 
-    # source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
+    source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
+    simulation_param.learning_rate = 1e-6
+    simulation_param.batch_size = 20
 
-    # print("GPOMDP")
-    # estimator = "GPOMDP"
-    # gpomdp = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=0) #1e-6
-    # disc[i_run, :] = reinforce_baseline.disc_rewards
-    # policy[i_run, :, :] = reinforce_baseline.policy_parameter
+    print("GPOMDP")
+    estimator = "GPOMDP"
+    gpomdp = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=0) #1e-6
+    disc[i_run, :] = reinforce_baseline.disc_rewards
+    policy[i_run, :, :] = reinforce_baseline.policy_parameter
 
 x = range(num_batch)
 
