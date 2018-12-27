@@ -66,8 +66,8 @@ env_param = EnvParam(env_tgt, param_space_size, state_space_size, env_param_spac
 mean_initial_param = -0.1 * np.ones(param_space_size)
 variance_initial_param = 0
 variance_action = 0.1
-batch_size = 2
-num_batch = 400
+batch_size = 5
+num_batch = 200
 discount_factor = 0.99
 runs = 5
 learning_rate = 1e-5
@@ -77,7 +77,7 @@ adaptive = "No"
 simulation_param = SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
 # source task for lqg1d
-episodes_per_configuration = 2
+episodes_per_configuration = 20
 discount_factor = 0.99
 env_param_min = 0.5
 env_param_max = 1.5
@@ -106,8 +106,9 @@ n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to 
 # next_states_unclipped = np.genfromtxt('next_states_unclipped.csv', delimiter=',')
 # actions_clipped = np.genfromtxt('actions_clipped.csv', delimiter=',')
 
-estimators = ["GPOMDP"]
-learning_rates = [1e-6, 1e-6, 1e-5, 5e-6, 1e-5, 1e-6, 8e-6, 1e-5, 1e-6, 1e-6, 1e-6]
+estimators = ["MIS", "MIS-CV", "MIS-CV-BASELINE"]
+#learning_rates = [1e-6, 1e-6, 1e-5, 5e-6, 1e-5, 1e-6, 8e-6, 1e-5, 1e-6, 1e-6, 1e-6]
+learning_rates = [1e-5, 1e-5, 1e-5]
 disc_rewards = {}
 policy = {}
 gradient = {}

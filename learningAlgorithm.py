@@ -98,13 +98,13 @@ def onlyGradient(algorithm_configuration, weights_source_target_update, gradient
 
 
 def regressionFitting(y, x, n_config_cv, baseline_flag):
-    n_config_cv = min(n_config_cv, 100)
+    #n_config_cv = min(n_config_cv, 100)
     if baseline_flag == 1:
         baseline = np.squeeze(np.asarray(x[:, -1]))[:, np.newaxis]
-        #x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
         x = np.concatenate([x, baseline], axis=1)
-    # else:
-    #     x = x[:, 0:n_config_cv]
+        x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
+    else:
+        x = x[:, 0:n_config_cv]
 
     train_size = int(np.ceil(x.shape[0]/3*2))
     train_index = random.sample(range(x.shape[0]), train_size)
@@ -129,7 +129,6 @@ def gradientAndRegression(algorithm_configuration, weights_source_target_update,
     if algorithm_configuration.pd == 1:
         # The algorithm is pd
         gradient_estimation = weights_source_target_update[:, :, np.newaxis] * gradient_off_policy_update * discounted_rewards_all[:, :, np.newaxis]
-
     else:
         gradient_estimation = weights_source_target_update[:, np.newaxis] * gradient_off_policy_update * np.sum(discounted_rewards_all, axis=1)[:, np.newaxis]
 
@@ -538,7 +537,7 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
         num_episodes_target = simulation_param.batch_size
 
     #print("Problems: n_def-" + str(num_episodes_target) + " ess-" + str(ess) + " gradient-" + str(gradient))
-    print("param: " + str(param) + " gradient: " + str(gradient) + " ess: " + str(ess))
+    #print("param: " + str(param) + " gradient: " + str(gradient) + " ess: " + str(ess))
 
     return source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target
 
