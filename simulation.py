@@ -77,14 +77,14 @@ adaptive = "No"
 simulation_param = SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
 # source task for lqg1d
-episodes_per_configuration = 20
+episodes_per_configuration = 15
 discount_factor = 0.99
-env_param_min = 0.5
+env_param_min = 0.6
 env_param_max = 1.5
 policy_param_min = -1
 policy_param_max = -0.1
-linspace_env = 11
-linspace_policy = 10
+linspace_env = 5
+linspace_policy = 5
 n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to use to fit the control variates
 
 [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationAllCombinations(env_src, episode_length, episodes_per_configuration, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
@@ -106,9 +106,9 @@ n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to 
 # next_states_unclipped = np.genfromtxt('next_states_unclipped.csv', delimiter=',')
 # actions_clipped = np.genfromtxt('actions_clipped.csv', delimiter=',')
 
-estimators = ["MIS", "MIS-CV", "MIS-CV-BASELINE"]
+estimators = ["MIS", "MIS-CV", "MIS-CV-BASELINE", "REINFORCE-BASELINE"]
 #learning_rates = [1e-6, 1e-6, 1e-5, 5e-6, 1e-5, 1e-6, 8e-6, 1e-5, 1e-6, 1e-6, 1e-6]
-learning_rates = [1e-5, 1e-5, 1e-5]
+learning_rates = [1e-5, 1e-5, 1e-5, 1e-5]
 disc_rewards = {}
 policy = {}
 gradient = {}
