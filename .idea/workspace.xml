@@ -77,9 +77,9 @@
     <session id="211049904">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="81" />
+          <entry key="project.closed" value="82" />
           <entry key="project.open.time.0" value="4" />
-          <entry key="project.open.time.1" value="16" />
+          <entry key="project.open.time.1" value="17" />
           <entry key="project.open.time.17" value="1" />
           <entry key="project.open.time.3" value="9" />
           <entry key="project.open.time.4" value="24" />
@@ -87,20 +87,20 @@
           <entry key="project.open.time.6" value="6" />
           <entry key="project.open.time.7" value="3" />
           <entry key="project.open.time.9" value="1" />
-          <entry key="project.opened" value="84" />
+          <entry key="project.opened" value="85" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="Python Console" value="22615" />
+          <entry key="Python Console" value="24022" />
           <entry key="dummy" value="3" />
-          <entry key="py" value="43275" />
+          <entry key="py" value="43307" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="3" />
-          <entry key="Python" value="65890" />
+          <entry key="Python" value="67329" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
@@ -118,17 +118,17 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-4140">
-              <caret line="99" column="14" selection-start-line="99" selection-start-column="4" selection-end-line="99" selection-end-column="14" />
+            <state relative-caret-position="-1730">
+              <caret line="308" column="232" selection-start-line="308" selection-start-column="127" selection-end-line="308" selection-end-column="232" />
               <folding>
-                <marker date="1546088074851" expanded="true" signature="3873:5576" ph="..." />
-                <marker date="1546088074851" expanded="true" signature="7531:8986" ph="..." />
-                <marker date="1546088074851" expanded="true" signature="9085:9737" ph="..." />
-                <marker date="1546088074851" expanded="true" signature="37028:42302" ph="..." />
-                <marker date="1546088074851" expanded="true" signature="42344:43771" ph="..." />
+                <marker date="1546118944481" expanded="true" signature="3873:5576" ph="..." />
+                <marker date="1546118944481" expanded="true" signature="7531:8986" ph="..." />
+                <marker date="1546118944481" expanded="true" signature="9085:9737" ph="..." />
+                <marker date="1546118944481" expanded="true" signature="37038:42312" ph="..." />
+                <marker date="1546118944481" expanded="true" signature="42354:43781" ph="..." />
               </folding>
             </state>
           </provider>
@@ -149,7 +149,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/envs/lqg1d.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1270">
+            <state relative-caret-position="1533">
               <caret line="79" column="26" selection-start-line="79" selection-start-column="26" selection-end-line="79" selection-end-column="26" />
               <folding>
                 <element signature="e#55#81#0" expanded="true" />
@@ -172,11 +172,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/simulation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="91">
-              <caret line="68" column="14" selection-start-line="68" selection-start-column="14" selection-end-line="68" selection-end-column="14" />
+            <state relative-caret-position="150">
+              <caret line="159" selection-start-line="159" selection-end-line="159" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -187,8 +187,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$USER_HOME$/Desktop/transfer-policy-search-master-lqg/importanceWeights.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="174">
-              <caret line="1273" lean-forward="true" selection-start-line="1273" selection-end-line="1273" />
+            <state relative-caret-position="26733">
+              <caret line="1273" selection-start-line="1273" selection-end-line="1273" />
               <folding>
                 <element signature="e#0#16#0" expanded="true" />
               </folding>
@@ -240,7 +240,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>LQG1D</find>
       <find>LQG1D-</find>
       <find>regress</find>
       <find>, source_dataset=None, variance_action=None, sourceDistributions=None</find>
@@ -270,6 +269,7 @@
       <find>pol</find>
       <find>off_policy</find>
       <find>regression</find>
+      <find>stepDenoised</find>
     </findStrings>
     <replaceStrings>
       <replace>clipped_actions</replace>
@@ -322,8 +322,8 @@
         <option value="$PROJECT_DIR$/sourceTaskCreation.py" />
         <option value="$PROJECT_DIR$/simulation_test.py" />
         <option value="$PROJECT_DIR$/plots.py" />
-        <option value="$PROJECT_DIR$/learningAlgorithm.py" />
         <option value="$PROJECT_DIR$/simulation.py" />
+        <option value="$PROJECT_DIR$/learningAlgorithm.py" />
       </list>
     </option>
   </component>
@@ -977,12 +977,34 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/envs/lqg1d.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1533">
+          <caret line="79" column="26" selection-start-line="79" selection-start-column="26" selection-end-line="79" selection-end-column="26" />
+          <folding>
+            <element signature="e#55#81#0" expanded="true" />
+            <marker date="1545679917689" expanded="true" signature="2791:3830" ph="..." />
+            <marker date="1545679917689" expanded="true" signature="3825:3830" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/envs/test.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1239">
           <caret line="61" column="43" selection-start-line="61" selection-start-column="43" selection-end-line="61" selection-end-column="43" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Desktop/transfer-policy-search-master-lqg/importanceWeights.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="26733">
+          <caret line="1273" selection-start-line="1273" selection-end-line="1273" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -1014,48 +1036,26 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/envs/lqg1d.py">
+    <entry file="file://$PROJECT_DIR$/simulation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1270">
-          <caret line="79" column="26" selection-start-line="79" selection-start-column="26" selection-end-line="79" selection-end-column="26" />
+        <state relative-caret-position="150">
+          <caret line="159" selection-start-line="159" selection-end-line="159" />
           <folding>
-            <element signature="e#55#81#0" expanded="true" />
-            <marker date="1545679917689" expanded="true" signature="2791:3830" ph="..." />
-            <marker date="1545679917689" expanded="true" signature="3825:3830" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Desktop/transfer-policy-search-master-lqg/importanceWeights.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="174">
-          <caret line="1273" lean-forward="true" selection-start-line="1273" selection-end-line="1273" />
-          <folding>
-            <element signature="e#0#16#0" expanded="true" />
+            <element signature="e#0#10#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-4140">
-          <caret line="99" column="14" selection-start-line="99" selection-start-column="4" selection-end-line="99" selection-end-column="14" />
+        <state relative-caret-position="-1730">
+          <caret line="308" column="232" selection-start-line="308" selection-start-column="127" selection-end-line="308" selection-end-column="232" />
           <folding>
-            <marker date="1546088074851" expanded="true" signature="3873:5576" ph="..." />
-            <marker date="1546088074851" expanded="true" signature="7531:8986" ph="..." />
-            <marker date="1546088074851" expanded="true" signature="9085:9737" ph="..." />
-            <marker date="1546088074851" expanded="true" signature="37028:42302" ph="..." />
-            <marker date="1546088074851" expanded="true" signature="42344:43771" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/simulation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="91">
-          <caret line="68" column="14" selection-start-line="68" selection-start-column="14" selection-end-line="68" selection-end-column="14" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
+            <marker date="1546118944481" expanded="true" signature="3873:5576" ph="..." />
+            <marker date="1546118944481" expanded="true" signature="7531:8986" ph="..." />
+            <marker date="1546118944481" expanded="true" signature="9085:9737" ph="..." />
+            <marker date="1546118944481" expanded="true" signature="37038:42312" ph="..." />
+            <marker date="1546118944481" expanded="true" signature="42354:43781" ph="..." />
           </folding>
         </state>
       </provider>

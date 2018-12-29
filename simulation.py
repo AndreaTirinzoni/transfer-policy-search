@@ -66,10 +66,10 @@ env_param = EnvParam(env_tgt, param_space_size, state_space_size, env_param_spac
 mean_initial_param = -0.1 * np.ones(param_space_size)
 variance_initial_param = 0
 variance_action = 0.1
-batch_size = 2
+batch_size = 5
 num_batch = 400
 discount_factor = 0.99
-runs = 15
+runs = 5
 learning_rate = 1e-5
 ess_min = 50
 adaptive = "No"
@@ -77,14 +77,14 @@ adaptive = "No"
 simulation_param = SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
 # source task for lqg1d
-episodes_per_configuration = 15
+episodes_per_configuration = 5
 discount_factor = 0.99
-env_param_min = 0.5
-env_param_max = 1.5
+env_param_min = 0.9
+env_param_max = 1
 policy_param_min = -1
 policy_param_max = -0.1
-linspace_env = 11
-linspace_policy = 10
+linspace_env = 2
+linspace_policy = 2
 n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to use to fit the control variates
 np.random.seed(2000)
 
