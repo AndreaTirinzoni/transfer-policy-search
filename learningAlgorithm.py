@@ -101,22 +101,22 @@ def regressionFitting(y, x, n_config_cv, baseline_flag):
     #n_config_cv = min(n_config_cv, 100)
     if baseline_flag == 1:
         baseline = np.squeeze(np.asarray(x[:, -1]))[:, np.newaxis]
-        x = np.concatenate([x, baseline], axis=1)
-        #x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
-    # else:
-    #     x = x[:, 0:n_config_cv]
+        #x = np.concatenate([x, baseline], axis=1)
+        x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
+    else:
+        x = x[:, 0:n_config_cv]
 
-    #train_size = int(np.ceil(x.shape[0]/3*2))
-    # train_index = random.sample(range(x.shape[0]), train_size)
-    # x_train = x[train_index]
-    # y_train = y[train_index]
-    # x_test = np.delete(x, train_index, axis=0)
-    # y_test = np.delete(y, train_index, axis=0)
-    # beta = np.squeeze(np.asarray(np.matmul(np.linalg.pinv(x_train[:, 1:]), y_train)))
-    # error = y_test - np.dot(x_test[:, 1:], beta)
+    train_size = int(np.ceil(x.shape[0]/3*2))
+    train_index = random.sample(range(x.shape[0]), train_size)
+    x_train = x[train_index]
+    y_train = y[train_index]
+    x_test = np.delete(x, train_index, axis=0)
+    y_test = np.delete(y, train_index, axis=0)
+    beta = np.squeeze(np.asarray(np.matmul(np.linalg.pinv(x_train[:, 1:]), y_train)))
+    error = y_test - np.dot(x_test[:, 1:], beta)
 
-    beta = np.squeeze(np.asarray(np.matmul(np.linalg.pinv(x[:, 1:]), y)))
-    error = y - np.dot(x[:, 1:], beta)
+    # beta = np.squeeze(np.asarray(np.matmul(np.linalg.pinv(x[:, 1:]), y)))
+    # error = y - np.dot(x[:, 1:], beta)
 
     # x_avg = np.squeeze(np.asarray(np.mean(x, axis=0)))
     # beta = np.matmul(np.linalg.inv(np.matmul((x[:, 1:]-x_avg[1:]).T, (x[:, 1:]-x_avg[1:]))), np.matmul((x[:, 1:]-x_avg[1:]).T, (y-y_avg)).T)
@@ -254,10 +254,10 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
         state_t1_denoised = env_param.env.stepDenoised(combination_src_parameters_env, state_t, clipped_actions)
 
         policy_src_new_traj = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :], state_t[evaluated_trajectories:, :, :, :]), axis=2))**2)/(2*variance_action)), axis=1)
-        model_src_new_traj = np.prod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis]) * np.exp(-np.sum((state_t1[evaluated_trajectories:, :, :] - state_t1_denoised[evaluated_trajectories:, :, :])**2, axis=2) / (2*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis])), axis=1)
+        model_src_new_traj = np.prod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis]) * np.exp(-np.sum((state_t1[evaluated_trajectories:, :, :, :] - state_t1_denoised[evaluated_trajectories:, :, :, :])**2, axis=2) / (2*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis])), axis=1)
 
         policy_src_new_param = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[0:evaluated_trajectories, :, 0] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, -1], state_t[0:evaluated_trajectories, :, :, 0]), axis=2))**2)/(2*variance_action)), axis=1)
-        model_src_new_param = np.prod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, np.newaxis]) * np.exp(-np.sum((state_t1[0:evaluated_trajectories, :, 0] - state_t1_denoised[0:evaluated_trajectories, :, 0])**2, axis=2) / (2*variance_env[0:evaluated_trajectories, np.newaxis])), axis=1)
+        model_src_new_param = np.prod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, np.newaxis]) * np.exp(-np.sum((state_t1[0:evaluated_trajectories, :, :, 0] - state_t1_denoised[0:evaluated_trajectories, :, :, 0])**2, axis=2) / (2*variance_env[0:evaluated_trajectories, np.newaxis])), axis=1)
 
         source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, np.matrix(policy_src_new_param * model_src_new_param).T), axis=1)
         source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, np.matrix(policy_src_new_traj * model_src_new_traj)), axis=0)
@@ -306,7 +306,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
         model_src_new_traj = np.cumprod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis]) * np.exp(-np.sum((state_t1[evaluated_trajectories:, :, :] - state_t1_denoised[evaluated_trajectories:, :, :])**2, axis=2) / (2*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis])), axis=1)
 
         policy_src_new_param = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[0:evaluated_trajectories, :, 0] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, -1], state_t[0:evaluated_trajectories, :, :, 0]), axis=2))**2)/(2*variance_action)), axis=1)
-        model_src_new_param = np.cumprod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, np.newaxis]) * np.exp(-np.sum((state_t1[0:evaluated_trajectories, :, 0] - state_t1_denoised[0:evaluated_trajectories, :, 0])**2, axis=2) / (2*variance_env[0:evaluated_trajectories, np.newaxis])), axis=1)
+        model_src_new_param = np.cumprod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, np.newaxis]) * np.exp(-np.sum((state_t1[0:evaluated_trajectories, :, :, 0] - state_t1_denoised[0:evaluated_trajectories, :, :, 0])**2, axis=2) / (2*variance_env[0:evaluated_trajectories, np.newaxis])), axis=1)
 
         source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, (policy_src_new_param * model_src_new_param)[:, :, np.newaxis]), axis=2)
         source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, (policy_src_new_traj * model_src_new_traj)), axis=0)
@@ -540,7 +540,7 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
         num_episodes_target = simulation_param.batch_size
 
     #print("Problems: n_def-" + str(num_episodes_target) + " ess-" + str(ess) + " gradient-" + str(gradient))
-    #print("param: " + str(param) + " gradient: " + str(gradient) + " ess: " + str(ess))
+    print("param: " + str(param) + " gradient: " + str(gradient) + " ess: " + str(ess))
 
     return source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target
 
