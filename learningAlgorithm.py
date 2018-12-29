@@ -215,15 +215,15 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
         policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action)), axis=1)
         policy_src = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(param_policy_src[:, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action)), axis=1)
 
-        model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis]) * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*variance_env[:, np.newaxis])), axis=1)
-        model_src = np.prod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis]) * np.exp(-(np.sum((state_t1 - state_t1_denoised)**2, axis=2)) / (2*variance_env[:, np.newaxis])), axis=1)
+        model_tgt = np.prod(1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*(variance_env[:, np.newaxis]**env_param.state_space_size))), axis=1)
+        model_src = np.prod(1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-(np.sum((state_t1 - state_t1_denoised)**2, axis=2)) / (2*(variance_env[:, np.newaxis]**env_param.state_space_size))), axis=1)
 
     else:
         policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action)), axis=1)
         policy_src = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(param_policy_src[:, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action)), axis=1)
 
-        model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis]) * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*variance_env[:, np.newaxis])), axis=1)
-        model_src = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis]) * np.exp(-(np.sum((state_t1 - state_t1_denoised)**2, axis=2)) / (2*variance_env[:, np.newaxis])), axis=1)
+        model_tgt = np.cumprod(1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*(variance_env[:, np.newaxis]**env_param.state_space_size))), axis=1)
+        model_src = np.cumprod(1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-(np.sum((state_t1 - state_t1_denoised)**2, axis=2)) / (2*(variance_env[:, np.newaxis]**env_param.state_space_size))), axis=1)
 
     weights = policy_tgt / policy_src * model_tgt / model_src
 
@@ -254,23 +254,23 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
         state_t1_denoised = env_param.env.stepDenoised(combination_src_parameters_env, state_t, clipped_actions)
 
         policy_src_new_traj = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :], state_t[evaluated_trajectories:, :, :, :]), axis=2))**2)/(2*variance_action)), axis=1)
-        model_src_new_traj = np.prod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis]) * np.exp(-np.sum((state_t1[evaluated_trajectories:, :, :, :] - state_t1_denoised[evaluated_trajectories:, :, :, :])**2, axis=2) / (2*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis])), axis=1)
+        model_src_new_traj = np.prod(1/np.sqrt((2*m.pi*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[evaluated_trajectories:, :, :, :] - state_t1_denoised[evaluated_trajectories:, :, :, :])**2, axis=2) / (2*(variance_env[evaluated_trajectories:, np.newaxis, np.newaxis]**env_param.state_space_size))), axis=1)
 
         policy_src_new_param = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[0:evaluated_trajectories, :, 0] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, -1], state_t[0:evaluated_trajectories, :, :, 0]), axis=2))**2)/(2*variance_action)), axis=1)
-        model_src_new_param = np.prod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, np.newaxis]) * np.exp(-np.sum((state_t1[0:evaluated_trajectories, :, :, 0] - state_t1_denoised_current[0:evaluated_trajectories, :, :])**2, axis=2) / (2*variance_env[0:evaluated_trajectories, np.newaxis])), axis=1)
+        model_src_new_param = np.prod(1/np.sqrt((2*m.pi*variance_env[0:evaluated_trajectories, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[0:evaluated_trajectories, :, :, 0] - state_t1_denoised_current[0:evaluated_trajectories, :, :])**2, axis=2) / (2*(variance_env[0:evaluated_trajectories, np.newaxis]**env_param.state_space_size))), axis=1)
 
         source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, np.matrix(policy_src_new_param * model_src_new_param).T), axis=1)
         source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, np.matrix(policy_src_new_traj * model_src_new_traj)), axis=0)
 
         policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t[:, :, :, 0]), axis=2))**2)/(2*variance_action)), axis=1)
-        model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis]) * np.exp(-np.sum((state_t1[:, :, :, 0] - state_t1_denoised_current)**2, axis=2) / (2*variance_env[:, np.newaxis])), axis=1)
+        model_tgt = np.prod(1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[:, :, :, 0] - state_t1_denoised_current)**2, axis=2) / (2*(variance_env[:, np.newaxis]**env_param.state_space_size))), axis=1)
 
     else:
 
         variance_env = env_param_src[:, -1] # variance of the model transition
 
         policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2))**2)/(2*variance_action)), axis=1)
-        model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis]) * np.exp(-np.sum((state_t1 - state_t1_denoised_current)**2, axis=2) / (2*variance_env[:, np.newaxis])), axis=1)
+        model_tgt = np.prod(1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1 - state_t1_denoised_current)**2, axis=2) / (2*(variance_env[:, np.newaxis]**env_param.state_space_size))), axis=1)
 
     mis_denominator = np.squeeze(np.asarray(np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, :]/n, source_dataset.source_distributions), axis=1)))
 
@@ -303,23 +303,23 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
         state_t1_denoised = env_param.env.stepDenoised(combination_src_parameters_env, state_t, clipped_actions)
 
         policy_src_new_traj = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :], state_t[evaluated_trajectories:, :, :, :]), axis=2))**2)/(2*variance_action)), axis=1)
-        model_src_new_traj = np.cumprod(1/np.sqrt(2*m.pi*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis]) * np.exp(-np.sum((state_t1[evaluated_trajectories:, :, :] - state_t1_denoised[evaluated_trajectories:, :, :])**2, axis=2) / (2*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis])), axis=1)
+        model_src_new_traj = np.cumprod(1/np.sqrt((2*m.pi*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[evaluated_trajectories:, :, :] - state_t1_denoised[evaluated_trajectories:, :, :])**2, axis=2) / (2*(variance_env[evaluated_trajectories:, np.newaxis, np.newaxis]**env_param.state_space_size))), axis=1)
 
         policy_src_new_param = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[0:evaluated_trajectories, :, 0] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, -1], state_t[0:evaluated_trajectories, :, :, 0]), axis=2))**2)/(2*variance_action)), axis=1)
-        model_src_new_param = np.cumprod(1/np.sqrt(2*m.pi*variance_env[0:evaluated_trajectories, np.newaxis]) * np.exp(-np.sum((state_t1[0:evaluated_trajectories, :, :, 0] - state_t1_denoised_current[0:evaluated_trajectories, :, :])**2, axis=2) / (2*variance_env[0:evaluated_trajectories, np.newaxis])), axis=1)
+        model_src_new_param = np.cumprod(1/np.sqrt((2*m.pi*variance_env[0:evaluated_trajectories, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[0:evaluated_trajectories, :, :, 0] - state_t1_denoised_current[0:evaluated_trajectories, :, :])**2, axis=2) / (2*(variance_env[0:evaluated_trajectories, np.newaxis]**env_param.state_space_size))), axis=1)
 
         source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, (policy_src_new_param * model_src_new_param)[:, :, np.newaxis]), axis=2)
         source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, (policy_src_new_traj * model_src_new_traj)), axis=0)
 
         policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t[:, :, :, 0]), axis=2))**2)/(2*variance_action)), axis=1)
-        model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis]) * np.exp(-np.sum((state_t1[:, :, :, 0] - state_t1_denoised_current)**2, axis=2) / (2*variance_env[:, np.newaxis])), axis=1)
+        model_tgt = np.cumprod(1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[:, :, :, 0] - state_t1_denoised_current)**2, axis=2) / (2*(variance_env[:, np.newaxis]**env_param.state_space_size))), axis=1)
 
     else:
 
         variance_env = env_param_src[:, -1] # variance of the model transition
 
         policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2))**2)/(2*variance_action)), axis=1)
-        model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis]) * np.exp(-np.sum((state_t1 - state_t1_denoised_current)**2, axis=2) / (2*variance_env[:, np.newaxis])), axis=1)
+        model_tgt = np.cumprod(1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1 - state_t1_denoised_current)**2, axis=2) / (2*(variance_env[:, np.newaxis]**env_param.state_space_size))), axis=1)
 
     mis_denominator = np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, np.newaxis, :]/n, source_dataset.source_distributions), axis=2)
 
@@ -564,10 +564,10 @@ def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance
 
     if algorithm_configuration.pd == 0:
         src_distributions_policy = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :], state_t), axis=2))**2)/(2*variance_action)), axis=1)
-        src_distributions_model = np.prod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis, np.newaxis]) * np.exp(-np.sum((np.power((state_t1 - state_t1_denoised), 2)), axis=2) / (2*variance_env[:, np.newaxis, np.newaxis])), axis=1)
+        src_distributions_model = np.prod(1/np.sqrt((2*m.pi*variance_env[:, np.newaxis, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((np.power((state_t1 - state_t1_denoised), 2)), axis=2) / (2*(variance_env[:, np.newaxis, np.newaxis]**env_param.state_space_size))), axis=1)
     else:
         src_distributions_policy = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :], state_t), axis=2))**2)/(2*variance_action)), axis=1)
-        src_distributions_model = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis, np.newaxis]) * np.exp(-np.sum(((state_t1 - state_t1_denoised)**2), axis=2) / (2*variance_env[:, np.newaxis, np.newaxis])), axis=1)
+        src_distributions_model = np.cumprod(1/np.sqrt((2*m.pi*variance_env[:, np.newaxis, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum(((state_t1 - state_t1_denoised)**2), axis=2) / (2*(variance_env[:, np.newaxis, np.newaxis]**env_param.state_space_size))), axis=1)
 
     return src_distributions_model * src_distributions_policy
 
