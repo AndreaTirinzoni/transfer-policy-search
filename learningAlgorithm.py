@@ -400,20 +400,20 @@ def computeEss(policy_param, env_param, source_dataset, simulation_param, algori
 
     if algorithm_configuration.pd == 0:
         policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action)), axis=1)
-        model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis]) * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*variance_env[:, np.newaxis])), axis=1)
-        mis_denominator = np.squeeze(np.asarray(np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, :], source_dataset.source_distributions), axis=1)))
+        model_tgt = np.prod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*variance_env[:, np.newaxis])), axis=1)
+        mis_denominator = np.squeeze(np.asarray(np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, :] / n, source_dataset.source_distributions), axis=1)))
 
     else:
         policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action)), axis=1)
-        model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis]) * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*variance_env[:, np.newaxis])), axis=1)
-        mis_denominator = np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, np.newaxis, :], source_dataset.source_distributions), axis=2)
+        model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*variance_env[:, np.newaxis])), axis=1)
+        mis_denominator = np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, np.newaxis, :] / n, source_dataset.source_distributions), axis=2)
 
-    numerator = np.power(policy_tgt * model_tgt, 2)
-    denominator = np.power(mis_denominator, 2)
-    ess_inv = numerator/denominator
-    if np.sum(ess_inv) == 0:
+    weights = policy_tgt * model_tgt / mis_denominator
+
+    ess_den = np.sum(weights ** 2)
+    if ess_den == 0:
         print("problem")
-    ess = 1/np.sum(ess_inv, axis=0)
+    ess = np.sum(weights) * n / ess_den
 
     if(algorithm_configuration.pd==1):
         min_index = np.argmin(ess)
