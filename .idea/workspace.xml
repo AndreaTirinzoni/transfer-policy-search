@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4263835c-fd92-417b-afad-0a299f6d3721" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/learningAlgorithm.py" beforeDir="false" afterPath="$PROJECT_DIR$/learningAlgorithm.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plots.py" beforeDir="false" afterPath="$PROJECT_DIR$/plots.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/simulation.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulation.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -74,30 +77,30 @@
     <session id="211049904">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="82" />
+          <entry key="project.closed" value="83" />
           <entry key="project.open.time.0" value="4" />
           <entry key="project.open.time.1" value="17" />
           <entry key="project.open.time.17" value="1" />
           <entry key="project.open.time.3" value="9" />
           <entry key="project.open.time.4" value="24" />
           <entry key="project.open.time.5" value="19" />
-          <entry key="project.open.time.6" value="6" />
+          <entry key="project.open.time.6" value="7" />
           <entry key="project.open.time.7" value="3" />
           <entry key="project.open.time.9" value="1" />
-          <entry key="project.opened" value="85" />
+          <entry key="project.opened" value="86" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="Python Console" value="24022" />
+          <entry key="Python Console" value="24024" />
           <entry key="dummy" value="3" />
-          <entry key="py" value="43387" />
+          <entry key="py" value="43537" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="3" />
-          <entry key="Python" value="67409" />
+          <entry key="Python" value="67561" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
@@ -115,11 +118,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="270">
-              <caret line="569" column="200" selection-start-line="569" selection-start-column="200" selection-end-line="569" selection-end-column="200" />
+            <state relative-caret-position="-675">
+              <caret line="377" column="14" selection-start-line="377" selection-start-column="4" selection-end-line="377" selection-end-column="14" />
               <folding>
                 <element signature="e#213#517#0" />
                 <element signature="e#555#1072#0" />
@@ -135,7 +138,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/sourceTaskCreation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1407">
+            <state relative-caret-position="217">
               <caret line="70" selection-start-line="70" selection-end-line="70" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
@@ -158,11 +161,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/simulation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="741">
-              <caret line="106" column="83" lean-forward="true" selection-start-line="106" selection-start-column="83" selection-end-line="106" selection-end-column="83" />
+            <state relative-caret-position="158">
+              <caret line="71" column="8" selection-start-line="71" selection-start-column="8" selection-end-line="71" selection-end-column="8" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -173,8 +176,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/plots.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="546">
-              <caret line="28" selection-start-line="28" selection-end-line="28" />
+            <state relative-caret-position="441">
+              <caret line="21" column="14" selection-start-line="21" selection-start-column="14" selection-end-line="21" selection-end-column="14" />
               <folding>
                 <element signature="e#0#13#0" expanded="true" />
               </folding>
@@ -185,8 +188,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/simulation_test.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-945">
-              <caret line="7" lean-forward="true" selection-start-line="7" selection-end-line="7" />
+            <state relative-caret-position="63">
+              <caret line="7" selection-start-line="7" selection-end-line="7" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -205,12 +208,10 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>LQG1D-</find>
       <find>regress</find>
       <find>, source_dataset=None, variance_action=None, sourceDistributions=None</find>
       <find>learningFunction</find>
       <find>n_tgt</find>
-      <find>computeEss</find>
       <find>algorithm_configuration.adaptive</find>
       <find>computeN</find>
       <find>update</find>
@@ -235,6 +236,8 @@
       <find>off_policy</find>
       <find>regression</find>
       <find>stepDenoised</find>
+      <find>ess</find>
+      <find>computeEss</find>
     </findStrings>
     <replaceStrings>
       <replace>clipped_actions</replace>
@@ -286,9 +289,9 @@
         <option value="$PROJECT_DIR$/envs/test.py" />
         <option value="$PROJECT_DIR$/sourceTaskCreation.py" />
         <option value="$PROJECT_DIR$/simulation_test.py" />
+        <option value="$PROJECT_DIR$/learningAlgorithm.py" />
         <option value="$PROJECT_DIR$/plots.py" />
         <option value="$PROJECT_DIR$/simulation.py" />
-        <option value="$PROJECT_DIR$/learningAlgorithm.py" />
       </list>
     </option>
   </component>
@@ -343,7 +346,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.simulation">
+  <component name="RunManager" selected="Python.plots">
     <configuration name="algorithmComparison" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="transfer-policy-search-master" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -458,8 +461,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.simulation" />
         <item itemvalue="Python.plots" />
+        <item itemvalue="Python.simulation" />
         <item itemvalue="Python.simulation_test" />
         <item itemvalue="Python.algorithmComparison" />
         <item itemvalue="Python.algorithmPolicySearch" />
@@ -577,7 +580,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/simulation.py</url>
-          <line>143</line>
+          <line>142</line>
           <option name="timeStamp" value="188" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -587,32 +590,32 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/simulation.py</url>
-          <line>139</line>
+          <line>138</line>
           <option name="timeStamp" value="230" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/simulation.py</url>
-          <line>140</line>
+          <line>139</line>
           <option name="timeStamp" value="231" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/simulation.py</url>
-          <line>141</line>
+          <line>140</line>
           <option name="timeStamp" value="242" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/simulation.py</url>
-          <line>142</line>
+          <line>141</line>
           <option name="timeStamp" value="245" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/simulation.py</url>
-          <line>125</line>
+          <line>121</line>
           <option name="timeStamp" value="266" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/simulation.py</url>
-          <line>101</line>
+          <line>99</line>
           <option name="timeStamp" value="270" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -622,7 +625,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/simulation.py</url>
-          <line>135</line>
+          <line>134</line>
           <option name="timeStamp" value="276" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -632,7 +635,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/simulation.py</url>
-          <line>138</line>
+          <line>137</line>
           <option name="timeStamp" value="287" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -642,7 +645,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/simulation.py</url>
-          <line>199</line>
+          <line>198</line>
           <option name="timeStamp" value="293" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -667,7 +670,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/simulation.py</url>
-          <line>159</line>
+          <line>158</line>
           <option name="timeStamp" value="311" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -679,6 +682,16 @@
           <url>file://$PROJECT_DIR$/learningAlgorithm.py</url>
           <line>544</line>
           <option name="timeStamp" value="313" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/plots.py</url>
+          <line>43</line>
+          <option name="timeStamp" value="314" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/plots.py</url>
+          <line>46</line>
+          <option name="timeStamp" value="315" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -932,13 +945,24 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/sourceTaskCreation.py">
+    <entry file="file://$PROJECT_DIR$/envs/test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1407">
-          <caret line="70" selection-start-line="70" selection-end-line="70" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="1281">
+          <caret line="61" column="43" selection-start-line="61" selection-start-column="43" selection-end-line="61" selection-end-column="43" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Desktop/transfer-policy-search-master-lqg/importanceWeights.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="26733">
+          <caret line="1273" selection-start-line="1273" selection-end-line="1273" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/local/Cellar/python/3.7.1/Frameworks/Python.framework/Versions/3.7/lib/python3.7/codecs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="6510">
+          <caret line="311" column="25" selection-start-line="311" selection-start-column="25" selection-end-line="311" selection-end-column="25" />
         </state>
       </provider>
     </entry>
@@ -954,51 +978,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/envs/test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1281">
-          <caret line="61" column="43" selection-start-line="61" selection-start-column="43" selection-end-line="61" selection-end-column="43" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Desktop/transfer-policy-search-master-lqg/importanceWeights.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="26733">
-          <caret line="1273" selection-start-line="1273" selection-end-line="1273" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/plots.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="546">
-          <caret line="28" selection-start-line="28" selection-end-line="28" />
-          <folding>
-            <element signature="e#0#13#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/local/Cellar/python/3.7.1/Frameworks/Python.framework/Versions/3.7/lib/python3.7/codecs.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="6510">
-          <caret line="311" column="25" selection-start-line="311" selection-start-column="25" selection-end-line="311" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/simulation_test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-945">
-          <caret line="7" lean-forward="true" selection-start-line="7" selection-end-line="7" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/simulation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="741">
-          <caret line="106" column="83" lean-forward="true" selection-start-line="106" selection-start-column="83" selection-end-line="106" selection-end-column="83" />
+        <state relative-caret-position="63">
+          <caret line="7" selection-start-line="7" selection-end-line="7" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
@@ -1007,8 +990,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="569" column="200" selection-start-line="569" selection-start-column="200" selection-end-line="569" selection-end-column="200" />
+        <state relative-caret-position="-675">
+          <caret line="377" column="14" selection-start-line="377" selection-start-column="4" selection-end-line="377" selection-end-column="14" />
           <folding>
             <element signature="e#213#517#0" />
             <element signature="e#555#1072#0" />
@@ -1016,6 +999,36 @@
             <element signature="e#2791#3139#0" />
             <element signature="e#3252#3723#0" />
             <element signature="e#3878#4339#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/plots.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="441">
+          <caret line="21" column="14" selection-start-line="21" selection-start-column="14" selection-end-line="21" selection-end-column="14" />
+          <folding>
+            <element signature="e#0#13#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sourceTaskCreation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="217">
+          <caret line="70" selection-start-line="70" selection-end-line="70" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/simulation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="158">
+          <caret line="71" column="8" selection-start-line="71" selection-start-column="8" selection-end-line="71" selection-end-column="8" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
           </folding>
         </state>
       </provider>

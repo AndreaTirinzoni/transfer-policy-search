@@ -66,10 +66,10 @@ env_param = EnvParam(env_tgt, param_space_size, state_space_size, env_param_spac
 mean_initial_param = -0.1 * np.ones(param_space_size)
 variance_initial_param = 0
 variance_action = 0.1
-batch_size = 5
-num_batch = 400
+batch_size = 2
+num_batch = 350
 discount_factor = 0.99
-runs = 5
+runs = 15
 learning_rate = 1e-5
 ess_min = 50
 adaptive = "No"
@@ -77,18 +77,16 @@ adaptive = "No"
 simulation_param = SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
 # source task for lqg1d
-episodes_per_configuration = 5
+episodes_per_configuration = 20
 discount_factor = 0.99
-env_param_min = 0.9
-env_param_max = 1
+env_param_min = 0.5
+env_param_max = 1.5
 policy_param_min = -1
 policy_param_max = -0.1
-linspace_env = 2
-linspace_policy = 2
+linspace_env = 11
+linspace_policy = 10
 n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to use to fit the control variates
 np.random.seed(2000)
-
-[source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationAllCombinations(env_src, episode_length, episodes_per_configuration, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
 
 # # source task for cartpole
 # policy_params = np.array([[-0.045, 0.20, 0.24, 0.6], [-0.05, 0.1, 0.1, 0.4]])
@@ -110,7 +108,7 @@ np.random.seed(2000)
 #estimators = ["MIS", "MIS-CV", "MIS-CV-BASELINE", "REINFORCE-BASELINE"]
 estimators = ["MIS", "MIS-CV", "MIS-CV-BASELINE", "REINFORCE-BASELINE"]
 #learning_rates = [5e-5, 6e-6, 8e-6, 5e-6, 1e-5, 1e-6, 8e-6, 1e-5, 1e-6, 1e-6, 1e-6]
-learning_rates = [5e-5, 6e-6, 8e-6, 1e-6]
+learning_rates = [3e-5, 8e-6, 2e-5, 1e-5]
 disc_rewards = {}
 policy = {}
 gradient = {}
@@ -123,9 +121,10 @@ for estimator in estimators:
     ess[estimator] = []
     n_def[estimator] = []
 
-source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
-
 for i_run in range(runs):
+
+    [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationAllCombinations(env_src, episode_length, episodes_per_configuration, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
+    source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
 
     print("Run: " + str(i_run))
     initial_param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
