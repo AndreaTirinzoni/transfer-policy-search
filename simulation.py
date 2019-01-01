@@ -66,10 +66,10 @@ env_param = EnvParam(env_tgt, param_space_size, state_space_size, env_param_spac
 mean_initial_param = -0.1 * np.ones(param_space_size)
 variance_initial_param = 0
 variance_action = 0.1
-batch_size = 2
-num_batch = 350
+batch_size = 3
+num_batch = 400
 discount_factor = 0.99
-runs = 15
+runs = 20
 learning_rate = 1e-5
 ess_min = 50
 adaptive = "No"
@@ -77,7 +77,7 @@ adaptive = "No"
 simulation_param = SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
 # source task for lqg1d
-source_dataset_batch_size = 5
+source_dataset_batch_size = 20
 discount_factor = 0.99
 env_param_min = 0.5
 env_param_max = 1.5
@@ -86,7 +86,7 @@ policy_param_max = -0.1
 linspace_env = 11
 linspace_policy = 10
 n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to use to fit the control variates
-np.random.seed(2000)
+#np.random.seed(2000)
 
 # # source task for cartpole
 # policy_params = np.array([[-0.045, 0.20, 0.24, 0.6], [-0.05, 0.1, 0.1, 0.4]])
@@ -108,7 +108,7 @@ np.random.seed(2000)
 #estimators = ["MIS", "MIS-CV", "MIS-CV-BASELINE", "REINFORCE-BASELINE"]
 estimators = ["MIS", "MIS-CV", "MIS-CV-BASELINE", "REINFORCE-BASELINE"]
 #learning_rates = [5e-5, 6e-6, 8e-6, 5e-6, 1e-5, 1e-6, 8e-6, 1e-5, 1e-6, 1e-6, 1e-6]
-learning_rates = [3e-5, 6e-6, 2e-5, 1e-5]
+learning_rates = [2e-5, 5e-6, 2e-5, 1e-5]
 disc_rewards = {}
 policy = {}
 gradient = {}
