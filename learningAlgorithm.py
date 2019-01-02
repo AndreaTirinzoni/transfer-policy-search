@@ -88,15 +88,25 @@ def computeGradientsSourceTargetTimestep(param, source_dataset, variance_action,
 
 def computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration):
 
+    [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src, clipped_action_t, trajectories_length] = getEpisodesInfoFromSource(source_dataset, env_param)[-1]
     weights = algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration, 0)[0]
     n = source_dataset.source_task.shape[0]
     if algorithm_configuration.pd == 1:
         weights = weights[:, min_index]
+
+    if algorithm_configuration.pd == 1:
+        indices = trajectories_length >= min_index
+        weights = weights[indices]
+
     w_1 = np.linalg.norm(weights, 1)
     w_2 = np.linalg.norm(weights, 2)
-    num_episodes_target = int(max(0, np.ceil((simulation_param.ess_min * w_1 / n) - (w_1 * n / (w_2 ** 2)))))
+    num_episodes_target1 = int(max(0, np.ceil((simulation_param.ess_min * w_1 / n) - (w_1 * n / (w_2 ** 2)))))
 
-    return num_episodes_target
+    c = (np.mean(weights**3) + 3*(1-np.mean(weights)))/(1 + np.var(weights))**2
+    num_episodes_target2 = np.ceil((simulation_param - n / (1 + np.var(weights)))/(min(1, c)))
+    num_episodes_target2 = int(np.clip(num_episodes_target2, 0, simulation_param.ess_min))
+
+    return [num_episodes_target1, num_episodes_target2]
 
 # Compute gradients
 
@@ -322,11 +332,16 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
         model_tgt = np.prod(model_tgt, axis=1)
 
     else:
+        policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2))**2)/(2*variance_action))
+        model_tgt = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1 - state_t1_denoised_current)**2, axis=2) / (2*variance_env[:, np.newaxis]))
 
-        variance_env = env_param_src[:, -1] # variance of the model transition
+        for t in range(state_t.shape[1]):
+            indices = trajectories_length < t
+            policy_tgt[indices, t] = 1
+            model_tgt[indices, t] = 1
 
-        policy_tgt = np.prod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2))**2)/(2*variance_action)), axis=1)
-        model_tgt = np.prod(1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1 - state_t1_denoised_current)**2, axis=2) / (2*variance_env[:, np.newaxis])), axis=1)
+        policy_tgt = np.prod(policy_tgt, axis=1)
+        model_tgt = np.prod(model_tgt, axis=1)
 
     mis_denominator = np.squeeze(np.asarray(np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, :]/n, source_dataset.source_distributions), axis=1)))
 
@@ -446,48 +461,76 @@ def computeEssIs(policy_param, env_param, source_dataset, simulation_param, algo
     return [ess, min_index]
 
 
+#def computeEssSecond(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration):
 def computeEss(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration):
 
-    [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src, clipped_actions, trajectories_length] = getEpisodesInfoFromSource(source_dataset, env_param)
-    variance_env = env_param_src[:, -1]
-    state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_actions)
-    variance_action = simulation_param.variance_action
-    n = state_t1_denoised_current.shape[0]
+    trajectories_length = getEpisodesInfoFromSource(source_dataset, env_param)[-1]
+    n = trajectories_length.shape[0]
+    # variance_env = env_param_src[:, -1]
+    # state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_actions)
+    # variance_action = simulation_param.variance_action
+    #
+    # if algorithm_configuration.pd == 0:
+    #     policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action))
+    #     model_tgt = 1/np.sqrt(2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*variance_env[:, np.newaxis]))
+    #
+    #     for t in range(state_t.shape[1]):
+    #         indices = trajectories_length < t
+    #         policy_tgt[indices, t] = 1
+    #         model_tgt[indices, t] = 1
+    #
+    #     policy_tgt = np.prod(policy_tgt, axis=1)
+    #     model_tgt = np.prod(model_tgt, axis=1)
+    #
+    #     mis_denominator = np.squeeze(np.asarray(np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, :] / n, source_dataset.source_distributions), axis=1)))
+    #
+    # else:
+    #     policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action)), axis=1)
+    #     model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*variance_env[:, np.newaxis])), axis=1)
+    #     mis_denominator = np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, np.newaxis, :] / n, source_dataset.source_distributions), axis=2)
 
-    if algorithm_configuration.pd == 0:
-        policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action))
-        model_tgt = 1/np.sqrt(2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*variance_env[:, np.newaxis]))
-
-        for t in range(state_t.shape[1]):
-            indices = trajectories_length < t
-            policy_tgt[indices, t] = 1
-            model_tgt[indices, t] = 1
-
-        policy_tgt = np.prod(policy_tgt, axis=1)
-        model_tgt = np.prod(model_tgt, axis=1)
-
-        mis_denominator = np.squeeze(np.asarray(np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, :] / n, source_dataset.source_distributions), axis=1)))
-
-    else:
-        policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action)), axis=1)
-        model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*variance_env[:, np.newaxis])), axis=1)
-        mis_denominator = np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, np.newaxis, :] / n, source_dataset.source_distributions), axis=2)
-
-    weights = policy_tgt * model_tgt / mis_denominator
+    weights = algorithm_configuration.computeWeights(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, 0)[0]
 
     #if ess_den == 0:
         #print("problem")
-    if algorithm_configuration.pd==0:
+    if algorithm_configuration.pd == 0:
         ess_den = np.sum(weights ** 2, axis=0)
         ess = np.sum(weights, axis=0) * n / ess_den
         min_index = 0
     else:
         ess = np.zeros(weights.shape[1])
-        for t in range(state_t.shape[1]):
+        for t in range(weights.shape[1]):
             indices = trajectories_length >= t
             weights_timestep = weights[indices, t]
             ess_den = np.sum(weights_timestep ** 2, axis=0)
             ess[t] = np.sum(weights_timestep, axis=0) * n / ess_den
+
+        min_index = np.argmin(ess)
+        ess = ess[min_index]
+
+    return [ess, min_index]
+
+#def computeEss(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration):
+def computeEssSecond(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration):
+
+    trajectories_length = getEpisodesInfoFromSource(source_dataset, env_param)[-1]
+    n = trajectories_length.shape[0]
+
+    weights = algorithm_configuration.computeWeights(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, 0)
+
+    #if ess_den == 0:
+        #print("problem")
+    if algorithm_configuration.pd == 0:
+        variance_weights = np.var(weights, axis=0)
+        ess = n / (1 + variance_weights)
+        min_index = 0
+    else:
+        ess = np.zeros(weights.shape[1])
+        for t in range(weights.shape[1]):
+            indices = trajectories_length >= t
+            weights_timestep = weights[indices, t]
+            variance_weights = np.var(weights_timestep, axis=0)
+            ess[t] = n / (1 + variance_weights)
 
         min_index = np.argmin(ess)
         ess = ess[min_index]
@@ -602,8 +645,10 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
             ess = np.min(ess)
 
         if algorithm_configuration.adaptive == "Yes":
+            defensive_sample = 1
+            addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep)
             #Number of n_def next iteration
-            num_episodes_target = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)
+            num_episodes_target = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)[0]
         else:
             num_episodes_target = simulation_param.batch_size
 
@@ -884,7 +929,8 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
             [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)
 
         if simulation_param.adaptive == "Yes":
-            n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)
+            #n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)
+            n_def = 5
 
     for i_batch in range(simulation_param.num_batch):
 
