@@ -46,6 +46,7 @@ class SourceDataset:
         self.n_config_cv = episodes_per_config.shape[0]
         self.initial_size = source_task.shape[0]
         self.source_distributions = None
+        self.mask_weights = None
 
 # # LQG1D
 # env = gym.make('LQG1D-v0')
@@ -66,10 +67,10 @@ env_param = EnvParam(env_tgt, param_space_size, state_space_size, env_param_spac
 mean_initial_param = -0.1 * np.ones(param_space_size)
 variance_initial_param = 0
 variance_action = 0.1
-batch_size = 3
+batch_size = 5
 num_batch = 400
 discount_factor = 0.99
-runs = 20
+runs = 4
 learning_rate = 1e-5
 ess_min = 50
 adaptive = "No"
@@ -79,12 +80,12 @@ simulation_param = SimulationParam(mean_initial_param, variance_initial_param, v
 # source task for lqg1d
 source_dataset_batch_size = 20
 discount_factor = 0.99
-env_param_min = 0.5
-env_param_max = 1.5
+env_param_min = 0.9
+env_param_max = 1
 policy_param_min = -1
 policy_param_max = -0.1
-linspace_env = 11
-linspace_policy = 10
+linspace_env = 2
+linspace_policy = 2
 n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to use to fit the control variates
 #np.random.seed(2000)
 
@@ -106,7 +107,7 @@ n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to 
 # actions_clipped = np.genfromtxt('actions_clipped.csv', delimiter=',')
 
 #estimators = ["MIS", "MIS-CV", "MIS-CV-BASELINE", "REINFORCE-BASELINE"]
-estimators = ["MIS", "MIS-CV", "MIS-CV-BASELINE", "REINFORCE-BASELINE"]
+estimators = ["MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
 #learning_rates = [5e-5, 6e-6, 8e-6, 5e-6, 1e-5, 1e-6, 8e-6, 1e-5, 1e-6, 1e-6, 1e-6]
 learning_rates = [2e-5, 5e-6, 2e-5, 1e-5]
 disc_rewards = {}

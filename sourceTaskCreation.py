@@ -17,6 +17,7 @@ def createBatch(env, batch_size, episode_length, param, state_space_size, varian
 
     information_size = state_space_size+2+state_space_size+state_space_size+1+state_space_size
     batch = np.zeros((batch_size, episode_length, information_size)) #[state, clipped_action, reward, next_state, unclipped_state, action]
+    trajectory_length = np.zeros(batch_size)
     for i_batch in range(batch_size):
         state = env.reset()
 
@@ -39,8 +40,9 @@ def createBatch(env, batch_size, episode_length, param, state_space_size, varian
                 break
 
             state = next_state
+        trajectory_length[i_batch] = t
 
-    return batch
+    return batch, trajectory_length
 
 def sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size):
     """
@@ -70,7 +72,7 @@ def sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_
     length_source_task = policy_param.shape[0]*env_param.shape[0]*episode_per_param
     source_task = np.zeros((length_source_task, episode_length, state_space_size + 2 + state_space_size)) # every line a task, every task has all [clipped_state, action, reward]
     # Every line is a task, every task has [discounted_return, policy_parameter, env_params, variance]
-    source_param = np.zeros((length_source_task, 1+param_space_size+env_param_space_size))
+    source_param = np.zeros((length_source_task, 1+param_space_size+env_param_space_size+1)) # discounted rewards, policy parameter, environment parameter, episode length
     next_states_unclipped = np.zeros((length_source_task, episode_length, state_space_size))
     next_states_unclipped_denoised = np.zeros((length_source_task, episode_length, state_space_size))
     actions_clipped = np.zeros((length_source_task, episode_length))
@@ -84,7 +86,7 @@ def sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_
             env.setParams(np.concatenate(([env_param[i_env_param]], np.ravel(env.B), [env.sigma_noise**2])))
 
             # Reset the environment and pick the first action
-            batch = createBatch(env, episode_per_param, episode_length, policy_param[i_policy_param], state_space_size, variance_action) # [state, action, reward, next_state]
+            [batch, trajectory_length] = createBatch(env, episode_per_param, episode_length, policy_param[i_policy_param], state_space_size, variance_action) # [state, action, reward, next_state]
 
             #  Go through the episode and compute estimators
             #I populate the source task
@@ -105,6 +107,7 @@ def sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_
             source_param[i_episode:i_episode+episode_per_param, 0] = discounted_return
             source_param[i_episode:i_episode+episode_per_param, 1:1+param_space_size] = policy_param[i_policy_param]
             source_param[i_episode:i_episode+episode_per_param, 1+param_space_size:1+param_space_size+env_param_space_size] = env.getEnvParam().T
+            source_param[i_episode:i_episode+episode_per_param, 1+param_space_size+env_param_space_size] = trajectory_length
 
             i_episode += episode_per_param
 
@@ -140,7 +143,7 @@ def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, var
     length_source_task = policy_params.shape[0]*env_params.shape[0]*episode_per_param
     source_task = np.zeros((length_source_task, episode_length, state_space_size + 2 + state_space_size)) # every line a task, every task has all [clipped_state, action, reward]
     # Every line is a task, every task has [discounted_return, policy_parameter, env_params, variance]
-    source_param = np.zeros((length_source_task, 1+param_space_size+env_param_space_size))
+    source_param = np.zeros((length_source_task, 1+param_space_size+env_param_space_size+1))
     next_states_unclipped = np.zeros((length_source_task, episode_length, state_space_size))
     next_states_unclipped_denoised = np.zeros((length_source_task, episode_length, state_space_size))
     actions_clipped = np.zeros((length_source_task, episode_length))
@@ -154,7 +157,7 @@ def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, var
             env.setParams(env_params[i_env_param, :])
 
             # Reset the environment and pick the first action
-            batch = createBatch(env, episode_per_param, episode_length, policy_params[i_policy_param, :], state_space_size, variance_action) # [state, action, reward, next_state]
+            [batch, trajectory_length] = createBatch(env, episode_per_param, episode_length, policy_params[i_policy_param, :], state_space_size, variance_action) # [state, action, reward, next_state]
 
             #  Go through the episode and compute estimators
 
@@ -175,6 +178,7 @@ def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, var
             source_param[i_episode:i_episode+episode_per_param, 0] = discounted_return
             source_param[i_episode:i_episode+episode_per_param, 1:1+param_space_size] = policy_params[i_policy_param, :]
             source_param[i_episode:i_episode+episode_per_param, 1+param_space_size:1+param_space_size+env_param_space_size] = env.getEnvParam().T
+            source_param[i_episode:i_episode+episode_per_param, 1+param_space_size+env_param_space_size] = trajectory_length
 
             i_episode += episode_per_param
 
