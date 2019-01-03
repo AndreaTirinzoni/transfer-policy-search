@@ -98,7 +98,7 @@ def simulationParallel(env_src, episode_length, episodes_per_configuration, disc
 
         i_learning_rate += 1
 
-        return [disc_rewards, policy, gradient, ess, n_def]
+    return [disc_rewards, policy, gradient, ess, n_def]
 
 env_tgt = gym.make('cartpolec-v0')
 env_src = gym.make('cartpolec-v0')
@@ -115,7 +115,7 @@ variance_action = 0.1
 batch_size = 5
 num_batch = 120
 discount_factor = 0.99
-runs = 15
+runs = 16
 learning_rate = 1e-5
 ess_min = 50
 adaptive = "No"
@@ -169,23 +169,11 @@ for estimator in estimators:
 
 seeds = [np.random.randint(1000000) for _ in range(runs)]
 
-results = Parallel(n_jobs=15)(delayed(simulationParallel)(env_src, episode_length, episodes_per_configuration, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param) for seed in seeds)
+results = Parallel(n_jobs=8)(delayed(simulationParallel)(env_src, episode_length, episodes_per_configuration, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param) for seed in seeds)
 
 
-with open('rewards.pkl', 'wb') as output:
-    pickle.dump(disc_rewards, output, pickle.HIGHEST_PROTOCOL)
-
-with open('policy.pkl', 'wb') as output:
-    pickle.dump(policy, output, pickle.HIGHEST_PROTOCOL)
-
-with open('gradient.pkl', 'wb') as output:
-    pickle.dump(gradient, output, pickle.HIGHEST_PROTOCOL)
-
-with open('ess.pkl', 'wb') as output:
-    pickle.dump(ess, output, pickle.HIGHEST_PROTOCOL)
-
-with open('n_def.pkl', 'wb') as output:
-    pickle.dump(n_def, output, pickle.HIGHEST_PROTOCOL)
+with open('results.pkl', 'wb') as output:
+    pickle.dump(results, output, pickle.HIGHEST_PROTOCOL)
 
 # with open('rewards.pkl', 'rb') as input:
 #     rewards = pickle.load(input)
