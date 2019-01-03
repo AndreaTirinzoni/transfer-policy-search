@@ -297,25 +297,19 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
         policy_src_new_param = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[0:evaluated_trajectories, :, 0] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, -1], state_t[0:evaluated_trajectories, :, :, 0]), axis=2))**2)/(2*variance_action))
         model_src_new_param = 1/np.sqrt((2*m.pi*variance_env[0:evaluated_trajectories, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[0:evaluated_trajectories, :, :, 0] - state_t1_denoised_current[0:evaluated_trajectories, :, :])**2, axis=2) / (2*variance_env[0:evaluated_trajectories, np.newaxis]))
 
-        mask_new_param = np.ones(policy_src_new_param.shape)
-        mask_new_trajectories = np.ones(policy_src_new_traj.shape)
+        mask_new_trajectories = np.ones((policy_src_new_traj.shape[0], policy_src_new_traj.shape[1]))
         for t in range(state_t.shape[1]):
             indices_new_trajectories = trajectories_length[evaluated_trajectories:] < t
-            if indices_new_trajectories[indices_new_trajectories == "True"].shape[0] > 0:
-                mask_new_trajectories[indices_new_trajectories, t, :] = 1/(policy_src_new_traj[indices_new_trajectories, t, :] * model_src_new_traj[indices_new_trajectories, t, :])
+            if indices_new_trajectories[indices_new_trajectories == True].shape[0] > 0:
+                mask_new_trajectories[indices_new_trajectories, t] = 1/(policy_src_new_traj[indices_new_trajectories, t, 0] * model_src_new_traj[indices_new_trajectories, t, 0])
 
-            indices_new_param = trajectories_length[0:evaluated_trajectories] < t
-            if indices_new_param[indices_new_param == "True"].shape[0] > 0:
-                mask_new_param[indices_new_param, t] = 1/(policy_src_new_param[indices_new_param, t, :] * model_src_new_param[indices_new_param, t, :])
-
-        source_dataset.mask_weights = np.concatenate((source_dataset.mask_weights, mask_new_param[:, :, np.newaxis]), axis=2)
-        source_dataset.mask_weights = np.concatenate((source_dataset.mask_weights, mask_new_trajectories), axis=0)
-
-        policy_src_new_traj = np.prod(policy_src_new_traj * mask_new_trajectories, axis=1)
+        policy_src_new_traj = np.prod(policy_src_new_traj * mask_new_trajectories[:, :, np.newaxis], axis=1)
         model_src_new_traj = np.prod(model_src_new_traj, axis=1)
 
-        policy_src_new_param = np.prod(policy_src_new_param * mask_new_param, axis=1)
+        policy_src_new_param = np.prod(policy_src_new_param * source_dataset.mask_weights, axis=1)
         model_src_new_param = np.prod(model_src_new_param, axis=1)
+
+        source_dataset.mask_weights = np.concatenate((source_dataset.mask_weights, mask_new_trajectories), axis=0)
 
         source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, np.matrix(policy_src_new_param * model_src_new_param).T), axis=1)
         source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, np.matrix(policy_src_new_traj * model_src_new_traj)), axis=0)
@@ -323,7 +317,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
         policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t[:, :, :, 0]), axis=2))**2)/(2*variance_action))
         model_tgt = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[:, :, :, 0] - state_t1_denoised_current)**2, axis=2) / (2*variance_env[:, np.newaxis]))
 
-        for t in range(state_t.shape[1]):
+        for t in range(policy_tgt.shape[1]):
             indices = trajectories_length < t
             policy_tgt[indices, t] = 1
             model_tgt[indices, t] = 1
@@ -335,7 +329,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
         policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2))**2)/(2*variance_action))
         model_tgt = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1 - state_t1_denoised_current)**2, axis=2) / (2*variance_env[:, np.newaxis]))
 
-        for t in range(state_t.shape[1]):
+        for t in range(policy_tgt.shape[1]):
             indices = trajectories_length < t
             policy_tgt[indices, t] = 1
             model_tgt[indices, t] = 1
@@ -378,6 +372,14 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
 
         policy_src_new_param = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[0:evaluated_trajectories, :, 0] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, -1], state_t[0:evaluated_trajectories, :, :, 0]), axis=2))**2)/(2*variance_action)), axis=1)
         model_src_new_param = np.cumprod(1/np.sqrt((2*m.pi*variance_env[0:evaluated_trajectories, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[0:evaluated_trajectories, :, :, 0] - state_t1_denoised_current[0:evaluated_trajectories, :, :])**2, axis=2) / (2*variance_env[0:evaluated_trajectories, np.newaxis])), axis=1)
+
+        mask_new_trajectories = np.ones((policy_src_new_traj.shape[0], policy_src_new_traj.shape[1]))
+        for t in range(mask_new_trajectories.shape[1]):
+            indices_new_trajectories = trajectories_length[evaluated_trajectories:] < t
+            if indices_new_trajectories[indices_new_trajectories == True].shape[0] > 0:
+                mask_new_trajectories[indices_new_trajectories, t] = 0
+
+        source_dataset.mask_weights = np.concatenate((source_dataset.mask_weights, mask_new_trajectories), axis=0)
 
         source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, (policy_src_new_param * model_src_new_param)[:, :, np.newaxis]), axis=2)
         source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, (policy_src_new_traj * model_src_new_traj)), axis=0)
@@ -430,9 +432,10 @@ def computeCv(weights, source_dataset, mis_denominator, policy_gradients, algori
                 control_variate = np.repeat(control_variate[:, :, :, np.newaxis], policy_gradients.shape[2], axis=3)
 
         else:
-            control_variate = np.sum(control_variate, axis=1)
+            mask = source_dataset.mask_weights
+            control_variate = np.sum(control_variate * mask[:, :, np.newaxis], axis=1)
             if algorithm_configuration.baseline == 1:
-                baseline_covariate = np.sum(np.multiply(weights[:, :, np.newaxis], policy_gradients), axis=1)
+                baseline_covariate = np.sum(np.multiply(weights[:, :, np.newaxis], policy_gradients) * mask[:, :, np.newaxis], axis=1)
                 if algorithm_configuration.multid_approx == 0:
                     control_variate = np.repeat(control_variate[:, :, np.newaxis], policy_gradients.shape[2], axis=2)
                     control_variate = np.concatenate((control_variate, baseline_covariate[:, np.newaxis, :]), axis=1)
@@ -683,20 +686,26 @@ def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance
         src_distributions_policy = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :], state_t), axis=2))**2)/(2*variance_action))
         src_distributions_model = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((np.power((state_t1 - state_t1_denoised), 2)), axis=2) / (2*variance_env[:, np.newaxis, np.newaxis]))
 
-        mask = np.ones(src_distributions_policy.shape)
+        mask = np.ones((src_distributions_policy.shape[0], src_distributions_policy.shape[1]))
         for t in range(src_distributions_policy.shape[1]):
             indices = trajectories_length < t
-            if indices[indices == "True"].shape[0] > 0:
-                mask[indices, t, :] = 1/(src_distributions_model[indices, t, :] * src_distributions_policy[indices, t, :])
+            if indices[indices == True].shape[0] > 0:
+                mask[indices, t] = 1/(src_distributions_model[indices, t, 0] * src_distributions_policy[indices, t, 0])
 
-        src_distributions_policy = np.prod(src_distributions_policy * mask, axis=1)
-        src_distributions_model = np.prod(src_distributions_model * mask, axis=1)
+        src_distributions_policy = np.prod(src_distributions_policy * mask[:, :, np.newaxis], axis=1)
+        src_distributions_model = np.prod(src_distributions_model, axis=1)
 
         source_dataset.mask_weights = mask
 
     else:
         src_distributions_policy = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :], state_t), axis=2))**2)/(2*variance_action)), axis=1)
         src_distributions_model = np.cumprod(1/np.sqrt((2*m.pi*variance_env[:, np.newaxis, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum(((state_t1 - state_t1_denoised)**2), axis=2) / (2*variance_env[:, np.newaxis, np.newaxis])), axis=1)
+
+        mask = np.ones((src_distributions_policy.shape[0], src_distributions_policy.shape[1]))
+        for t in range(src_distributions_policy.shape[1]):
+            indices = trajectories_length < t
+            mask[indices, t] = 0
+        source_dataset.mask_weights = mask
 
     return src_distributions_model * src_distributions_policy
 
