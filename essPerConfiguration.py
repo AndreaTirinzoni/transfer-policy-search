@@ -267,15 +267,15 @@ mean_initial_param = 0
 variance_initial_param = 0
 variance_action = 0.1
 
-batch_size = 40
+batch_size = 20
 discount_factor = 0.99
 
-env_param_min = -2
-env_param_max = 2
+env_param_min = 0.5
+env_param_max = 1.5
 policy_param_min = -1
-policy_param_max = 0
-linspace_env = 2
-linspace_policy = 2
+policy_param_max = -0.1
+linspace_env = 22
+linspace_policy = 20
 
 [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationAllCombinations(env_src, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
 
