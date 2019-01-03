@@ -90,8 +90,8 @@ simulation_param = SimulationParam(mean_initial_param, variance_initial_param, v
 #np.random.seed(2000)
 
 # source task for cartpole
-policy_params = np.array([[-0.045, 0.20, 0.24, 0.6], [-0.05, 0.1, 0.1, 0.4]])
-env_params = np.array([[1, 0.5, 0.09], [1, 0.5, 0.09]])
+policy_params = np.array([[-0.045, 0.20, 0.24, 0.6], [-0.05, 0.1, 0.1, 0.4], [-0.06, 0.21, 0.24, 0.73], [-0.08, -0.05, 0.05, 0.35]])
+env_params = np.array([[1, 0.5, 0.09], [1, 0.5, 0.09], [0.5, 1, 0.09], [0.5, 1, 0.09]])
 
 # policy_params = np.array([[-0.045, 0.20, 0.24, 0.6], [-0.05, 0.1, 0.1, 0.4], [-0.06, 0.21, 0.24, 0.73], [-0.08, -0.05, 0.05, 0.35], [-0.09, 0.16, 0.36, 0.7], [-0.11, -0.17, 0.007, 0.15]])
 # env_params = np.array([[1, 0.5, 0.09], [1, 0.5, 0.09], [0.5, 1, 0.09], [0.5, 1, 0.09], [1.5, 1, 0.09], [1.5, 1, 0.09]])
@@ -107,9 +107,9 @@ n_config_cv = policy_params.shape[0] * env_params.shape[0] - 1
 # actions_clipped = np.genfromtxt('actions_clipped.csv', delimiter=',')
 
 #estimators = ["MIS", "MIS-CV", "MIS-CV-BASELINE", "REINFORCE-BASELINE"]
-estimators = ["PD-MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
-#learning_rates = [5e-5, 6e-6, 8e-6, 5e-6, 1e-5, 1e-6, 8e-6, 1e-5, 1e-6, 1e-6, 1e-6]
-learning_rates = [2e-5, 5e-6, 2e-5, 5e-6, 1e-5]
+estimators = ["MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
+#learning_rates = [2e-5, 6e-6, 1e-5, 2e-5, 1e-5, 1e-6, 1e-5, 1e-5, 1e-6, 1e-6, 1e-5]
+learning_rates = [1e-4, 1e-4, 1e-4, 1e-4, 1e-4]
 disc_rewards = {}
 policy = {}
 gradient = {}

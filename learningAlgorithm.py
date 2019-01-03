@@ -660,7 +660,7 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
         num_episodes_target = simulation_param.batch_size
 
     #print("Problems: n_def-" + str(num_episodes_target) + " ess-" + str(ess) + " gradient-" + str(gradient))
-    #print("param: " + str(param) + " gradient: " + str(gradient) + " ess: " + str(ess))
+    print("param: " + str(param) + " gradient: " + str(gradient) + " ess: " + str(ess))
 
     return source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target
 
