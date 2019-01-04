@@ -4,7 +4,7 @@ from collections import namedtuple
 import algorithmPolicySearch as alg
 import random
 import re
-import modelEstimation as models
+#import modelEstimation as models
 
 class BatchStats:
 
@@ -129,7 +129,7 @@ def regressionFitting(y, x, n_config_cv, baseline_flag):
     # else:
     #     x = x[:, 0:n_config_cv]
 
-    train_size = int(np.ceil(x.shape[0]/4*3))
+    train_size = int(np.ceil(x.shape[0]/3*2))
     train_index = random.sample(range(x.shape[0]), train_size)
     x_train = x[train_index]
     y_train = y[train_index]
@@ -662,7 +662,7 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
         num_episodes_target = simulation_param.batch_size
 
     #print("Problems: n_def-" + str(num_episodes_target) + " ess-" + str(ess) + " gradient-" + str(gradient))
-    print("param: " + str(param) + " gradient: " + str(gradient) + " ess: " + str(ess))
+    print("param: " + str(param) + " tot_rewards: " + str(tot_reward_batch) + " ess: " + str(ess))
 
     return source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target
 
