@@ -223,7 +223,7 @@ def computeEssSecond(policy_param, env_param, source_dataset, simulation_param, 
     return [ess, min_index]
 
 
-def essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_max, source_dataset, simulation_param, algorithm_configuration):
+def essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, source_dataset, simulation_param, algorithm_configuration):
     """
     The function computes eh ess for every combination of environment_parameter and policy_parameter
     :param variance_action: variance of the action distribution
@@ -237,8 +237,8 @@ def essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_ma
     :return: A matrix containing ESS for every env_parameter - policy_parameter combination w.r.t the source task dataset
     """
 
-    policy_param = np.linspace(policy_param_min, policy_param_max, 40)
-    env_param = np.linspace(env_param_min, env_param_max, 160)
+    policy_param = np.linspace(policy_param_min, policy_param_max, linspace_policy)
+    env_param = np.linspace(env_param_min, env_param_max, linspace_env)
     ess1 = np.zeros((env_param.shape[0], policy_param.shape[0]))
     ess2 = np.zeros((env_param.shape[0], policy_param.shape[0]))
     for i_policy_param in range(policy_param.shape[0]):
@@ -285,7 +285,7 @@ linspace_policy = 20
 # source_param = np.genfromtxt('source_param.csv', delimiter=',')
 
 print("Computing ESS")
-[ess1, ess2] = essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_max, source_dataset, simulation_param, algorithm_configuration)
+[ess1, ess2] = essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env*2, linspace_policy*2, source_dataset, simulation_param, algorithm_configuration)
 
 np.savetxt("ess_version1.csv", ess1, delimiter=",")
 np.savetxt("ess_version2.csv", ess2, delimiter=",")

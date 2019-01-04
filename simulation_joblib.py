@@ -5,7 +5,7 @@ import algorithmPolicySearch as alg
 import learningAlgorithm as la
 import sourceTaskCreation as stc
 import pickle
-#from utils import plot
+from utils import plot
 import math as m
 from joblib import Parallel
 from joblib import delayed

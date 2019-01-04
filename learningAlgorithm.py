@@ -4,6 +4,7 @@ from collections import namedtuple
 import algorithmPolicySearch as alg
 import random
 import re
+import modelEstimation as models
 
 class BatchStats:
 
@@ -225,6 +226,7 @@ def weightsPolicySearch(policy_param, env_param, source_dataset, simulation_para
         weights = np.concatenate((weights, np.ones((simulation_param.batch_size, env_param.episode_length))), axis=0)
 
     return [weights, 0]
+
 
 def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, batch_size):
 
@@ -660,7 +662,7 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
         num_episodes_target = simulation_param.batch_size
 
     #print("Problems: n_def-" + str(num_episodes_target) + " ess-" + str(ess) + " gradient-" + str(gradient))
-    #print("param: " + str(param) + " gradient: " + str(gradient) + " ess: " + str(ess))
+    print("param: " + str(param) + " gradient: " + str(gradient) + " ess: " + str(ess))
 
     return source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target
 
@@ -954,4 +956,62 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
         stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.policy_parameter[i_batch, :] = param
         stats.gradient[i_batch, :] = gradient
+    return stats
+
+
+def setEnvParametersTarget(env, source_dataset, env_param):
+
+    source_length = source_dataset.initial_size
+    source_dataset.source_param[source_length:, 1+env_param.param_space_size:1+env_param.param_space_size+env_param.env_param_space_size] = env.getEnvParam().T
+
+
+def learnPolicyWithModelEstimation(env_param, simulation_param, source_dataset, proposals_env, estimator, off_policy=1, multid_approx=0):
+
+    param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
+
+    # Adam initial params
+    m_t = 0
+    v_t = 0
+    t = 0
+
+    # Keep track of useful statistics#
+    stats = BatchStats(simulation_param.num_batch, env_param.param_space_size)
+    n_def = simulation_param.batch_size
+    ess = 0
+
+    algorithm_configuration = switch_estimator(estimator, simulation_param.adaptive)
+    algorithm_configuration.off_policy = off_policy
+    algorithm_configuration.multid_approx = multid_approx
+
+    model_estimation = models.Models(proposals_env)
+
+    if off_policy == 1:
+        if re.match("^.*MIS.*", estimator):
+            source_dataset.source_distributions = computeMultipleImportanceWeightsSourceDistributions(source_dataset, simulation_param.variance_action, algorithm_configuration, env_param)
+            [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)
+
+        else:
+            [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)
+
+        if simulation_param.adaptive == "Yes":
+            #n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)
+            n_def = 5
+
+    for i_batch in range(simulation_param.num_batch):
+
+        stats.n_def[i_batch] = n_def
+        batch_size = n_def
+        stats.ess[i_batch] = ess
+
+        [source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size)
+
+        # Update statistics
+        stats.total_rewards[i_batch] = tot_reward_batch
+        stats.disc_rewards[i_batch] = discounted_reward_batch
+        stats.policy_parameter[i_batch, :] = param
+        stats.gradient[i_batch, :] = gradient
+
+        env = model_estimation.chooseTransitionModel(env_param, param, simulation_param, source_dataset.source_param, source_dataset.episodes_per_config, source_dataset.initial_size)
+        setEnvParametersTarget(env, source_dataset, env_param)
+
     return stats
