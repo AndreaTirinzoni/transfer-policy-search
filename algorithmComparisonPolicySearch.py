@@ -68,7 +68,7 @@ num_batch = 350
 discount_factor = 0.99
 learning_rate = 1e-4
 
-runs = 7
+runs = 4
 
 reward_reinforce = np.zeros((runs, num_batch))
 total_reward_reinforce = np.zeros((runs, num_batch))
