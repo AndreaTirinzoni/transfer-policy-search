@@ -2,13 +2,12 @@ import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
-
 class ModelEstimatorRKHS:
     """
     Model estimation algorithm using reproducing kernel Hilbert spaces.
     """
 
-    def __init__(self, kernel_rho, kernel_lambda, sigma_env, T, R, lambda_, source_envs, state_dim, action_dim=1):
+    def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, state_dim, action_dim=1):
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.T = T
@@ -16,17 +15,21 @@ class ModelEstimatorRKHS:
         self.lambda_ = lambda_
         self.source_envs = source_envs
         self.sigma_env = sigma_env
+        self.sigma_pi = sigma_pi
 
         self.kernel = kernel_rho**2 * RBF(length_scale=kernel_lambda)
         self.gp = GaussianProcessRegressor(kernel=self.kernel, alpha=sigma_env**2, optimizer=None)
 
         # Weight matrix of the learned model
         self.A = 0
+        # State-action matrix used to learn the current model
+        self.X = 0
 
     def _split_dataset(self, dataset):
         """
         Extracts the relevant data structures from a dataset of trajectories.
         """
+        # TODO need to handle variable-length trajectories
         s_t = dataset.source_task[:, :, 0:self.state_dim]
         # TODO should we use unclipped actions?
         a_t = dataset.clipped_actions[:, :, np.newaxis]
@@ -71,44 +74,78 @@ class ModelEstimatorRKHS:
             F_bar += alpha_src[j + 1] * F_src[j + 1]
         inv = np.linalg.inv(np.matmul(c1*np.sum(alpha_src)*W + c2, K) + self.lambda_*self.R*np.eye(X.shape[0]))
         self.A = np.matmul(inv, c1*np.matmul(W, F_bar) + c2*M)
+        self.X = X
 
-    def _collect_dataset_update(self):
+    def _collect_dataset_update(self, policy_params, alpha, target_param, use_gp=False):
         """
         Collects a dataset for updating the transition model. The collection is under a mixture distribution of
-        given policies and the previous learned model.
+        given policies and the previous learned model. This function also the weight function W to be used in
+        fitting the learned model.
+
+        If use_gp is true, the current GP model is used to simulate transitions instead of the old learned model.
         """
 
-        raise NotImplementedError
+        states = np.zeros((self.R, self.T, self.state_dim))
+        actions = np.zeros(self.R, self.T)
+        probs_mixture = np.ones(self.R)
+        probs_target = np.ones(self.R)
 
-    def _compute_iw_update(self):
-        """
-        Computes the importance-weight matrix for updating the transition model.
-        """
+        for r in range(self.R):
 
-        raise NotImplementedError
+            # Choose a policy to run with probabilities alpha
+            theta = np.random.choice(policy_params, p=alpha)
 
-    def update_model(self, ):
+            # Initial state distributions are the same for all envs -> reset a source env
+            s = self.source_envs[0].reset()
+
+            for t in range(self.T):
+
+                # TODO a is unclipped. Should we clip it? How?
+                a = np.random.normal(np.dot(theta, s), self.sigma_pi)
+                x = np.concatenate([s,a], axis=0)[np.newaxis, :]
+                # Predict the transition function at (s,a)
+                # TODO what to do at the first iteration?
+                if not use_gp:
+                    mean_ns = np.matmul(self.kernel(self.X, x), self.A).reshape(self.state_dim+1,)
+                else:
+                    mean_ns = self.gp.predict(x).reshape(self.state_dim+1,)
+                # TODO ns is unclipped. Should we clip it? How?
+                ns = np.random.multivariate_normal(mean_ns, self.sigma_env**2)
+
+                states[r, t, :] = s
+                actions[r, t] = a
+
+                probs_target[r] *= np.exp(-(np.dot(target_param, s) - a)**2 / (2*self.sigma_pi**2))
+                probs_mixture[r] *= np.sum(np.exp(-(np.dot(policy_params, s) - a)**2 / (2*self.sigma_pi**2)) * alpha)
+
+                s = ns
+
+        W = np.diag(probs_target / probs_mixture)
+        X = np.concatenate([states, actions[:,:,np.newaxis]], axis=2).reshape(self.R*self.T, self.state_dim+1)
+
+        return X, W, states, actions
+
+    def update_model(self, N, alpha_tgt, alpha_src, alpha_0, policy_params, target_param):
         """
         Updates the current transition model.
+
+        :param N: total number of trajectories in the current dataset
+        :param alpha_tgt: proportion of trajectories from each target policy
+        :param alpha_src: proportion of trajectories from each source env
+        :param alpha_0: proportion of trajectories from the current target policy
+        :param policy_params: list of parameters of all target policies
+        :param target_param: current target policy parameters
         """
 
-        dataset = self._collect_dataset_update()
-
-        X, _, _ = self._split_dataset(dataset)
-
-        alpha_0 = 0  # TODO
-        alpha_tgt = 0  # TODO
-        alpha_src = [0]  # TODO
-        N = 0  # TODO
+        X, W, states, actions = self._collect_dataset_update(policy_params, alpha_tgt / np.sum(alpha_tgt),
+                                                             target_param, use_gp=False)
 
         C_alpha = (1 - alpha_0)^2 / (alpha_0 * np.log(1 / alpha_0))
         c1 = C_alpha / (2 * self.sigma_env**2 * N)
-        c2 = 4 * alpha_tgt / (self.sigma_env**2 * alpha_0**2)
+        c2 = 4 * np.sum(alpha_tgt) / (self.sigma_env**2 * alpha_0**2)
 
         M = self.gp.predict(X)
-        W = self._compute_iw_update()
-        F_src = [env.stepDenoisedCurrent(dataset.source_task[:, :, 0:self.state_dim],
-                                         dataset.clipped_actions).reshape(X.shape[0], self.state_dim) for env in self.source_envs]
+        F_src = [env.stepDenoisedCurrent(states, actions).reshape(X.shape[0], self.state_dim) for env in self.source_envs]
 
         self._update_weight_matrix(X, M, W, F_src, alpha_src, c1, c2)
 
