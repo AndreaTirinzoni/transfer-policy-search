@@ -99,20 +99,20 @@ num_batch = 400
 discount_factor = 0.99
 runs = 16
 learning_rate = 1e-5
-ess_min = 50
-adaptive = "No"
+ess_min = 70
+adaptive = "Yes"
 
 simulation_param = SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
 # source task for lqg1d
-source_dataset_batch_size = 25
+source_dataset_batch_size = 4
 discount_factor = 0.99
-env_param_min = 0.5
-env_param_max = 1.5
+env_param_min = 0.9
+env_param_max = 1
 policy_param_min = -1
 policy_param_max = -0.1
-linspace_env = 11
-linspace_policy = 10
+linspace_env = 2
+linspace_policy = 2
 n_config_cv = (linspace_policy * linspace_env) - 1 #number of configurations to use to fit the control variates
 #np.random.seed(2000)
 
@@ -146,7 +146,7 @@ for estimator in estimators:
 seeds = [np.random.randint(1000000) for _ in range(runs)]
 
 #results = Parallel(n_jobs=16)(delayed(simulationParallel)(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param) for seed in seeds) #cartpole
-results = Parallel(n_jobs=8)(delayed(simulationParallel)(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param) for seed in seeds) #lqg1d
+results = Parallel(n_jobs=1)(delayed(simulationParallel)(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param) for seed in seeds) #lqg1d
 
 
 with open('results.pkl', 'wb') as output:
