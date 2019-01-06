@@ -95,13 +95,13 @@ simulation_param = SimulationParam(mean_initial_param, variance_initial_param, v
 policy_params = np.array([[-0.13, 0.19, 0.28, 0.57], [-0.04, 0.1, 0.11, 0.37], [-0.01, 0.09, 0.26, 0.61], [-0.03, 0.01, 0.1, 0.32], [-0.09, 0.11, 0.36, 0.67], [-0.1, -0.11, 0.04, 0.19]])
 env_params = np.array([[1, 0.5, 0.09], [1, 0.5, 0.09], [0.5, 1, 0.09], [0.5, 1, 0.09], [1.5, 1, 0.09], [1.5, 1, 0.09]])
 
-number_of_episodes_per_config = 25
+number_of_episodes_per_config = 4
 n_config_cv = policy_params.shape[0] * env_params.shape[0] - 1
 
 [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env_src, episode_length, number_of_episodes_per_config, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size)
 
 #estimators = ["MIS", "MIS-CV", "MIS-CV-BASELINE", "REINFORCE-BASELINE"]
-estimators = ["MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
+estimators = ["PD-MIS-CV-BASELINE", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
 #learning_rates = [2e-5, 6e-6, 1e-5, 2e-5, 1e-5, 1e-6, 1e-5, 1e-5, 1e-6, 1e-6, 1e-5]
 learning_rates = [5e-4, 2e-3, 5e-4, 2e-3, 1e-4]
 disc_rewards = {}
