@@ -86,14 +86,14 @@ class ModelEstimatorRKHS:
         """
 
         states = np.zeros((self.R, self.T, self.state_dim))
-        actions = np.zeros(self.R, self.T)
+        actions = np.zeros((self.R, self.T))
         probs_mixture = np.ones(self.R)
         probs_target = np.ones(self.R)
 
         for r in range(self.R):
 
             # Choose a policy to run with probabilities alpha
-            theta = np.random.choice(policy_params, p=alpha)
+            theta = policy_params[np.random.choice(len(policy_params), p=alpha)]
 
             # Initial state distributions are the same for all envs -> reset a source env
             s = self.source_envs[0].reset()
@@ -102,15 +102,15 @@ class ModelEstimatorRKHS:
 
                 # TODO a is unclipped. Should we clip it? How?
                 a = np.random.normal(np.dot(theta, s), self.sigma_pi)
-                x = np.concatenate([s,a], axis=0)[np.newaxis, :]
+                x = np.append(s, a)[np.newaxis, :]
                 # Predict the transition function at (s,a)
                 # TODO what to do at the first iteration?
                 if not use_gp:
-                    mean_ns = np.matmul(self.kernel(self.X, x), self.A).reshape(self.state_dim+1,)
+                    mean_ns = np.matmul(self.kernel(self.X, x), self.A).reshape(self.state_dim,)
                 else:
-                    mean_ns = self.gp.predict(x).reshape(self.state_dim+1,)
+                    mean_ns = self.gp.predict(x).reshape(self.state_dim,)
                 # TODO ns is unclipped. Should we clip it? How?
-                ns = np.random.multivariate_normal(mean_ns, self.sigma_env**2)
+                ns = np.random.multivariate_normal(mean_ns, self.sigma_env**2*np.eye(self.state_dim))
 
                 states[r, t, :] = s
                 actions[r, t] = a
