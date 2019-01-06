@@ -1,10 +1,10 @@
 import math as m
 import numpy as np
-from collections import namedtuple
 import algorithmPolicySearch as alg
 import random
 import re
-#import modelEstimation as models
+import modelEstimation as models
+import simulationClasses as sc
 
 class BatchStats:
 
@@ -570,45 +570,6 @@ def computeEss(policy_param, env_param, source_dataset, simulation_param, algori
     return [ess, min_index]
 
 
-def addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, num_episodes_target, discount_factor_timestep):
-
-    batch_size = num_episodes_target
-
-    source_param_new = np.zeros((batch_size, 1+env_param.param_space_size+env_param.env_param_space_size+1))
-    source_task_new = np.zeros((batch_size, env_param.episode_length, env_param.state_space_size + 2 + env_param.state_space_size))
-    # Iterate for every episode in batch
-
-    [batch, trajectory_length] = createBatch(env_param.env, batch_size, env_param.episode_length, param, env_param.state_space_size, simulation_param.variance_action) # [state, action, reward, next_state, next_state_unclipped, clipped_actions]
-
-    source_task_new[:, :, 0:env_param.state_space_size] = batch[:, :, 0:env_param.state_space_size] # state
-    source_task_new[:, :, env_param.state_space_size] = batch[:, :, env_param.state_space_size+2+env_param.state_space_size+env_param.state_space_size] # unclipped action
-    source_task_new[:, :, env_param.state_space_size+1] = batch[:, :, env_param.state_space_size+1] # reward
-    source_task_new[:, :, env_param.state_space_size+2:env_param.state_space_size+2+env_param.state_space_size] = batch[:, :, env_param.state_space_size+2:env_param.state_space_size+2+env_param.state_space_size] #next state
-
-    #unclipped next_states and actions
-    next_states_unclipped_new = batch[:, :, env_param.state_space_size+2+env_param.state_space_size:env_param.state_space_size+2+env_param.state_space_size+env_param.state_space_size]
-    next_states_unclipped_denoised_new = batch[:, :, env_param.state_space_size+2+env_param.state_space_size+env_param.state_space_size+1:env_param.state_space_size+2+env_param.state_space_size+env_param.state_space_size+1+env_param.state_space_size]
-    clipped_actions_new = batch[:, :, env_param.state_space_size]
-
-    # The return after this timestep
-    total_return = np.sum(batch[:, :, env_param.state_space_size+1], axis=1)
-    discounted_return_timestep = (discount_factor_timestep * batch[:, :, env_param.state_space_size+1])
-    discounted_return = np.sum(discounted_return_timestep, axis=1)
-
-    source_param_new[:, 0] = discounted_return
-    source_param_new[:, 1:1+env_param.param_space_size] = param
-    source_param_new[:, 1+env_param.param_space_size:1+env_param.param_space_size+env_param.env_param_space_size] = env_param.env.getEnvParam().T
-    source_param_new[:, 1+env_param.param_space_size+env_param.env_param_space_size] = trajectory_length
-
-    # Concatenate new episodes to source tasks
-    source_dataset.source_param = np.concatenate((source_dataset.source_param, source_param_new), axis=0)
-    source_dataset.source_task = np.concatenate((source_dataset.source_task, source_task_new), axis=0)
-    source_dataset.episodes_per_config = np.concatenate((source_dataset.episodes_per_config, [batch_size]))
-    source_dataset.next_states_unclipped = np.concatenate((source_dataset.next_states_unclipped, next_states_unclipped_new), axis=0)
-    source_dataset.next_states_unclipped_denoised = np.concatenate((source_dataset.next_states_unclipped_denoised, next_states_unclipped_denoised_new), axis=0)
-    source_dataset.clipped_actions = np.concatenate((source_dataset.clipped_actions, clipped_actions_new), axis=0)
-
-
 def generateEpisodesAndComputeRewards(env_param, simulation_param, param, discount_factor_timestep):
 
     batch_size = 5
@@ -629,15 +590,7 @@ def generateEpisodesAndComputeRewards(env_param, simulation_param, param, discou
 
 def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size):
 
-    num_episodes_target = batch_size
-    discount_factor_timestep = np.power(simulation_param.discount_factor*np.ones(env_param.episode_length), range(env_param.episode_length))
-
-    #Collect new episodes
-    if num_episodes_target != 0:
-        #Generate the episodes and compute the rewards over the batch
-        addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, num_episodes_target, discount_factor_timestep)
-
-    #Generate episodes and compute rewards
+    #Generate episodes and compute rewards for the batch's statistics
     [tot_reward_batch, discounted_reward_batch] = generateEpisodesAndComputeRewards(env_param, simulation_param, param, discount_factor_timestep)
 
 
@@ -938,10 +891,52 @@ def switch_estimator(estimator, adaptive):
     return algorithm_configuration
 
 
+def addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, num_episodes_target, discount_factor_timestep):
+
+    batch_size = num_episodes_target
+
+    source_param_new = np.zeros((batch_size, 1+env_param.param_space_size+env_param.env_param_space_size+1))
+    source_task_new = np.zeros((batch_size, env_param.episode_length, env_param.state_space_size + 2 + env_param.state_space_size))
+    # Iterate for every episode in batch
+
+    [batch, trajectory_length] = createBatch(env_param.env, batch_size, env_param.episode_length, param, env_param.state_space_size, simulation_param.variance_action) # [state, action, reward, next_state, next_state_unclipped, clipped_actions]
+
+    source_task_new[:, :, 0:env_param.state_space_size] = batch[:, :, 0:env_param.state_space_size] # state
+    source_task_new[:, :, env_param.state_space_size] = batch[:, :, env_param.state_space_size+2+env_param.state_space_size+env_param.state_space_size] # unclipped action
+    source_task_new[:, :, env_param.state_space_size+1] = batch[:, :, env_param.state_space_size+1] # reward
+    source_task_new[:, :, env_param.state_space_size+2:env_param.state_space_size+2+env_param.state_space_size] = batch[:, :, env_param.state_space_size+2:env_param.state_space_size+2+env_param.state_space_size] #next state
+
+    #unclipped next_states and actions
+    next_states_unclipped_new = batch[:, :, env_param.state_space_size+2+env_param.state_space_size:env_param.state_space_size+2+env_param.state_space_size+env_param.state_space_size]
+    next_states_unclipped_denoised_new = batch[:, :, env_param.state_space_size+2+env_param.state_space_size+env_param.state_space_size+1:env_param.state_space_size+2+env_param.state_space_size+env_param.state_space_size+1+env_param.state_space_size]
+    clipped_actions_new = batch[:, :, env_param.state_space_size]
+
+    # The return after this timestep
+    total_return = np.sum(batch[:, :, env_param.state_space_size+1], axis=1)
+    discounted_return_timestep = (discount_factor_timestep * batch[:, :, env_param.state_space_size+1])
+    discounted_return = np.sum(discounted_return_timestep, axis=1)
+
+    source_param_new[:, 0] = discounted_return
+    source_param_new[:, 1:1+env_param.param_space_size] = param
+    source_param_new[:, 1+env_param.param_space_size:1+env_param.param_space_size+env_param.env_param_space_size] = env_param.env.getEnvParam().T
+    source_param_new[:, 1+env_param.param_space_size+env_param.env_param_space_size] = trajectory_length
+
+    # Concatenate new episodes to source tasks
+    source_dataset.source_param = np.concatenate((source_dataset.source_param, source_param_new), axis=0)
+    source_dataset.source_task = np.concatenate((source_dataset.source_task, source_task_new), axis=0)
+    source_dataset.episodes_per_config = np.concatenate((source_dataset.episodes_per_config, [batch_size]))
+    source_dataset.next_states_unclipped = np.concatenate((source_dataset.next_states_unclipped, next_states_unclipped_new), axis=0)
+    source_dataset.next_states_unclipped_denoised = np.concatenate((source_dataset.next_states_unclipped_denoised, next_states_unclipped_denoised_new), axis=0)
+    source_dataset.clipped_actions = np.concatenate((source_dataset.clipped_actions, clipped_actions_new), axis=0)
+
+    return [source_task_new, source_param_new, batch_size, next_states_unclipped_new, clipped_actions_new, next_states_unclipped_denoised_new]
+
+
 def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1, multid_approx=0):
 
     param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
 
+    discount_factor_timestep = np.power(simulation_param.discount_factor*np.ones(env_param.episode_length), range(env_param.episode_length))
     # Adam initial params
     m_t = 0
     v_t = 0
@@ -974,6 +969,10 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
         batch_size = n_def
         stats.ess[i_batch] = ess
 
+        if batch_size != 0:
+            #Generate the episodes and compute the rewards over the batch
+            addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, batch_size, discount_factor_timestep)
+
         [source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size)
 
         # Update statistics
@@ -994,6 +993,7 @@ def learnPolicyWithModelEstimation(env_param, simulation_param, source_dataset, 
 
     param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
 
+    discount_factor_timestep = np.power(simulation_param.discount_factor*np.ones(env_param.episode_length), range(env_param.episode_length))
     # Adam initial params
     m_t = 0
     v_t = 0
@@ -1028,6 +1028,15 @@ def learnPolicyWithModelEstimation(env_param, simulation_param, source_dataset, 
         batch_size = n_def
         stats.ess[i_batch] = ess
 
+        #Collect new episodes
+        if batch_size != 0:
+            #Generate the episodes and compute the rewards over the batch
+            [source_task_tgt, source_param_tgt, episodes_per_configuration_tgt, next_states_unclipped_tgt, actions_clipped_tgt, next_states_unclipped_denoised_tgt] = addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, batch_size, discount_factor_timestep)
+            dataset_model_estimation = sc.SourceDataset(source_task_tgt, source_param_tgt, episodes_per_configuration_tgt, next_states_unclipped_tgt, actions_clipped_tgt, next_states_unclipped_denoised_tgt, 1)
+
+        env = model_estimation.chooseTransitionModel(env_param, param, simulation_param, source_dataset.source_param, source_dataset.episodes_per_config, source_dataset.n_config_cv, source_dataset.initial_size, dataset_model_estimation)
+        setEnvParametersTarget(env, source_dataset, env_param)
+
         [source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size)
 
         # Update statistics
@@ -1035,8 +1044,5 @@ def learnPolicyWithModelEstimation(env_param, simulation_param, source_dataset, 
         stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.policy_parameter[i_batch, :] = param
         stats.gradient[i_batch, :] = gradient
-
-        env = model_estimation.chooseTransitionModel(env_param, param, simulation_param, source_dataset.source_param, source_dataset.episodes_per_config, source_dataset.initial_size)
-        setEnvParametersTarget(env, source_dataset, env_param)
 
     return stats
