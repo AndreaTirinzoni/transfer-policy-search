@@ -2,11 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4263835c-fd92-417b-afad-0a299f6d3721" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/essPerConfiguration.py" beforeDir="false" afterPath="$PROJECT_DIR$/essPerConfiguration.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/learningAlgorithm.py" beforeDir="false" afterPath="$PROJECT_DIR$/learningAlgorithm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modelEstimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/modelEstimation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/simulation.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/simulation_joblib.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulation_joblib.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -95,13 +93,13 @@
         <counts>
           <entry key="Python Console" value="24904" />
           <entry key="dummy" value="3" />
-          <entry key="py" value="49513" />
+          <entry key="py" value="49568" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="3" />
-          <entry key="Python" value="74417" />
+          <entry key="Python" value="74472" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
@@ -119,11 +117,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/simulation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="241">
-              <caret line="30" column="14" selection-start-line="30" selection-start-column="14" selection-end-line="30" selection-end-column="14" />
+            <state relative-caret-position="67">
+              <caret line="118" lean-forward="true" selection-start-line="118" selection-end-line="120" selection-end-column="62" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -131,14 +129,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/essPerConfiguration.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="7203">
-              <caret line="347" column="20" selection-start-line="347" selection-start-column="20" selection-end-line="347" selection-end-column="20" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="-7551">
+              <caret line="4" column="30" lean-forward="true" selection-start-line="4" selection-start-column="30" selection-end-line="4" selection-end-column="30" />
             </state>
           </provider>
         </entry>
@@ -146,8 +141,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="21693">
-              <caret line="1039" selection-start-line="1039" selection-end-line="1039" />
+            <state relative-caret-position="1249">
+              <caret line="635" column="135" selection-start-line="635" selection-start-column="135" selection-end-line="635" selection-end-column="135" />
               <folding>
                 <element signature="e#0#16#0" expanded="true" />
               </folding>
@@ -191,8 +186,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/simulation_joblib.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1134">
-              <caret line="65" column="22" selection-start-line="65" selection-start-column="22" selection-end-line="65" selection-end-column="22" />
+            <state relative-caret-position="-1781">
+              <caret line="11" column="30" lean-forward="true" selection-start-line="11" selection-start-column="30" selection-end-line="11" selection-end-column="30" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -302,13 +297,13 @@
         <option value="$PROJECT_DIR$/algorithmComparisonPolicySearch.py" />
         <option value="$PROJECT_DIR$/envs/continuousCartpole.py" />
         <option value="$PROJECT_DIR$/plotHeatmap.py" />
-        <option value="$PROJECT_DIR$/simulation_joblib.py" />
-        <option value="$PROJECT_DIR$/essPerConfiguration.py" />
         <option value="$PROJECT_DIR$/simulationClasses.py" />
         <option value="$PROJECT_DIR$/sourceTaskCreation.py" />
         <option value="$PROJECT_DIR$/modelEstimation.py" />
-        <option value="$PROJECT_DIR$/learningAlgorithm.py" />
         <option value="$PROJECT_DIR$/simulation.py" />
+        <option value="$PROJECT_DIR$/learningAlgorithm.py" />
+        <option value="$PROJECT_DIR$/simulation_joblib.py" />
+        <option value="$PROJECT_DIR$/essPerConfiguration.py" />
       </list>
     </option>
   </component>
@@ -363,7 +358,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.simulation">
+  <component name="RunManager" selected="Python.essPerConfiguration">
     <configuration name="algorithmComparison" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="transfer-policy-search-master" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -478,8 +473,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.simulation" />
         <item itemvalue="Python.essPerConfiguration" />
+        <item itemvalue="Python.simulation" />
         <item itemvalue="Python.simulation_joblib" />
         <item itemvalue="Python.algorithmComparison" />
         <item itemvalue="Python.plots" />
@@ -497,8 +492,8 @@
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32891566" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.3313253" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.40120482" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.3313253" />
+      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.40120482" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -712,27 +707,27 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/essPerConfiguration.py</url>
-          <line>364</line>
+          <line>365</line>
           <option name="timeStamp" value="341" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/essPerConfiguration.py</url>
-          <line>125</line>
+          <line>126</line>
           <option name="timeStamp" value="344" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/essPerConfiguration.py</url>
-          <line>134</line>
+          <line>135</line>
           <option name="timeStamp" value="345" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/essPerConfiguration.py</url>
-          <line>184</line>
+          <line>185</line>
           <option name="timeStamp" value="346" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/essPerConfiguration.py</url>
-          <line>361</line>
+          <line>362</line>
           <option name="timeStamp" value="347" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -784,6 +779,11 @@
           <url>file://$PROJECT_DIR$/simulation.py</url>
           <line>55</line>
           <option name="timeStamp" value="363" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/essPerConfiguration.py</url>
+          <line>353</line>
+          <option name="timeStamp" value="364" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -1079,36 +1079,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/simulation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="241">
-          <caret line="30" column="14" selection-start-line="30" selection-start-column="14" selection-end-line="30" selection-end-column="14" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/essPerConfiguration.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="7203">
-          <caret line="347" column="20" selection-start-line="347" selection-start-column="20" selection-end-line="347" selection-end-column="20" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="21693">
-          <caret line="1039" selection-start-line="1039" selection-end-line="1039" />
-          <folding>
-            <element signature="e#0#16#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/modelEstimation.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3591">
@@ -1136,20 +1106,47 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/simulationClasses.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="735">
+          <caret line="35" column="38" selection-start-line="35" selection-start-column="38" selection-end-line="35" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1249">
+          <caret line="635" column="135" selection-start-line="635" selection-start-column="135" selection-end-line="635" selection-end-column="135" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/simulation_joblib.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1134">
-          <caret line="65" column="22" selection-start-line="65" selection-start-column="22" selection-end-line="65" selection-end-column="22" />
+        <state relative-caret-position="-1781">
+          <caret line="11" column="30" lean-forward="true" selection-start-line="11" selection-start-column="30" selection-end-line="11" selection-end-column="30" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/simulationClasses.py">
+    <entry file="file://$PROJECT_DIR$/simulation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="735">
-          <caret line="35" column="38" selection-start-line="35" selection-start-column="38" selection-end-line="35" selection-end-column="38" />
+        <state relative-caret-position="67">
+          <caret line="118" lean-forward="true" selection-start-line="118" selection-end-line="120" selection-end-column="62" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/essPerConfiguration.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-7551">
+          <caret line="4" column="30" lean-forward="true" selection-start-line="4" selection-start-column="30" selection-end-line="4" selection-end-column="30" />
         </state>
       </provider>
     </entry>

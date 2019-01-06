@@ -3,6 +3,7 @@ import math as m
 import sourceTaskCreation as stc
 import gym
 import learningAlgorithm as la
+import pickle
 
 class AlgorithmConfiguration:
 
@@ -364,7 +365,15 @@ source_dataset.source_distributions = computeMultipleImportanceWeightsSourceDist
 print("Computing ESS")
 [ess1, n_def1, ess2, n_def2] = essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env*2, linspace_policy*2, source_dataset, simulation_param, algorithm_configuration, env_param)
 
-np.savetxt("ess_version1.csv", ess1, delimiter=",")
-np.savetxt("ess_version2.csv", ess2, delimiter=",")
-np.savetxt("n_def_version1.csv", n_def1, delimiter=",")
-np.savetxt("n_def_version2.csv", n_def2, delimiter=",")
+
+with open('ess_version1.pkl', 'wb') as output:
+    pickle.dump(ess1, output, pickle.HIGHEST_PROTOCOL)
+
+with open('ess_version2.pkl', 'wb') as output:
+    pickle.dump(ess2, output, pickle.HIGHEST_PROTOCOL)
+
+with open('n_def_version1.pkl', 'wb') as output:
+    pickle.dump(n_def1, output, pickle.HIGHEST_PROTOCOL)
+
+with open('n_def_version2.pkl', 'wb') as output:
+    pickle.dump(n_def2, output, pickle.HIGHEST_PROTOCOL)
