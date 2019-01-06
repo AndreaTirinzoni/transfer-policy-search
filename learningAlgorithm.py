@@ -588,7 +588,7 @@ def generateEpisodesAndComputeRewards(env_param, simulation_param, param, discou
     return tot_reward_batch, discounted_reward_batch
 
 
-def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size):
+def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size, discount_factor_timestep):
 
     #Generate episodes and compute rewards for the batch's statistics
     [tot_reward_batch, discounted_reward_batch] = generateEpisodesAndComputeRewards(env_param, simulation_param, param, discount_factor_timestep)
@@ -670,7 +670,7 @@ def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance
 
         mask = trajectories_length[:, np.newaxis] < np.repeat(np.arange(0, state_t.shape[1])[np.newaxis, :], repeats=state_t.shape[0], axis=0)
         src_distributions_policy[mask] = 1
-        src_distributions_policy[mask] = 1
+        src_distributions_model[mask] = 1
 
         src_distributions_policy = np.prod(src_distributions_policy, axis=1)
         src_distributions_model = np.prod(src_distributions_model, axis=1)
@@ -973,7 +973,7 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
             #Generate the episodes and compute the rewards over the batch
             addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, batch_size, discount_factor_timestep)
 
-        [source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size)
+        [source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size, discount_factor_timestep)
 
         # Update statistics
         stats.total_rewards[i_batch] = tot_reward_batch
@@ -1037,7 +1037,7 @@ def learnPolicyWithModelEstimation(env_param, simulation_param, source_dataset, 
         env = model_estimation.chooseTransitionModel(env_param, param, simulation_param, source_dataset.source_param, source_dataset.episodes_per_config, source_dataset.n_config_cv, source_dataset.initial_size, dataset_model_estimation)
         setEnvParametersTarget(env, source_dataset, env_param)
 
-        [source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size)
+        [source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size, discount_factor_timestep)
 
         # Update statistics
         stats.total_rewards[i_batch] = tot_reward_batch
