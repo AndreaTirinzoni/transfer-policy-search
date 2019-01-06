@@ -307,6 +307,7 @@ def essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_ma
     n_def1 = np.zeros((env_parameters.shape[0], policy_param.shape[0]))
     n_def2 = np.zeros((env_parameters.shape[0], policy_param.shape[0]))
     for i_policy_param in range(policy_param.shape[0]):
+        print(i_policy_param)
         for i_env_param in range(env_parameters.shape[0]):
             env_params.env.setParams(np.concatenate(([env_parameters[i_env_param]], np.ravel(env_params.env.B), [env_params.env.sigma_noise**2])))
 
@@ -343,8 +344,8 @@ env_param_min = 0.5
 env_param_max = 1.5
 policy_param_min = -1
 policy_param_max = -0.1
-linspace_env = 22
-linspace_policy = 20
+linspace_env = 11
+linspace_policy = 10
 
 [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
 source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
@@ -353,8 +354,8 @@ simulation_param = SimulationParam(mean_initial_param, variance_initial_param, v
 
 #Estimator details
 
-pd = 1
-computeWeights = computeMultipleImportanceWeightsSourceTargetPerDecision
+pd = 0
+computeWeights = computeMultipleImportanceWeightsSourceTarget
 
 algorithm_configuration = AlgorithmConfiguration(pd, computeWeights)
 
