@@ -67,9 +67,9 @@ number_of_episodes_per_config = 25
 n_config_cv = policy_params.shape[0] * env_params.shape[0]
 
 #estimators = ["MIS", "MIS-CV", "MIS-CV-BASELINE", "REINFORCE-BASELINE"]
-estimators = ["MIS", "MIS-CV-BASELINE", "PD-MIS", "GPOMDP"]
+estimators = ["MIS-CV-BASELINE", "PD-MIS-MIS-BASELINE-APPROXIMATED", "GPOMDP"]
 #learning_rates = [2e-5, 6e-6, 1e-5, 2e-5, 1e-5, 1e-6, 1e-5, 1e-5, 1e-6, 1e-6, 1e-5]
-learning_rates = [5e-4, 2e-3, 5e-4, 2e-3, 1e-4]
+learning_rates = [2e-3, 2e-3, 1e-4]
 disc_rewards = {}
 policy = {}
 gradient = {}
@@ -84,8 +84,8 @@ for estimator in estimators:
 
 for i_run in range(runs):
 
-    [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationAllCombinations(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
-    #[source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env_src, episode_length, number_of_episodes_per_config, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size)
+    #[source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationAllCombinations(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
+    [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env_src, episode_length, number_of_episodes_per_config, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size)
     source_dataset = sc.SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised, n_config_cv)
 
     print("Run: " + str(i_run))
@@ -99,7 +99,7 @@ for i_run in range(runs):
         print(estimator)
         if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]:
             off_policy = 0
-            simulation_param.batch_size = 10
+            simulation_param.batch_size = 20
         else:
             off_policy = 1
 

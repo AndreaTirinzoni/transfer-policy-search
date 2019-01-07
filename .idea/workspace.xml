@@ -2,9 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4263835c-fd92-417b-afad-0a299f6d3721" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/essPerConfiguration.py" beforeDir="false" afterPath="$PROJECT_DIR$/essPerConfiguration.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/learningAlgorithm.py" beforeDir="false" afterPath="$PROJECT_DIR$/learningAlgorithm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/simulation_joblib.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulation_joblib.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/simulation.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulation.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -76,9 +77,9 @@
     <session id="211049904">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="98" />
+          <entry key="project.closed" value="100" />
           <entry key="project.open.time.0" value="4" />
-          <entry key="project.open.time.1" value="18" />
+          <entry key="project.open.time.1" value="19" />
           <entry key="project.open.time.17" value="1" />
           <entry key="project.open.time.3" value="10" />
           <entry key="project.open.time.4" value="29" />
@@ -86,31 +87,31 @@
           <entry key="project.open.time.6" value="10" />
           <entry key="project.open.time.7" value="3" />
           <entry key="project.open.time.9" value="1" />
-          <entry key="project.opened" value="101" />
+          <entry key="project.opened" value="103" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="Python Console" value="24904" />
           <entry key="dummy" value="3" />
-          <entry key="py" value="49568" />
+          <entry key="py" value="49607" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="3" />
-          <entry key="Python" value="74472" />
+          <entry key="Python" value="74511" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
-          <entry key="Python" value="226" />
+          <entry key="Python" value="227" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.vcs.git.usages" />
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="py" value="226" />
+          <entry key="py" value="227" />
         </counts>
       </usages-collector>
     </session>
@@ -120,8 +121,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/simulation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="67">
-              <caret line="118" lean-forward="true" selection-start-line="118" selection-end-line="120" selection-end-column="62" />
+            <state relative-caret-position="531">
+              <caret line="30" column="14" lean-forward="true" selection-start-line="30" selection-start-column="14" selection-end-line="30" selection-end-column="14" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -129,20 +130,35 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/essPerConfiguration.py">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/simulation_test.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-7551">
-              <caret line="4" column="30" lean-forward="true" selection-start-line="4" selection-start-column="30" selection-end-line="4" selection-end-column="30" />
+            <state relative-caret-position="63">
+              <caret line="7" selection-start-line="7" selection-end-line="7" />
+              <folding>
+                <element signature="e#0#10#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/essPerConfiguration.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="105">
+              <caret line="5" column="13" selection-start-line="5" selection-start-column="13" selection-end-line="5" selection-end-column="13" />
+              <folding>
+                <element signature="e#0#18#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1249">
-              <caret line="635" column="135" selection-start-line="635" selection-start-column="135" selection-end-line="635" selection-end-column="135" />
+            <state relative-caret-position="440">
+              <caret line="131" column="43" selection-start-line="131" selection-start-column="43" selection-end-line="131" selection-end-column="43" />
               <folding>
                 <element signature="e#0#16#0" expanded="true" />
               </folding>
@@ -186,7 +202,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/simulation_joblib.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1781">
+            <state relative-caret-position="231">
               <caret line="11" column="30" lean-forward="true" selection-start-line="11" selection-start-column="30" selection-end-line="11" selection-end-column="30" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
@@ -234,7 +250,6 @@
       <find>n_config_cv</find>
       <find>pol</find>
       <find>off_policy</find>
-      <find>regression</find>
       <find>stepDenoised</find>
       <find>ess</find>
       <find>computeEss</find>
@@ -245,6 +260,7 @@
       <find>num_episodes_target</find>
       <find>source_param</find>
       <find>initial_size</find>
+      <find>regression</find>
     </findStrings>
     <replaceStrings>
       <replace>clipped_actions</replace>
@@ -300,10 +316,10 @@
         <option value="$PROJECT_DIR$/simulationClasses.py" />
         <option value="$PROJECT_DIR$/sourceTaskCreation.py" />
         <option value="$PROJECT_DIR$/modelEstimation.py" />
-        <option value="$PROJECT_DIR$/simulation.py" />
-        <option value="$PROJECT_DIR$/learningAlgorithm.py" />
         <option value="$PROJECT_DIR$/simulation_joblib.py" />
         <option value="$PROJECT_DIR$/essPerConfiguration.py" />
+        <option value="$PROJECT_DIR$/simulation.py" />
+        <option value="$PROJECT_DIR$/learningAlgorithm.py" />
       </list>
     </option>
   </component>
@@ -316,7 +332,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Course" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -324,15 +339,11 @@
               <item name="transfer-policy-search-master" type="b2602c69:ProjectViewProjectNode" />
               <item name="transfer-policy-search-master" type="462c0819:PsiDirectoryNode" />
             </path>
-            <path>
-              <item name="transfer-policy-search-master" type="b2602c69:ProjectViewProjectNode" />
-              <item name="transfer-policy-search-master" type="462c0819:PsiDirectoryNode" />
-              <item name="utils" type="462c0819:PsiDirectoryNode" />
-            </path>
           </expand>
           <select />
         </subPane>
       </pane>
+      <pane id="Course" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -358,7 +369,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.essPerConfiguration">
+  <component name="RunManager" selected="Python.simulation">
     <configuration name="algorithmComparison" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="transfer-policy-search-master" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -473,8 +484,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.essPerConfiguration" />
         <item itemvalue="Python.simulation" />
+        <item itemvalue="Python.essPerConfiguration" />
         <item itemvalue="Python.simulation_joblib" />
         <item itemvalue="Python.algorithmComparison" />
         <item itemvalue="Python.plots" />
@@ -488,12 +499,12 @@
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2769556" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2769556" />
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32891566" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.3313253" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.40120482" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.40120482" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -988,16 +999,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/simulation_test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="63">
-          <caret line="7" selection-start-line="7" selection-end-line="7" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/plots.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="399">
@@ -1079,6 +1080,16 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/essPerConfiguration.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="105">
+          <caret line="5" column="13" selection-start-line="5" selection-start-column="13" selection-end-line="5" selection-end-column="13" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/modelEstimation.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3591">
@@ -1106,6 +1117,16 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/simulation_joblib.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="231">
+          <caret line="11" column="30" lean-forward="true" selection-start-line="11" selection-start-column="30" selection-end-line="11" selection-end-column="30" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/simulationClasses.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="735">
@@ -1113,20 +1134,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
+    <entry file="file://$PROJECT_DIR$/simulation_test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1249">
-          <caret line="635" column="135" selection-start-line="635" selection-start-column="135" selection-end-line="635" selection-end-column="135" />
-          <folding>
-            <element signature="e#0#16#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/simulation_joblib.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1781">
-          <caret line="11" column="30" lean-forward="true" selection-start-line="11" selection-start-column="30" selection-end-line="11" selection-end-column="30" />
+        <state relative-caret-position="63">
+          <caret line="7" selection-start-line="7" selection-end-line="7" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
@@ -1135,18 +1146,21 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/simulation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="67">
-          <caret line="118" lean-forward="true" selection-start-line="118" selection-end-line="120" selection-end-column="62" />
+        <state relative-caret-position="531">
+          <caret line="30" column="14" lean-forward="true" selection-start-line="30" selection-start-column="14" selection-end-line="30" selection-end-column="14" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/essPerConfiguration.py">
+    <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-7551">
-          <caret line="4" column="30" lean-forward="true" selection-start-line="4" selection-start-column="30" selection-end-line="4" selection-end-column="30" />
+        <state relative-caret-position="440">
+          <caret line="131" column="43" selection-start-line="131" selection-start-column="43" selection-end-line="131" selection-end-column="43" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
