@@ -71,3 +71,9 @@ class TestEnv(gym.Env):
 
     def get_state(self):
         return np.array(self.state)
+
+    def clip_state(self, state):
+        return np.clip(state, -1, 1)
+
+    def clip_action(self, action):
+        return np.clip(action, -1, 1)

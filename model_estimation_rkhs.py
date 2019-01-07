@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
+from envs.rkhs_env import RKHS_Env
 
 class ModelEstimatorRKHS:
     """
@@ -24,6 +25,12 @@ class ModelEstimatorRKHS:
         self.A = 0
         # State-action matrix used to learn the current model
         self.X = 0
+
+        # Env used to simulate trajectories from the learned model
+        self.rkhs_env = RKHS_Env(self, source_envs[0], sigma_env)
+
+        # Whether the current GP model should be used to simulate trajectories
+        self.use_gp = False
 
     def _split_dataset(self, dataset):
         """
@@ -62,6 +69,27 @@ class ModelEstimatorRKHS:
         X, _, F = self._split_dataset(dataset)
         return np.mean((self.gp.predict(X) - F)**2)
 
+    def transition(self, state, action):
+        """
+        Simulates one or more transitions using the current model.
+
+        :return: the estimated transition f(s,a) if a single state and action are passed.
+        If state is an NxTxd matrix and action is an NxT matrix, it returns the NxTxd matrix containing all transitions.
+        """
+
+        if state.ndim == 1:
+            x = np.append(state, action)[np.newaxis, :]
+            if self.use_gp:
+                return self.gp.predict(x).reshape(self.state_dim, )
+            else:
+                return np.matmul(self.kernel(self.X, x), self.A).reshape(self.state_dim, )
+        else:
+            X = np.concatenate([state, action[:,:,np.newaxis]], axis=2).reshape(state.shape[0] * state.shape[1], state.shape[2])
+            if self.use_gp:
+                return self.gp.predict(X).reshape(state.shape)
+            else:
+                return np.matmul(self.kernel(self.X, X), self.A).reshape(state.shape)
+
     def _update_weight_matrix(self, X, M, W, F_src, alpha_src, c1, c2):
         """
         Updates the current weight matrix of the learned transition model.
@@ -95,25 +123,16 @@ class ModelEstimatorRKHS:
             # Choose a policy to run with probabilities alpha
             theta = policy_params[np.random.choice(len(policy_params), p=alpha)]
 
-            # Initial state distributions are the same for all envs -> reset a source env
-            s = self.source_envs[0].reset()
+            s = self.rkhs_env.reset()
 
             for t in range(self.T):
 
-                # TODO a is unclipped. Should we clip it? How?
                 a = np.random.normal(np.dot(theta, s), self.sigma_pi)
-                x = np.append(s, a)[np.newaxis, :]
-                # Predict the transition function at (s,a)
-                # TODO what to do at the first iteration?
-                if not use_gp:
-                    mean_ns = np.matmul(self.kernel(self.X, x), self.A).reshape(self.state_dim,)
-                else:
-                    mean_ns = self.gp.predict(x).reshape(self.state_dim,)
-                # TODO ns is unclipped. Should we clip it? How?
-                ns = np.random.multivariate_normal(mean_ns, self.sigma_env**2*np.eye(self.state_dim))
+                ns, _, _, _, a_clipped, _ = self.rkhs_env.step(a)
 
                 states[r, t, :] = s
-                actions[r, t] = a
+                # We save the clipped action for learning the model
+                actions[r, t] = a_clipped
 
                 probs_target[r] *= np.exp(-(np.dot(target_param, s) - a)**2 / (2*self.sigma_pi**2))
                 probs_mixture[r] *= np.sum(np.exp(-(np.dot(policy_params, s) - a)**2 / (2*self.sigma_pi**2)) * alpha)
