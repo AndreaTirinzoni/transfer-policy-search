@@ -129,17 +129,17 @@ def regressionFitting(y, x, n_config_cv, baseline_flag):
     # else:
     #     x = x[:, 0:n_config_cv]
 
-    train_size = int(np.ceil(x.shape[0]/4*3))
-    train_index = random.sample(range(x.shape[0]), train_size)
-    x_train = x[train_index]
-    y_train = y[train_index]
-    x_test = np.delete(x, train_index, axis=0)
-    y_test = np.delete(y, train_index, axis=0)
-    beta = np.squeeze(np.asarray(np.matmul(np.linalg.pinv(x_train[:, 1:]), y_train)))
-    error = y_test - np.dot(x_test[:, 1:], beta)
+    # train_size = int(np.ceil(x.shape[0]/4*3))
+    # train_index = random.sample(range(x.shape[0]), train_size)
+    # x_train = x[train_index]
+    # y_train = y[train_index]
+    # x_test = np.delete(x, train_index, axis=0)
+    # y_test = np.delete(y, train_index, axis=0)
+    # beta = np.squeeze(np.asarray(np.matmul(np.linalg.pinv(x_train[:, 1:]), y_train)))
+    # error = y_test - np.dot(x_test[:, 1:], beta)
 
-    # beta = np.squeeze(np.asarray(np.matmul(np.linalg.pinv(x[:, 1:]), y)))
-    # error = y - np.dot(x[:, 1:], beta)
+    beta = np.squeeze(np.asarray(np.matmul(np.linalg.pinv(x[:, 1:]), y)))
+    error = y - np.dot(x[:, 1:], beta)
 
     # x_avg = np.squeeze(np.asarray(np.mean(x, axis=0)))
     # beta = np.matmul(np.linalg.inv(np.matmul((x[:, 1:]-x_avg[1:]).T, (x[:, 1:]-x_avg[1:]))), np.matmul((x[:, 1:]-x_avg[1:]).T, (y-y_avg)).T)
@@ -498,28 +498,6 @@ def computeEssSecond(policy_param, env_param, source_dataset, simulation_param, 
 
     trajectories_length = getEpisodesInfoFromSource(source_dataset, env_param)[-1]
     n = trajectories_length.shape[0]
-    # variance_env = env_param_src[:, -1]
-    # state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_actions)
-    # variance_action = simulation_param.variance_action
-    #
-    # if algorithm_configuration.pd == 0:
-    #     policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action))
-    #     model_tgt = 1/np.sqrt(2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*variance_env[:, np.newaxis]))
-    #
-    #     for t in range(state_t.shape[1]):
-    #         indices = trajectories_length < t
-    #         policy_tgt[indices, t] = 1
-    #         model_tgt[indices, t] = 1
-    #
-    #     policy_tgt = np.prod(policy_tgt, axis=1)
-    #     model_tgt = np.prod(model_tgt, axis=1)
-    #
-    #     mis_denominator = np.squeeze(np.asarray(np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, :] / n, source_dataset.source_distributions), axis=1)))
-    #
-    # else:
-    #     policy_tgt = np.cumprod(1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - (np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2)))**2)/(2*variance_action)), axis=1)
-    #     model_tgt = np.cumprod(1/np.sqrt(2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*variance_env[:, np.newaxis])), axis=1)
-    #     mis_denominator = np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, np.newaxis, :] / n, source_dataset.source_distributions), axis=2)
 
     weights = algorithm_configuration.computeWeights(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, 0)[0]
 
@@ -642,7 +620,7 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
         num_episodes_target = simulation_param.batch_size
 
     #print("Problems: n_def-" + str(num_episodes_target) + " ess-" + str(ess) + " gradient-" + str(gradient))
-    #print("param: " + str(param) + " tot_rewards: " + str(tot_reward_batch) + " ess: " + str(ess)+ " n_def: " + str(num_episodes_target))
+    print("param: " + str(param) + " tot_rewards: " + str(tot_reward_batch) + " ess: " + str(ess)+ " n_def: " + str(num_episodes_target))
 
     return source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target
 
@@ -912,7 +890,6 @@ def addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, para
     clipped_actions_new = batch[:, :, env_param.state_space_size]
 
     # The return after this timestep
-    total_return = np.sum(batch[:, :, env_param.state_space_size+1], axis=1)
     discounted_return_timestep = (discount_factor_timestep * batch[:, :, env_param.state_space_size+1])
     discounted_return = np.sum(discounted_return_timestep, axis=1)
 
@@ -1021,7 +998,6 @@ def learnPolicyWithModelEstimation(env_param, simulation_param, source_dataset, 
         if simulation_param.adaptive == "Yes":
             #n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)
             n_def = 5
-
     for i_batch in range(simulation_param.num_batch):
 
         stats.n_def[i_batch] = n_def

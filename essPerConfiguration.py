@@ -2,7 +2,8 @@ import numpy as np
 import math as m
 import sourceTaskCreation as stc
 import gym
-import learningAlgorithm as la
+import seaborn as sns
+import matplotlib.pyplot as plt
 import pickle
 
 class AlgorithmConfiguration:
@@ -244,7 +245,7 @@ def computeEssSecond(policy_param, env_param, source_dataset, simulation_param, 
     weights = algorithm_configuration.computeWeights(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, 0)[0]
 
     if algorithm_configuration.pd == 0:
-        variance_weights = np.var(weights, axis=0)
+        variance_weights = 1/n * np.sum((weights-1)**2)
         ess = n / (1 + variance_weights)
         min_index = 0
     else:
@@ -252,7 +253,7 @@ def computeEssSecond(policy_param, env_param, source_dataset, simulation_param, 
         for t in range(weights.shape[1]):
             indices = trajectories_length >= t
             weights_timestep = weights[indices, t]
-            variance_weights = np.var(weights_timestep, axis=0)
+            variance_weights = 1/n * np.sum((weights_timestep-1)**2)
             ess[t] = n / (1 + variance_weights)
 
         min_index = np.argmin(ess)
@@ -318,7 +319,7 @@ def essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_ma
             n_def1[i_env_param, i_policy_param] = n_def1_ij
 
             [ess2_ij, min_index2] = computeEssSecond(np.asarray(policy_param[i_policy_param] * np.ones(env_param.param_space_size)), env_params, source_dataset, simulation_param, algorithm_configuration)
-            n_def2_ij = computeNdef(min_index2, np.asarray(policy_param[i_policy_param] * np.ones(env_param.param_space_size)), env_params, source_dataset, simulation_param, algorithm_configuration)
+            n_def2_ij = computeNdefSecond(min_index2, np.asarray(policy_param[i_policy_param] * np.ones(env_param.param_space_size)), env_params, source_dataset, simulation_param, algorithm_configuration)
             ess2[i_env_param, i_policy_param] = ess2_ij
             n_def2[i_env_param, i_policy_param] = n_def2_ij
 
@@ -341,12 +342,12 @@ batch_size = 20
 discount_factor = 0.99
 ess_min = 70
 
-env_param_min = 0.5
+env_param_min = 0.6
 env_param_max = 1.5
 policy_param_min = -1
 policy_param_max = -0.1
-linspace_env = 11
-linspace_policy = 10
+linspace_env = 5
+linspace_policy = 5
 
 [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
 source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
@@ -377,3 +378,25 @@ with open('n_def_version1.pkl', 'wb') as output:
 
 with open('n_def_version2.pkl', 'wb') as output:
     pickle.dump(n_def2, output, pickle.HIGHEST_PROTOCOL)
+
+print(ess2)
+
+average = np.mean(ess1)
+print(np.max(ess1))
+ax = sns.heatmap(ess1, linewidth=0.5, vmax=np.max(ess1), vmin=np.min(ess1), center=average)
+plt.show()
+
+average = np.mean(ess2)
+print(np.max(ess2))
+ax = sns.heatmap(ess2, linewidth=0.5, vmax=np.max(ess2), vmin=np.min(ess2), center=average)
+plt.show()
+
+average = np.mean(n_def1)
+print(np.max(n_def1))
+ax = sns.heatmap(n_def1, linewidth=0.5, vmax=np.max(n_def1), vmin=np.min(n_def1), center=average)
+plt.show()
+
+average = np.mean(n_def2)
+print(np.max(n_def2))
+ax = sns.heatmap(n_def2, linewidth=0.5, vmax=np.max(n_def2), vmin=np.min(n_def2), center=average)
+plt.show()
