@@ -22,13 +22,13 @@ env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_s
 mean_initial_param = -0.1 * np.ones(param_space_size)
 variance_initial_param = 0
 variance_action = 0.1
-batch_size = 2
+batch_size = 5
 num_batch = 250
 discount_factor = 0.99
-runs = 10
+runs = 15
 learning_rate = 1e-5
 ess_min = 50
-adaptive = "Yes"
+adaptive = "No"
 
 simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
@@ -40,7 +40,7 @@ env_param_max = 1
 policy_param_min = -0.6
 policy_param_max = -0.1
 linspace_env = 2
-linspace_policy = 2
+linspace_policy = 5
 n_config_cv = linspace_policy * linspace_env #number of configurations to use to fit the control variates
 
 
