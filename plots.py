@@ -17,9 +17,9 @@ with open('ess.pkl', 'rb') as input:
 with open('n_def.pkl', 'rb') as input:
     n_def = pickle.load(input)
 
-estimators = ["MIS", "MIS-CV", "MIS-CV-BASELINE", "REINFORCE-BASELINE"]
-runs = 5
-num_batch = 150
+estimators = ["MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
+runs = 10
+num_batch = 250
 
 x = range(num_batch)
 

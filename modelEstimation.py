@@ -46,7 +46,7 @@ class Models:
 
             env_probabilities[i] = env_probabilities[i] * np.prod(policy_transition * model_transition)
 
-        self.probabilities_env = env_probabilities
+        self.probabilities_env = env_probabilities/np.sum(env_probabilities)
 
 
     def getEpisodesInfoFromSource(self, source_dataset, env_param):
@@ -64,7 +64,7 @@ class Models:
 
     def computeExpectedValueCurrentProposal(self, env, env_param, param_policy, simulation_param, source_parameters, episodes_per_config, initial_size):
 
-        batch_size = 40
+        batch_size = 2
         [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env, env_param.episode_length, batch_size, simulation_param.discount_factor, simulation_param.variance_action, param_policy[np.newaxis, :], env.getEnvParam().T, env_param.param_space_size, env_param.state_space_size, env_param.env_param_space_size)
         dataset_current_env = sc.SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised, 1)
 
@@ -159,7 +159,7 @@ class Models:
             alpha_0 = episodes_per_config[-1] / n
             alpha_tr = np.sum(episodes_per_config[n_config_cv:]) / np.sum(episodes_per_config)
             sigma = simulation_param.variance_action
-            loss_function[i] = 1/n * expected_value_current_proposal + 4 * alpha_tr / (alpha_0**2 * sigma) * expected_value_mixture
+            loss_function[i] = 1/n * expected_value_current_proposal + 4 * alpha_tr / (sigma) * expected_value_mixture
 
         return loss_function
 
@@ -168,7 +168,9 @@ class Models:
 
         self.computeModelsProbability(dataset_model_estimation, env_params, param_policy, simulation_param)
         lossFunction = self.computeLossFunction(env_params, param_policy, simulation_param, source_parameters, episodes_per_config, n_config_cv, initial_size)
+        #print("Model estimation: probabilities- " + str(self.probabilities_env))
         min_index = np.argmin(lossFunction)
+        #print("Loss function: " + str(lossFunction))
         env = self.proposal_env[min_index]
 
         return env

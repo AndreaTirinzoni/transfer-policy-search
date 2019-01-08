@@ -55,13 +55,13 @@ env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_s
 mean_initial_param = -0.1 * np.ones(param_space_size)
 variance_initial_param = 0
 variance_action = 0.1
-batch_size = 3
+batch_size = 5
 num_batch = 400
 discount_factor = 0.99
 runs = 16
 learning_rate = 1e-5
 ess_min = 70
-adaptive = "Yes"
+adaptive = "No"
 
 simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
@@ -107,7 +107,7 @@ for estimator in estimators:
 seeds = [np.random.randint(1000000) for _ in range(runs)]
 
 #results = Parallel(n_jobs=16)(delayed(simulationParallel)(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param) for seed in seeds) #cartpole
-results = Parallel(n_jobs=1)(delayed(simulationParallel)(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param) for seed in seeds) #lqg1d
+results = Parallel(n_jobs=8)(delayed(simulationParallel)(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param) for seed in seeds) #lqg1d
 
 
 with open('results.pkl', 'wb') as output:
