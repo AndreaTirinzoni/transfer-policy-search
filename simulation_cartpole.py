@@ -24,7 +24,7 @@ variance_action = 0.1
 batch_size = 5
 num_batch = 200
 discount_factor = 0.99
-runs = 15
+runs = 5
 learning_rate = 1e-5
 ess_min = 50
 adaptive = "No"
@@ -32,19 +32,19 @@ adaptive = "No"
 simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
 # source task for cartpole
-# policy_params = np.array([[-0.045, 0.20, 0.24, 0.6], [-0.05, 0.1, 0.1, 0.4], [-0.06, 0.21, 0.24, 0.73], [-0.08, -0.05, 0.05, 0.35]])
-# env_params = np.array([[1, 0.5, 0.09], [1, 0.5, 0.09], [0.5, 1, 0.09], [0.5, 1, 0.09]])
+policy_params = np.array([[-0.045, 0.20, 0.24, 0.6], [-0.05, 0.1, 0.1, 0.4]])
+env_params = np.array([[1, 0.5, 0.09], [1, 0.5, 0.09]])
 
-policy_params = np.array([[-0.13, 0.19, 0.28, 0.57], [-0.04, 0.1, 0.11, 0.37], [-0.01, 0.09, 0.26, 0.61], [-0.03, 0.01, 0.1, 0.32], [-0.09, 0.11, 0.36, 0.67], [-0.1, -0.11, 0.04, 0.19]])
-env_params = np.array([[1, 0.5, 0.09], [1, 0.5, 0.09], [0.5, 1, 0.09], [0.5, 1, 0.09], [1.5, 1, 0.09], [1.5, 1, 0.09]])
+# policy_params = np.array([[-0.13, 0.19, 0.28, 0.57], [-0.04, 0.1, 0.11, 0.37], [-0.01, 0.09, 0.26, 0.61], [-0.03, 0.01, 0.1, 0.32], [-0.09, 0.11, 0.36, 0.67], [-0.1, -0.11, 0.04, 0.19]])
+# env_params = np.array([[1, 0.5, 0.09], [1, 0.5, 0.09], [0.5, 1, 0.09], [0.5, 1, 0.09], [1.5, 1, 0.09], [1.5, 1, 0.09]])
 
-number_of_episodes_per_config = 25
+number_of_episodes_per_config = 15
 n_config_cv = policy_params.shape[0] * env_params.shape[0]
 
-estimators = ["MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]
+estimators = ["PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]
 
 #learning_rates = [2e-5, 6e-6, 1e-5, 2e-5, 1e-5, 1e-6, 1e-5, 1e-5, 1e-6, 1e-6, 1e-5]
-learning_rates = [1e-3, 1e-3, 1e-3, 1e-3, 1e-4]#, 2e-3, 1e-4]
+learning_rates = [1e-4, 1e-4]#, 2e-3, 1e-4]
 disc_rewards = {}
 policy = {}
 gradient = {}

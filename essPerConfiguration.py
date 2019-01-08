@@ -267,16 +267,14 @@ def computeNdef(min_index, param, env_param, source_dataset, simulation_param, a
     trajectories_length = getEpisodesInfoFromSource(source_dataset, env_param)[-1]
     weights = algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration, 1)[0]
     n = source_dataset.source_task.shape[0]
-    if algorithm_configuration.pd == 1:
-        weights = weights[:, min_index]
 
     if algorithm_configuration.pd == 1:
         indices = trajectories_length >= min_index
-        weights = weights[indices]
+        weights = weights[indices, min_index]
 
     w_1 = np.linalg.norm(weights, 1)
     w_2 = np.linalg.norm(weights, 2)
-    num_episodes_target1 = int(max(0, np.ceil((simulation_param.ess_min * w_1 / n) - (w_1 * n / (w_2 ** 2)))))
+    num_episodes_target1 = int(max(1, np.ceil((simulation_param.ess_min * w_1 / n) - (w_1 * n / (w_2 ** 2)))))
 
     return num_episodes_target1
 
@@ -286,16 +284,15 @@ def computeNdefSecond(min_index, param, env_param, source_dataset, simulation_pa
     trajectories_length = getEpisodesInfoFromSource(source_dataset, env_param)[-1]
     weights = algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration, 1)[0]
     n = source_dataset.source_task.shape[0]
-    if algorithm_configuration.pd == 1:
-        weights = weights[:, min_index]
 
     if algorithm_configuration.pd == 1:
         indices = trajectories_length >= min_index
-        weights = weights[indices]
+        weights = weights[indices, min_index]
 
-    c = (np.mean(weights**3) + 3*(1-np.mean(weights)))/(1 + np.var(weights))**2
+    variance_weights = 1/n * np.sum((weights-1)**2)
+    c = (np.mean(weights**3) + 3*(1-np.mean(weights)))/(1 + variance_weights)**2
     num_episodes_target2 = np.ceil((simulation_param.ess_min - n / (1 + np.var(weights)))/(min(1, c)))
-    num_episodes_target2 = int(np.clip(num_episodes_target2, 0, simulation_param.ess_min))
+    num_episodes_target2 = int(np.clip(num_episodes_target2, 1, simulation_param.ess_min))
 
     return num_episodes_target2
 
