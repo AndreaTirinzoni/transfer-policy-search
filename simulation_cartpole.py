@@ -41,10 +41,10 @@ env_params = np.array([[1, 0.5, 0.09], [1, 0.5, 0.09], [0.5, 1, 0.09], [0.5, 1, 
 number_of_episodes_per_config = 25
 n_config_cv = policy_params.shape[0] * env_params.shape[0]
 
-estimators = ["MIS-CV-BASELINE", "PD-MIS", "PD-MIS-BASELINE-APPROXIMATED", "GPOMDP"]
+estimators = ["MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]
 
 #learning_rates = [2e-5, 6e-6, 1e-5, 2e-5, 1e-5, 1e-6, 1e-5, 1e-5, 1e-6, 1e-6, 1e-5]
-learning_rates = [1e-3, 1e-3, 1e-3, 1e-4]#, 2e-3, 1e-4]
+learning_rates = [1e-3, 1e-3, 1e-3, 1e-3, 1e-4]#, 2e-3, 1e-4]
 disc_rewards = {}
 policy = {}
 gradient = {}

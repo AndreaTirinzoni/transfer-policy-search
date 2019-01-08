@@ -51,10 +51,10 @@ for i in range(omega_env.shape[0]):
     env_proposal.setParams(np.concatenate(([omega_env[i]], np.ravel(env_proposal.B), [env_proposal.sigma_noise**2])))
     model_proposals.append(env_proposal)
 
-estimators = ["MIS-CV-BASELINE", "PD-MIS-MIS-BASELINE-APPROXIMATED", "GPOMDP"]
+estimators = ["MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
 
 #learning_rates = [2e-5, 6e-6, 1e-5, 2e-5, 1e-5, 1e-6, 1e-5, 1e-5, 1e-6, 1e-6, 1e-5]
-learning_rates = [2e-3, 2e-3, 1e-4]
+learning_rates = [1e-5, 1e-5, 1e-5, 1e-5, 1e-5]
 disc_rewards = {}
 policy = {}
 gradient = {}

@@ -168,9 +168,9 @@ class Models:
 
         self.computeModelsProbability(dataset_model_estimation, env_params, param_policy, simulation_param)
         lossFunction = self.computeLossFunction(env_params, param_policy, simulation_param, source_parameters, episodes_per_config, n_config_cv, initial_size)
-        print("Model estimation: probabilities- " + str(self.probabilities_env))
+        #print("Model estimation: probabilities- " + str(self.probabilities_env))
         min_index = np.argmin(lossFunction)
-        print("Loss function: " + str(lossFunction))
+        #print("Loss function: " + str(lossFunction))
         env = self.proposal_env[min_index]
 
         return env

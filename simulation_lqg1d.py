@@ -44,10 +44,10 @@ linspace_policy = 10
 n_config_cv = linspace_policy * linspace_env #number of configurations to use to fit the control variates
 
 
-estimators = ["MIS-CV-BASELINE", "PD-MIS", "PD-MIS-BASELINE-APPROXIMATED", "GPOMDP"]
+estimators = ["MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
 
 #learning_rates = [2e-5, 6e-6, 1e-5, 2e-5, 1e-5, 1e-6, 1e-5, 1e-5, 1e-6, 1e-6, 1e-5]
-learning_rates = [2e-5, 2e-5, 2e-5, 5e-6]#, 2e-3, 1e-4]
+learning_rates = [1e-5, 1e-5, 1e-5, 1e-5, 5e-6]#, 2e-3, 1e-4]
 
 disc_rewards = {}
 policy = {}
