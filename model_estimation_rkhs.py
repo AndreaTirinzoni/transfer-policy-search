@@ -56,7 +56,7 @@ class ModelEstimatorRKHS:
 
         # Handle variable-length trajectories
         trajectories_length = dataset.source_param[:, 1 + 2*self.state_dim]
-        mask = trajectories_length[:, np.newaxis] < np.repeat(np.arange(0, s_t.shape[1])[np.newaxis, :],repeats=s_t.shape[0], axis=0)
+        mask = trajectories_length[dataset.initial_size:, np.newaxis] >= np.repeat(np.arange(0, s_t.shape[1])[np.newaxis, :],repeats=s_t.shape[0], axis=0)
         # Reshape mask to NT
         mask = mask.reshape(s_t.shape[0]*s_t.shape[1],)
         # Mask matrices
