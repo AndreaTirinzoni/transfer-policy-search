@@ -36,22 +36,33 @@ class ModelEstimatorRKHS:
         """
         Extracts the relevant data structures from a dataset of trajectories.
         """
-        # TODO need to handle variable-length trajectories
-        s_t = dataset.source_task[:, :, 0:self.state_dim]
-        # TODO should we use unclipped actions?
-        a_t = dataset.clipped_actions[:, :, np.newaxis]
+        # States from the target task
+        s_t = dataset.source_task[dataset.initial_size:, :, 0:self.state_dim]
+        # Clipped actions from the target task
+        a_t = dataset.clipped_actions[dataset.initial_size:, :, np.newaxis]
         sa_t = np.concatenate([s_t, a_t], axis=2)
         # State-action matrix (NTxd+1)
         X = sa_t.reshape(sa_t.shape[0]*sa_t.shape[1], sa_t.shape[2])
 
-        # TODO should we use clipped next states?
-        s_t1 = dataset.next_states_unclipped
+        # Next states from the target task
+        s_t1 = dataset.next_states_unclipped[dataset.initial_size:, :, :]
         # Next-state matrix (NTxd)
         Y = s_t1.reshape(s_t1.shape[0]*s_t1.shape[1], s_t1.shape[2])
 
-        f_t = dataset.next_states_unclipped_denoised
+        # f(s,a) from the target task
+        f_t = dataset.next_states_unclipped_denoised[dataset.initial_size:, :, :]
         # Transition function at each state-action pair (NTxd)
         F = f_t.reshape(f_t.shape[0]*f_t.shape[1], f_t.shape[2])
+
+        # Handle variable-length trajectories
+        trajectories_length = dataset.source_param[:, 1 + 2*self.state_dim]
+        mask = trajectories_length[:, np.newaxis] < np.repeat(np.arange(0, s_t.shape[1])[np.newaxis, :],repeats=s_t.shape[0], axis=0)
+        # Reshape mask to NT
+        mask = mask.reshape(s_t.shape[0]*s_t.shape[1],)
+        # Mask matrices
+        X = X[mask, :]
+        Y = Y[mask, :]
+        F = F[mask, :]
 
         return X, Y, F
 
