@@ -20,10 +20,10 @@ env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_s
 mean_initial_param = -0.1 * np.ones(param_space_size)
 variance_initial_param = 0
 variance_action = 0.1
-batch_size = 1
-num_batch = 120
+batch_size = 4
+num_batch = 350
 discount_factor = 0.99
-runs = 10
+runs = 15
 learning_rate = 1e-5
 ess_min = 50
 adaptive = "No"
@@ -31,14 +31,14 @@ adaptive = "No"
 simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
 # source task for lqg1d
-source_dataset_batch_size = 20
+source_dataset_batch_size = 15
 discount_factor = 0.99
-env_param_min = 0.8
-env_param_max = 1.3
+env_param_min = 0.6
+env_param_max = 1.5
 policy_param_min = -1
 policy_param_max = -0.1
-linspace_env = 6
-linspace_policy = 2
+linspace_env = 10
+linspace_policy = 10
 n_config_cv = linspace_policy * linspace_env #number of configurations to use to fit the control variates
 
 # Proposal envs
@@ -54,7 +54,7 @@ for i in range(omega_env.shape[0]):
 estimators = ["MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
 
 #learning_rates = [2e-5, 6e-6, 1e-5, 2e-5, 1e-5, 1e-6, 1e-5, 1e-5, 1e-6, 1e-6, 1e-5]
-learning_rates = [1e-5, 1e-5, 1e-5, 1e-5, 1e-5]
+learning_rates = [6e-6, 6e-6, 1e-5, 2e-5, 7e-6]
 disc_rewards = {}
 policy = {}
 gradient = {}

@@ -23,31 +23,31 @@ mean_initial_param = -0.1 * np.ones(param_space_size)
 variance_initial_param = 0
 variance_action = 0.1
 batch_size = 5
-num_batch = 250
+num_batch = 350
 discount_factor = 0.99
 runs = 15
 learning_rate = 1e-5
 ess_min = 50
-adaptive = "No"
+adaptive = "Yes"
 
 simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
 # source task for lqg1d
-source_dataset_batch_size = 5
+source_dataset_batch_size = 15
 discount_factor = 0.99
-env_param_min = 0.9
-env_param_max = 1
-policy_param_min = -0.6
+env_param_min = 0.6
+env_param_max = 1.5
+policy_param_min = -0.1
 policy_param_max = -0.1
-linspace_env = 2
-linspace_policy = 5
+linspace_env = 10
+linspace_policy = 10
 n_config_cv = linspace_policy * linspace_env #number of configurations to use to fit the control variates
 
 
 estimators = ["MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
 
 #learning_rates = [2e-5, 6e-6, 1e-5, 2e-5, 1e-5, 1e-6, 1e-5, 1e-5, 1e-6, 1e-6, 1e-5]
-learning_rates = [7e-6, 7e-6, 1e-5, 1e-5, 5e-6]#, 2e-3, 1e-4]
+learning_rates = [7e-6, 7e-6, 1e-5, 2e-5, 6e-6]#, 2e-3, 1e-4]
 
 disc_rewards = {}
 policy = {}

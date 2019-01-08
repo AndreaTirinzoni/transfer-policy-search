@@ -17,8 +17,8 @@ with open('ess.pkl', 'rb') as input:
 with open('n_def.pkl', 'rb') as input:
     n_def = pickle.load(input)
 
-estimators = ["MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
-runs = 10
+estimators = ["MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
+runs = 15
 num_batch = 250
 
 x = range(num_batch)
@@ -44,7 +44,7 @@ alpha = t.interval(0.95, runs-1, loc=0, scale=1)[1] if runs > 1 else 1
 means = [np.mean(policy[estimator], axis=0) for estimator in estimators]
 stds = [alpha * np.std(policy[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
 
-plot.plot_curves([x for _ in estimators], [means[estimator][:, 0] for estimator in range(4)], [stds[estimator][:, 0] for estimator in range(4)], x_label="Iteration", y_label="Policy", names=estimators)
+plot.plot_curves([x for _ in estimators], [means[estimator][:, 0] for estimator in range(5)], [stds[estimator][:, 0] for estimator in range(5)], x_label="Iteration", y_label="Policy", names=estimators)
 # means = [np.mean(rewards[estimator], axis=0) for estimator in estimators]
 # stds = [alpha * np.std(rewards[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
 #
