@@ -244,6 +244,8 @@ def computeEssSecond(policy_param, env_param, source_dataset, simulation_param, 
 
     weights = algorithm_configuration.computeWeights(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, 0)[0]
 
+    print("Mean weights: " + str(np.mean(weights)))
+
     if algorithm_configuration.pd == 0:
         variance_weights = 1/n * np.sum((weights-1)**2)
         ess = n / (1 + variance_weights)
@@ -305,11 +307,13 @@ def essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_ma
     ess2 = np.zeros((env_parameters.shape[0], policy_param.shape[0]))
     n_def1 = np.zeros((env_parameters.shape[0], policy_param.shape[0]))
     n_def2 = np.zeros((env_parameters.shape[0], policy_param.shape[0]))
+
     for i_policy_param in range(policy_param.shape[0]):
         print(i_policy_param)
         for i_env_param in range(env_parameters.shape[0]):
-            env_params.env.setParams(np.concatenate(([env_parameters[i_env_param]], np.ravel(env_params.env.B), [env_params.env.sigma_noise**2])))
 
+            env_params.env.setParams(np.concatenate(([env_parameters[i_env_param]], np.ravel(env_params.env.B), [env_params.env.sigma_noise**2])))
+            print(str(i_env_param) + " " + str(i_policy_param))
             [ess1_ij, min_index1] = computeEss(np.asarray(policy_param[i_policy_param] * np.ones(env_param.param_space_size)), env_params, source_dataset, simulation_param, algorithm_configuration)
             n_def1_ij = computeNdef(min_index1, np.asarray(policy_param[i_policy_param] * np.ones(env_param.param_space_size)), env_params, source_dataset, simulation_param, algorithm_configuration)
             ess1[i_env_param, i_policy_param] = ess1_ij

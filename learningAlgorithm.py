@@ -3,7 +3,7 @@ import numpy as np
 import algorithmPolicySearch as alg
 import random
 import re
-import modelEstimation as models
+import discreteModelEstimation as discreteEstimator
 import simulationClasses as sc
 
 class BatchStats:
@@ -34,6 +34,7 @@ class AlgorithmConfiguration:
         self.off_policy = None
         self.multid_approx = None
         self.dicrete_estimation = None
+        self.model_estimation = None
 
 
 def createBatch(env, batch_size, episode_length, param, state_space_size, variance_action):
@@ -93,21 +94,23 @@ def computeNdef(min_index, param, env_param, source_dataset, simulation_param, a
     trajectories_length = getEpisodesInfoFromSource(source_dataset, env_param)[-1]
     if algorithm_configuration.adaptive == "Yes":
         weights = algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration, 1, compute_n_def=1)[0]
-    else:
-        weights = algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration)[0]
+
     n = source_dataset.source_task.shape[0]
     if algorithm_configuration.pd == 1:
-        indices = trajectories_length >= min_index
-        weights = weights[indices, min_index]
+        #indices = trajectories_length >= min_index
+        weights = weights[:, min_index]
 
     variance_weights = 1/n * np.sum((weights-1)**2)
     w_1 = np.linalg.norm(weights, 1)
     w_2 = np.linalg.norm(weights, 2)
-    num_episodes_target1 = int(max(1, np.ceil((simulation_param.ess_min * w_1 / n) - (w_1 * n / (w_2 ** 2)))))
+    num_episodes_target1 = int(max(0, np.ceil((simulation_param.ess_min * w_1 / n) - (w_1 * n / (w_2 ** 2)))-1))
 
     c = (np.mean(weights**3) + 3*(1-np.mean(weights)))/(1 + np.var(weights))**2
     num_episodes_target2 = np.ceil((simulation_param.ess_min - n / (1 + variance_weights))/(min(1, c)))
-    num_episodes_target2 = int(np.clip(num_episodes_target2, 1, simulation_param.ess_min))
+    num_episodes_target2 = int(np.clip(num_episodes_target2, 0, simulation_param.ess_min-1))
+
+    if np.mean(weights) < 0.1: #TODO check mean
+        num_episodes_target2 = simulation_param.ess_min
 
     return [num_episodes_target1, num_episodes_target2]
 
@@ -202,6 +205,7 @@ def gradientPolicySearch(algorithm_configuration, weights_source_target_update, 
 
     return gradient
 
+
 #Compute weights of different estimators
 
 def getEpisodesInfoFromSource(source_dataset, env_param):
@@ -236,8 +240,15 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
     variance_action = simulation_param.variance_action
     variance_env = env_param_src[:, -1]
     param_indices = np.concatenate(([0], np.cumsum(np.delete(source_dataset.episodes_per_config, -1))))
-    state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_action_t) #change to source dataset . states denoised
+
+    if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
+        state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_action_t)
+    else:
+        #TODO if transition models estimated using GP
+        state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_action_t)
+
     state_t1_denoised = source_dataset.next_states_unclipped_denoised
+    state_t1_denoised[source_dataset.initial_size:, :, :] = state_t1_denoised_current[source_dataset.initial_size:, :, :]
 
     if algorithm_configuration.pd == 0:
 
@@ -298,7 +309,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
     combination_src_parameters_env = env_param_src[param_indices_env, :]#policy parameter of source not repeated
 
     evaluated_trajectories = source_dataset.source_distributions.shape[0]
-    if algorithm_configuration.dicrete_estimation == 1:
+    if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
         state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_actions)
     else:
         #TODO if transition models estimated using GP
@@ -385,7 +396,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
     combination_src_parameters_env = env_param_src[param_indices_env, :]#policy parameter of source not repeated
 
     evaluated_trajectories = source_dataset.source_distributions.shape[0]
-    if algorithm_configuration.dicrete_estimation == 1:
+    if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
         state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_actions)
     else:
         #TODO if transition models estimated using GP
@@ -540,8 +551,7 @@ def computeEssSecond(policy_param, env_param, source_dataset, simulation_param, 
     else:
         ess = np.zeros(weights.shape[1])
         for t in range(weights.shape[1]):
-            indices = trajectories_length >= t
-            weights_timestep = weights[indices, t]
+            weights_timestep = weights[:, t]
             ess_den = np.sum(weights_timestep ** 2, axis=0)
             ess[t] = np.sum(weights_timestep, axis=0) * n / ess_den
 
@@ -567,8 +577,7 @@ def computeEss(policy_param, env_param, source_dataset, simulation_param, algori
     else:
         ess = np.zeros(weights.shape[1])
         for t in range(weights.shape[1]):
-            indices = trajectories_length >= t
-            weights_timestep = weights[indices, t]
+            weights_timestep = weights[:, t]
             variance_weights = 1/n * np.sum((weights_timestep-1)**2)
             ess[t] = n / (1 + variance_weights)
 
@@ -952,7 +961,13 @@ def addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, para
     return [source_task_new, source_param_new, batch_size, next_states_unclipped_new, clipped_actions_new, next_states_unclipped_denoised_new]
 
 
-def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1, continuous_estimation=0, multid_approx=0):
+def setEnvParametersTarget(env, source_dataset, env_param):
+
+    source_length = source_dataset.initial_size
+    source_dataset.source_param[source_length:, 1+env_param.param_space_size:1+env_param.param_space_size+env_param.env_param_space_size] = env.getEnvParam().T
+
+
+def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1, model_estimation=0, dicrete_estimation=1, multid_approx=0, proposal_envs=None):
 
     param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
 
@@ -970,7 +985,15 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
     algorithm_configuration = switch_estimator(estimator, simulation_param.adaptive)
     algorithm_configuration.off_policy = off_policy
     algorithm_configuration.multid_approx = multid_approx
-    algorithm_configuration.dicrete_estimation = continuous_estimation
+    algorithm_configuration.dicrete_estimation = dicrete_estimation
+    algorithm_configuration.model_estimation = model_estimation
+
+    if model_estimation == 1:
+            if dicrete_estimation == 1:
+                model_estimator = discreteEstimator.Models(proposal_envs)
+            else:
+                #TODO GP estimation
+                model_estimator = discreteEstimator.Models(proposal_envs) #create object model estimator
 
     if off_policy == 1:
         if re.match("^.*MIS.*", estimator):
@@ -1001,80 +1024,16 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
 
         if batch_size != 0:
             #Generate the episodes and compute the rewards over the batch
-            addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, batch_size, discount_factor_timestep, simulation_param.adaptive, n_def_estimation=0)
-
-        [source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size, discount_factor_timestep)
-
-        # Update statistics
-        stats.total_rewards[i_batch] = tot_reward_batch
-        stats.disc_rewards[i_batch] = discounted_reward_batch
-        stats.policy_parameter[i_batch, :] = param
-        stats.gradient[i_batch, :] = gradient
-    return stats
-
-
-def setEnvParametersTarget(env, source_dataset, env_param):
-
-    source_length = source_dataset.initial_size
-    source_dataset.source_param[source_length:, 1+env_param.param_space_size:1+env_param.param_space_size+env_param.env_param_space_size] = env.getEnvParam().T
-
-
-def learnPolicyWithModelEstimation(env_param, simulation_param, source_dataset, proposals_env, estimator, off_policy=1, continuous_estimation=0, multid_approx=0):
-
-    param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
-
-    discount_factor_timestep = np.power(simulation_param.discount_factor*np.ones(env_param.episode_length), range(env_param.episode_length))
-    # Adam initial params
-    m_t = 0
-    v_t = 0
-    t = 0
-
-    # Keep track of useful statistics#
-    stats = BatchStats(simulation_param.num_batch, env_param.param_space_size)
-    n_def = simulation_param.batch_size
-    ess = 0
-
-    algorithm_configuration = switch_estimator(estimator, simulation_param.adaptive)
-    algorithm_configuration.off_policy = off_policy
-    algorithm_configuration.multid_approx = multid_approx
-    algorithm_configuration.dicrete_estimation = continuous_estimation
-
-    model_estimation = models.Models(proposals_env)
-
-    if off_policy == 1:
-        if re.match("^.*MIS.*", estimator):
-            source_dataset.source_distributions = computeMultipleImportanceWeightsSourceDistributions(source_dataset, simulation_param.variance_action, algorithm_configuration, env_param)
-            [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)
-
-        else:
-            [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)
-
-        if simulation_param.adaptive == "Yes":
-            simulation_param.defensive_sample = 1
-            defensive_sample = simulation_param.defensive_sample
-            addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, simulation_param.adaptive, n_def_estimation=1)
-            n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)[1]
-            #n_def = 5
-
-            #n_def = 5
-
-    for i_batch in range(simulation_param.num_batch):
-
-        batch_size = n_def
-
-        if simulation_param.adaptive == "Yes":
-            n_def = n_def + simulation_param.defensive_sample
-
-        stats.ess[i_batch] = ess
-
-        #Collect new episodes
-        if batch_size != 0:
-            #Generate the episodes and compute the rewards over the batch
             [source_task_tgt, source_param_tgt, episodes_per_configuration_tgt, next_states_unclipped_tgt, actions_clipped_tgt, next_states_unclipped_denoised_tgt] = addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, batch_size, discount_factor_timestep, algorithm_configuration.adaptive, n_def_estimation=0)
             dataset_model_estimation = sc.SourceDataset(source_task_tgt, source_param_tgt, episodes_per_configuration_tgt, next_states_unclipped_tgt, actions_clipped_tgt, next_states_unclipped_denoised_tgt, 1)
 
-        env = model_estimation.chooseTransitionModel(env_param, param, simulation_param, source_dataset.source_param, source_dataset.episodes_per_config, source_dataset.n_config_cv, source_dataset.initial_size, dataset_model_estimation)
-        setEnvParametersTarget(env, source_dataset, env_param)
+        if model_estimation == 1:
+            if dicrete_estimation == 1:
+                env = model_estimator.chooseTransitionModel(env_param, param, simulation_param, source_dataset.source_param, source_dataset.episodes_per_config, source_dataset.n_config_cv, source_dataset.initial_size, dataset_model_estimation)
+                setEnvParametersTarget(env, source_dataset, env_param)
+            else:
+                #TODO GP estimation
+                env = 1
 
         [source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size, discount_factor_timestep)
 
@@ -1083,5 +1042,75 @@ def learnPolicyWithModelEstimation(env_param, simulation_param, source_dataset, 
         stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.policy_parameter[i_batch, :] = param
         stats.gradient[i_batch, :] = gradient
-
     return stats
+
+# def learnPolicyWithModelEstimation(env_param, simulation_param, source_dataset, proposals_env, estimator, off_policy=1, model_estimation=0, continuous_estimation=0, multid_approx=0):
+#
+#     param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
+#
+#     discount_factor_timestep = np.power(simulation_param.discount_factor*np.ones(env_param.episode_length), range(env_param.episode_length))
+#     # Adam initial params
+#     m_t = 0
+#     v_t = 0
+#     t = 0
+#
+#     # Keep track of useful statistics#
+#     stats = BatchStats(simulation_param.num_batch, env_param.param_space_size)
+#     n_def = simulation_param.batch_size
+#     ess = 0
+#
+#     algorithm_configuration = switch_estimator(estimator, simulation_param.adaptive)
+#     algorithm_configuration.off_policy = off_policy
+#     algorithm_configuration.multid_approx = multid_approx
+#     algorithm_configuration.dicrete_estimation = continuous_estimation
+#
+#     model_estimation = models.Models(proposals_env)
+#
+#     if off_policy == 1:
+#         if re.match("^.*MIS.*", estimator):
+#             source_dataset.source_distributions = computeMultipleImportanceWeightsSourceDistributions(source_dataset, simulation_param.variance_action, algorithm_configuration, env_param)
+#             [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)
+#
+#         else:
+#             [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)
+#
+#         if simulation_param.adaptive == "Yes":
+#             simulation_param.defensive_sample = 1
+#             defensive_sample = simulation_param.defensive_sample
+#             addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, simulation_param.adaptive, n_def_estimation=1)
+#             n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)[1]
+#             #n_def = 5
+#
+#             #n_def = 5
+#
+#     for i_batch in range(simulation_param.num_batch):
+#
+#         batch_size = n_def
+#
+#         if simulation_param.adaptive == "Yes":
+#             n_def = n_def + simulation_param.defensive_sample
+#
+#         stats.ess[i_batch] = ess
+#
+#         #Collect new episodes
+#         if batch_size != 0:
+#             #Generate the episodes and compute the rewards over the batch
+#             [source_task_tgt, source_param_tgt, episodes_per_configuration_tgt, next_states_unclipped_tgt, actions_clipped_tgt, next_states_unclipped_denoised_tgt] = addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, batch_size, discount_factor_timestep, algorithm_configuration.adaptive, n_def_estimation=0)
+#             dataset_model_estimation = sc.SourceDataset(source_task_tgt, source_param_tgt, episodes_per_configuration_tgt, next_states_unclipped_tgt, actions_clipped_tgt, next_states_unclipped_denoised_tgt, 1)
+#
+#         if model_estimation == 0:
+#             if env = model_estimation.chooseTransitionModel(env_param, param, simulation_param, source_dataset.source_param, source_dataset.episodes_per_config, source_dataset.n_config_cv, source_dataset.initial_size, dataset_model_estimation)
+#             setEnvParametersTarget(env, source_dataset, env_param)
+#
+#         env = model_estimation.chooseTransitionModel(env_param, param, simulation_param, source_dataset.source_param, source_dataset.episodes_per_config, source_dataset.n_config_cv, source_dataset.initial_size, dataset_model_estimation)
+#         setEnvParametersTarget(env, source_dataset, env_param)
+#
+#         [source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size, discount_factor_timestep)
+#
+#         # Update statistics
+#         stats.total_rewards[i_batch] = tot_reward_batch
+#         stats.disc_rewards[i_batch] = discounted_reward_batch
+#         stats.policy_parameter[i_batch, :] = param
+#         stats.gradient[i_batch, :] = gradient
+#
+#     return stats
