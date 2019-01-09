@@ -2,13 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4263835c-fd92-417b-afad-0a299f6d3721" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Policy parameter policy search.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/Policy parameter policy search.pdf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Rewards policy search.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/Rewards policy search.pdf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithmComparisonPolicySearch.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithmComparisonPolicySearch.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/learningAlgorithm.py" beforeDir="false" afterPath="$PROJECT_DIR$/learningAlgorithm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/simulation_cartpole.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulation_cartpole.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/simulation_lqg1d.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulation_lqg1d_griglia.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/simulation_lqg1d_sample_reuse.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulation_lqg1d_sample_reuse.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/simulation_lqg1d_spec.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulation_lqg1d_spec.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -98,13 +94,13 @@
         <counts>
           <entry key="Python Console" value="25913" />
           <entry key="dummy" value="45" />
-          <entry key="py" value="53556" />
+          <entry key="py" value="53576" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="45" />
-          <entry key="Python" value="79469" />
+          <entry key="Python" value="79489" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
@@ -136,11 +132,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/simulation_lqg1d_sample_reuse.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="217">
-              <caret line="58" column="15" selection-start-line="58" selection-start-column="15" selection-end-line="58" selection-end-column="15" />
+            <state relative-caret-position="1533">
+              <caret line="84" column="263" selection-start-line="84" selection-start-column="263" selection-end-line="84" selection-end-column="263" />
             </state>
           </provider>
         </entry>
@@ -163,11 +159,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="234">
-              <caret line="36" column="36" selection-start-line="36" selection-start-column="36" selection-end-line="36" selection-end-column="36" />
+            <state relative-caret-position="215">
+              <caret line="662" column="5" selection-start-line="662" selection-start-column="5" selection-end-line="662" selection-end-column="5" />
               <folding>
                 <element signature="e#0#16#0" expanded="true" />
               </folding>
@@ -178,8 +174,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/simulation_lqg1d_spec.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="194">
-              <caret line="83" lean-forward="true" selection-start-line="81" selection-end-line="83" />
+            <state relative-caret-position="1491">
+              <caret line="82" column="263" selection-start-line="82" selection-start-column="263" selection-end-line="82" selection-end-column="263" />
             </state>
           </provider>
         </entry>
@@ -302,11 +298,11 @@
         <option value="$PROJECT_DIR$/simulation_cartpole.py" />
         <option value="$PROJECT_DIR$/algorithmComparisonPolicySearch.py" />
         <option value="$PROJECT_DIR$/simulation_lqg1d.py" />
-        <option value="$PROJECT_DIR$/simulation_lqg1d_spec.py" />
         <option value="$PROJECT_DIR$/simulation_lqg1d_griglia.py" />
         <option value="$PROJECT_DIR$/simulationClasses.py" />
-        <option value="$PROJECT_DIR$/learningAlgorithm.py" />
         <option value="$PROJECT_DIR$/simulation_lqg1d_sample_reuse.py" />
+        <option value="$PROJECT_DIR$/simulation_lqg1d_spec.py" />
+        <option value="$PROJECT_DIR$/learningAlgorithm.py" />
       </list>
     </option>
   </component>
@@ -1096,27 +1092,27 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
+    <entry file="file://$PROJECT_DIR$/simulation_lqg1d_sample_reuse.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="234">
-          <caret line="36" column="36" selection-start-line="36" selection-start-column="36" selection-end-line="36" selection-end-column="36" />
-          <folding>
-            <element signature="e#0#16#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="1533">
+          <caret line="84" column="263" selection-start-line="84" selection-start-column="263" selection-end-line="84" selection-end-column="263" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/simulation_lqg1d_spec.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="194">
-          <caret line="83" lean-forward="true" selection-start-line="81" selection-end-line="83" />
+        <state relative-caret-position="1491">
+          <caret line="82" column="263" selection-start-line="82" selection-start-column="263" selection-end-line="82" selection-end-column="263" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/simulation_lqg1d_sample_reuse.py">
+    <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="217">
-          <caret line="58" column="15" selection-start-line="58" selection-start-column="15" selection-end-line="58" selection-end-column="15" />
+        <state relative-caret-position="215">
+          <caret line="662" column="5" selection-start-line="662" selection-start-column="5" selection-end-line="662" selection-end-column="5" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
