@@ -2,9 +2,16 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4263835c-fd92-417b-afad-0a299f6d3721" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/learning rates.rtf" beforeDir="false" afterPath="$PROJECT_DIR$/learning rates.rtf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/learningAlgorithm.py" beforeDir="false" afterPath="$PROJECT_DIR$/learningAlgorithm.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modelEstimation.py" beforeDir="false" afterPath="$PROJECT_DIR$/modelEstimation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plots.py" beforeDir="false" afterPath="$PROJECT_DIR$/plots.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/simulationClasses.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulationClasses.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/simulation_cartpole.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulation_cartpole.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/simulation_joblib.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulation_joblib_lqg1d.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/simulation_lqg1d.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulation_lqg1d.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/simulation_models_lqg1d.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulation_models_lqg1d.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -76,43 +83,43 @@
     <session id="211049904">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="101" />
+          <entry key="project.closed" value="102" />
           <entry key="project.open.time.0" value="4" />
           <entry key="project.open.time.1" value="19" />
           <entry key="project.open.time.17" value="1" />
           <entry key="project.open.time.2" value="1" />
           <entry key="project.open.time.3" value="10" />
           <entry key="project.open.time.4" value="29" />
-          <entry key="project.open.time.5" value="24" />
+          <entry key="project.open.time.5" value="25" />
           <entry key="project.open.time.6" value="10" />
           <entry key="project.open.time.7" value="3" />
           <entry key="project.open.time.9" value="1" />
-          <entry key="project.opened" value="104" />
+          <entry key="project.opened" value="105" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="Python Console" value="25688" />
-          <entry key="dummy" value="17" />
-          <entry key="py" value="51774" />
+          <entry key="Python Console" value="25723" />
+          <entry key="dummy" value="23" />
+          <entry key="py" value="52101" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="PLAIN_TEXT" value="17" />
-          <entry key="Python" value="77462" />
+          <entry key="PLAIN_TEXT" value="23" />
+          <entry key="Python" value="77824" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="PLAIN_TEXT" value="1" />
-          <entry key="Python" value="248" />
+          <entry key="Python" value="255" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.vcs.git.usages" />
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="py" value="248" />
+          <entry key="py" value="255" />
           <entry key="rtf" value="1" />
         </counts>
       </usages-collector>
@@ -120,11 +127,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/simulation_lqg1d.py">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/simulation_cartpole.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="116">
-              <caret line="49" column="43" selection-start-line="49" selection-start-column="43" selection-end-line="49" selection-end-column="43" />
+            <state relative-caret-position="306">
+              <caret line="46" column="24" selection-start-line="46" selection-start-column="24" selection-end-line="46" selection-end-column="24" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -133,13 +140,31 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/simulation_cartpole.py">
+        <entry file="file://$PROJECT_DIR$/modelEstimation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="386">
-              <caret line="35" column="37" selection-start-line="35" selection-start-column="37" selection-end-line="35" selection-end-column="37" />
+            <state relative-caret-position="3272">
+              <caret line="161" column="97" selection-start-line="161" selection-start-column="97" selection-end-line="161" selection-end-column="97" />
               <folding>
-                <element signature="e#0#10#0" expanded="true" />
+                <element signature="e#0#18#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/simulation_joblib_lqg1d.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="147">
+              <caret line="7" column="22" lean-forward="true" selection-start-line="7" selection-start-column="22" selection-end-line="7" selection-end-column="22" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/simulation_joblib_cartpole.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-38">
+              <caret line="18" column="23" lean-forward="true" selection-start-line="18" selection-start-column="23" selection-end-line="18" selection-end-column="23" />
             </state>
           </provider>
         </entry>
@@ -147,8 +172,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="211">
-              <caret line="1045" column="30" selection-start-line="1045" selection-start-column="14" selection-end-line="1045" selection-end-column="30" />
+            <state relative-caret-position="2029">
+              <caret line="169" column="17" selection-start-line="169" selection-start-column="17" selection-end-line="169" selection-end-column="17" />
               <folding>
                 <element signature="e#0#16#0" expanded="true" />
               </folding>
@@ -157,10 +182,10 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/simulation_models_lqg1d.py">
+        <entry file="file://$PROJECT_DIR$/simulation_lqg1d.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-805">
-              <caret line="56" column="43" selection-start-line="56" selection-start-column="43" selection-end-line="56" selection-end-column="43" />
+            <state relative-caret-position="150">
+              <caret line="86" selection-start-line="86" selection-end-line="86" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -169,22 +194,19 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydevd_bundle/pydevd_resolver.py">
+        <entry file="file:///usr/local/Cellar/python/3.7.1/Frameworks/Python.framework/Versions/3.7/lib/python3.7/codecs.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="370">
-              <caret line="202" selection-start-line="202" selection-end-line="202" />
+            <state relative-caret-position="150">
+              <caret line="309" selection-start-line="309" selection-end-line="309" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/plots.py">
+        <entry file="file://$PROJECT_DIR$/simulationClasses.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="285">
-              <caret line="46" column="141" selection-start-line="46" selection-start-column="141" selection-end-line="46" selection-end-column="141" />
-              <folding>
-                <element signature="e#0#13#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="321">
+              <caret line="24" column="29" selection-start-line="24" selection-start-column="13" selection-end-line="24" selection-end-column="29" />
             </state>
           </provider>
         </entry>
@@ -192,7 +214,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/essPerConfiguration.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="300">
+            <state relative-caret-position="5943">
               <caret line="289" column="44" selection-start-line="289" selection-start-column="44" selection-end-line="289" selection-end-column="44" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
@@ -293,25 +315,26 @@
         <option value="$PROJECT_DIR$/algorithmComparisonPolicySearch.py" />
         <option value="$PROJECT_DIR$/envs/continuousCartpole.py" />
         <option value="$PROJECT_DIR$/plotHeatmap.py" />
-        <option value="$PROJECT_DIR$/simulationClasses.py" />
         <option value="$PROJECT_DIR$/sourceTaskCreation.py" />
         <option value="$PROJECT_DIR$/simulation_joblib.py" />
         <option value="$PROJECT_DIR$/simulation.py" />
         <option value="$PROJECT_DIR$/simulation_models.py" />
-        <option value="$PROJECT_DIR$/modelEstimation.py" />
         <option value="$PROJECT_DIR$/simulation_models_cartpole.py" />
-        <option value="$PROJECT_DIR$/simulation_cartpole.py" />
         <option value="$PROJECT_DIR$/essPerConfiguration.py" />
         <option value="$PROJECT_DIR$/learningAlgorithm_secondVersion.py" />
-        <option value="$PROJECT_DIR$/learningAlgorithm.py" />
-        <option value="$PROJECT_DIR$/plots.py" />
         <option value="$PROJECT_DIR$/simulation_models_lqg1d.py" />
+        <option value="$PROJECT_DIR$/plots.py" />
+        <option value="$PROJECT_DIR$/simulationClasses.py" />
         <option value="$PROJECT_DIR$/simulation_lqg1d.py" />
+        <option value="$PROJECT_DIR$/learningAlgorithm.py" />
+        <option value="$PROJECT_DIR$/simulation_cartpole.py" />
+        <option value="$PROJECT_DIR$/modelEstimation.py" />
+        <option value="$PROJECT_DIR$/simulation_joblib_lqg1d.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" fullScreen="true">
-    <option name="width" value="714" />
+    <option name="width" value="1440" />
     <option name="height" value="900" />
   </component>
   <component name="ProjectView">
@@ -361,7 +384,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.plots">
+  <component name="RunManager" selected="Python.simulation_cartpole">
     <configuration name="essPerConfiguration" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="transfer-policy-search-master" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -476,9 +499,9 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.plots" />
-        <item itemvalue="Python.simulation" />
         <item itemvalue="Python.simulation_cartpole" />
+        <item itemvalue="Python.simulation" />
+        <item itemvalue="Python.plots" />
         <item itemvalue="Python.simulation_models" />
         <item itemvalue="Python.essPerConfiguration" />
       </list>
@@ -489,7 +512,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2769556" />
       <window_info id="Structure" order="1" weight="0.25" />
@@ -715,7 +737,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/learningAlgorithm.py</url>
-          <line>985</line>
+          <line>986</line>
           <option name="timeStamp" value="375" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -749,7 +771,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/../results-tps/2500e-10b-5r_no_models/plotResults.py" />
     <entry file="file://$USER_HOME$/Library/Python/3.7/lib/python/site-packages/joblib/_parallel_backends.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="118">
@@ -971,29 +992,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/simulation_joblib.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="231">
-          <caret line="11" column="30" lean-forward="true" selection-start-line="11" selection-start-column="30" selection-end-line="11" selection-end-column="30" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/simulation_test.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="63">
           <caret line="7" selection-start-line="7" selection-end-line="7" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/modelEstimation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3381">
-          <caret line="161" column="24" selection-start-line="161" selection-start-column="24" selection-end-line="161" selection-end-column="24" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -1022,13 +1026,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/simulationClasses.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="735">
-          <caret line="35" column="38" selection-start-line="35" selection-start-column="38" selection-end-line="35" selection-end-column="38" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/simulation_models_cartpole.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1722">
@@ -1047,26 +1044,27 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="237">
           <caret line="30" column="30" lean-forward="true" selection-start-line="30" selection-start-column="30" selection-end-line="30" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/learningAlgorithm_secondVersion.py" />
+    <entry file="file://$PROJECT_DIR$/simulation_models_lqg1d.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="942">
+          <caret line="56" column="43" selection-start-line="56" selection-start-column="43" selection-end-line="56" selection-end-column="43" />
           <folding>
-            <marker date="1546646528396" expanded="true" signature="3928:6457" ph="..." />
+            <element signature="e#0#10#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/essPerConfiguration.py">
+    <entry file="file://$PROJECT_DIR$/plots.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="289" column="44" selection-start-line="289" selection-start-column="44" selection-end-line="289" selection-end-column="44" />
+        <state relative-caret-position="1071">
+          <caret line="51" column="90" selection-start-line="51" selection-start-column="90" selection-end-line="51" selection-end-column="90" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#13#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/learningAlgorithm_secondVersion.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="146">
-          <caret line="436" column="37" selection-start-line="436" selection-start-column="37" selection-end-line="436" selection-end-column="37" />
         </state>
       </provider>
     </entry>
@@ -1077,6 +1075,23 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/essPerConfiguration.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5943">
+          <caret line="289" column="44" selection-start-line="289" selection-start-column="44" selection-end-line="289" selection-end-column="44" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/simulationClasses.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="321">
+          <caret line="24" column="29" selection-start-line="24" selection-start-column="13" selection-end-line="24" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file:///usr/local/Cellar/python/3.7.1/Frameworks/Python.framework/Versions/3.7/lib/python3.7/codecs.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="150">
@@ -1084,53 +1099,57 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/simulation_lqg1d.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="150">
+          <caret line="86" selection-start-line="86" selection-end-line="86" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/learningAlgorithm.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="211">
-          <caret line="1045" column="30" selection-start-line="1045" selection-start-column="14" selection-end-line="1045" selection-end-column="30" />
+        <state relative-caret-position="2029">
+          <caret line="169" column="17" selection-start-line="169" selection-start-column="17" selection-end-line="169" selection-end-column="17" />
           <folding>
             <element signature="e#0#16#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/plots.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="285">
-          <caret line="46" column="141" selection-start-line="46" selection-start-column="141" selection-end-line="46" selection-end-column="141" />
-          <folding>
-            <element signature="e#0#13#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/simulation_cartpole.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="386">
-          <caret line="35" column="37" selection-start-line="35" selection-start-column="37" selection-end-line="35" selection-end-column="37" />
+        <state relative-caret-position="306">
+          <caret line="46" column="24" selection-start-line="46" selection-start-column="24" selection-end-line="46" selection-end-column="24" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/simulation_models_lqg1d.py">
+    <entry file="file://$PROJECT_DIR$/modelEstimation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-805">
-          <caret line="56" column="43" selection-start-line="56" selection-start-column="43" selection-end-line="56" selection-end-column="43" />
+        <state relative-caret-position="3272">
+          <caret line="161" column="97" selection-start-line="161" selection-start-column="97" selection-end-line="161" selection-end-column="97" />
           <folding>
-            <element signature="e#0#10#0" expanded="true" />
+            <element signature="e#0#18#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/simulation_lqg1d.py">
+    <entry file="file://$PROJECT_DIR$/simulation_joblib_cartpole.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="116">
-          <caret line="49" column="43" selection-start-line="49" selection-start-column="43" selection-end-line="49" selection-end-column="43" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="-38">
+          <caret line="18" column="23" lean-forward="true" selection-start-line="18" selection-start-column="23" selection-end-line="18" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/simulation_joblib_lqg1d.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="147">
+          <caret line="7" column="22" lean-forward="true" selection-start-line="7" selection-start-column="22" selection-end-line="7" selection-end-column="22" />
         </state>
       </provider>
     </entry>

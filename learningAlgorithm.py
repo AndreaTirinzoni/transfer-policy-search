@@ -167,7 +167,7 @@ def gradientAndRegression(algorithm_configuration, weights_source_target_update,
         for i in range(gradient_estimation.shape[2]):
         # Fitting the regression for every t 0...T-1
             for t in range(control_variates.shape[1]):
-                indices = trajectories_length >= t
+                #indices = trajectories_length >= t
                 gradient[i] += regressionFitting(gradient_estimation[:, t, i], control_variates[:, t, :, i], n_config_cv, algorithm_configuration.baseline) #always the same, only the MIS with CV changes format of the x_avg array
 
     else:
@@ -447,8 +447,8 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
         policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], state_t), axis=2))**2)/(2*variance_action))
         model_tgt = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1 - state_t1_denoised_current)**2, axis=2) / (2*variance_env[:, np.newaxis]))
 
-        policy_tgt[source_dataset.mask_weights] = 0
-        model_tgt[source_dataset.mask_weights] = 0
+        policy_tgt[source_dataset.mask_weights] = 1
+        model_tgt[source_dataset.mask_weights] = 1
 
         policy_tgt = np.cumprod(policy_tgt, axis=1)
         model_tgt = np.cumprod(model_tgt, axis=1)
@@ -639,7 +639,7 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
             ess = np.min(ess)
 
         if algorithm_configuration.adaptive == "Yes":
-            defensive_sample = 1
+            defensive_sample = simulation_param.defensive_sample
             addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, simulation_param.adaptive, n_def_estimation=1)
             #Number of n_def next iteration
             num_episodes_target = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)[1]
@@ -981,15 +981,22 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
             [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)
 
         if simulation_param.adaptive == "Yes":
-            defensive_sample = 1
+            simulation_param.defensive_sample = 1
+            defensive_sample = simulation_param.defensive_sample
             addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, simulation_param.adaptive, n_def_estimation=1)
             n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)[1]
             #n_def = 5
 
     for i_batch in range(simulation_param.num_batch):
 
-        stats.n_def[i_batch] = n_def
+        print("Batch: " + str(i_batch))
+
         batch_size = n_def
+
+        if simulation_param.adaptive == "Yes":
+            n_def = n_def + simulation_param.defensive_sample
+
+        stats.n_def[i_batch] = n_def
         stats.ess[i_batch] = ess
 
         if batch_size != 0:
@@ -1043,16 +1050,21 @@ def learnPolicyWithModelEstimation(env_param, simulation_param, source_dataset, 
             [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)
 
         if simulation_param.adaptive == "Yes":
-            # defensive_sample = 1
-            # addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep)
-            # n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)
+            simulation_param.defensive_sample = 1
+            defensive_sample = simulation_param.defensive_sample
+            addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, simulation_param.adaptive, n_def_estimation=1)
+            n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)[1]
+            #n_def = 5
 
-            n_def = 5
+            #n_def = 5
 
     for i_batch in range(simulation_param.num_batch):
 
-        stats.n_def[i_batch] = n_def
         batch_size = n_def
+
+        if simulation_param.adaptive == "Yes":
+            n_def = n_def + simulation_param.defensive_sample
+
         stats.ess[i_batch] = ess
 
         #Collect new episodes

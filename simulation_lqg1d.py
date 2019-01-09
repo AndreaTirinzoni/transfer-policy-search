@@ -33,14 +33,14 @@ adaptive = "Yes"
 simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
 # source task for lqg1d
-source_dataset_batch_size = 15
+source_dataset_batch_size = 10
 discount_factor = 0.99
 env_param_min = 0.6
-env_param_max = 1.5
-policy_param_min = -0.1
-policy_param_max = -0.1
-linspace_env = 10
-linspace_policy = 10
+env_param_max = 1
+policy_param_min = -0.6
+policy_param_max = -0.2
+linspace_env = 5
+linspace_policy = 2
 n_config_cv = linspace_policy * linspace_env #number of configurations to use to fit the control variates
 
 

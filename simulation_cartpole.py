@@ -22,7 +22,7 @@ mean_initial_param = -0.1 * np.ones(param_space_size)
 variance_initial_param = 0
 variance_action = 0.1
 batch_size = 5
-num_batch = 200
+num_batch = 70
 discount_factor = 0.99
 runs = 5
 learning_rate = 1e-5
@@ -38,13 +38,13 @@ env_params = np.array([[1, 0.5, 0.09], [1, 0.5, 0.09]])
 # policy_params = np.array([[-0.13, 0.19, 0.28, 0.57], [-0.04, 0.1, 0.11, 0.37], [-0.01, 0.09, 0.26, 0.61], [-0.03, 0.01, 0.1, 0.32], [-0.09, 0.11, 0.36, 0.67], [-0.1, -0.11, 0.04, 0.19]])
 # env_params = np.array([[1, 0.5, 0.09], [1, 0.5, 0.09], [0.5, 1, 0.09], [0.5, 1, 0.09], [1.5, 1, 0.09], [1.5, 1, 0.09]])
 
-number_of_episodes_per_config = 15
+number_of_episodes_per_config = 10
 n_config_cv = policy_params.shape[0] * env_params.shape[0]
 
-estimators = ["PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]
+estimators = ["PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]
 
 #learning_rates = [2e-5, 6e-6, 1e-5, 2e-5, 1e-5, 1e-6, 1e-5, 1e-5, 1e-6, 1e-6, 1e-5]
-learning_rates = [1e-4, 1e-4]#, 2e-3, 1e-4]
+learning_rates = [7e-4, 2e-3, 2e-3, 1e-3]#, 2e-3, 1e-4]
 disc_rewards = {}
 policy = {}
 gradient = {}

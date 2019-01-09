@@ -45,6 +45,11 @@ means = [np.mean(policy[estimator], axis=0) for estimator in estimators]
 stds = [alpha * np.std(policy[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
 
 plot.plot_curves([x for _ in estimators], [means[estimator][:, 0] for estimator in range(5)], [stds[estimator][:, 0] for estimator in range(5)], x_label="Iteration", y_label="Policy", names=estimators)
+
+means = [np.mean(n_def[estimator], axis=0) for estimator in estimators]
+stds = [alpha * np.std(n_def[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
+
+plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="N_DEF", names=estimators)
 # means = [np.mean(rewards[estimator], axis=0) for estimator in estimators]
 # stds = [alpha * np.std(rewards[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
 #
