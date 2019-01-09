@@ -19,10 +19,8 @@ def simulationParallel(env_src, episode_length, episodes_per_configuration, disc
     i_learning_rate = 0
 
     stats = {}
-    stats1 = {}
     for estimator in estimators:
         stats[estimator] = []
-        stats1[estimator] = []
 
     for estimator in estimators:
 
@@ -77,10 +75,10 @@ env_params = np.array([[1, 0.5, 0.09], [1, 0.5, 0.09]])
 source_dataset_batch_size = 10
 n_config_cv = policy_params.shape[0] * env_params.shape[0]
 
-estimators = ["PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]
+estimators = ["IS", "PD-IS", "MIS", "PD-MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]
 
 #learning_rates = [2e-5, 6e-6, 1e-5, 2e-5, 1e-5, 1e-6, 1e-5, 1e-5, 1e-6, 1e-6, 1e-5]
-learning_rates = [7e-4, 2e-3, 2e-3, 1e-3]#, 2e-3, 1e-4]
+learning_rates = [7e-4, 2e-3, 2e-3, 1e-4]#, 2e-3, 1e-4]
 
 seeds = [np.random.randint(1000000) for _ in range(runs)]
 

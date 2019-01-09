@@ -109,7 +109,7 @@ def computeNdef(min_index, param, env_param, source_dataset, simulation_param, a
     num_episodes_target2 = np.ceil((simulation_param.ess_min - n / (1 + variance_weights))/(min(1, c)))
     num_episodes_target2 = int(np.clip(num_episodes_target2, 0, simulation_param.ess_min-1))
 
-    if np.mean(weights) < 0.1: #TODO check mean
+    if np.mean(weights) < 0.1:
         num_episodes_target2 = simulation_param.ess_min
 
     return [num_episodes_target1, num_episodes_target2]
@@ -660,7 +660,7 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
         num_episodes_target = simulation_param.batch_size
 
     #print("Problems: n_def-" + str(num_episodes_target) + " ess-" + str(ess) + " gradient-" + str(gradient))
-    #print("param: " + str(param) + " tot_rewards: " + str(tot_reward_batch) + " ess: " + str(ess) + " n_def: " + str(num_episodes_target))
+    print("param: " + str(param) + " tot_rewards: " + str(tot_reward_batch) + " ess: " + str(ess) + " n_def: " + str(num_episodes_target))
 
     return source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target
 
@@ -1008,7 +1008,10 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
             defensive_sample = simulation_param.defensive_sample
             addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, simulation_param.adaptive, n_def_estimation=1)
             n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)[1]
-            #n_def = 5
+
+        else:
+            if simulation_param.adaptive == "Yes":
+                n_def = simulation_param.ess_min
 
     for i_batch in range(simulation_param.num_batch):
 

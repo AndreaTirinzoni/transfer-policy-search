@@ -27,12 +27,12 @@ def simulationParallel(env_src, episode_length, source_dataset_batch_size, disco
         print(estimator)
         if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]:
             off_policy = 0
-            simulation_param.batch_size = 15
+            simulation_param.batch_size = 10
         else:
             off_policy = 1
             simulation_param.batch_size = 5
 
-        source_dataset = sc.SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
+        source_dataset = sc.SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised, n_config_cv)
         simulation_param.learning_rate = learning_rates[i_learning_rate]
 
         result = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=off_policy, model_estimation=0, multid_approx=0)
@@ -56,9 +56,9 @@ mean_initial_param = -0.1 * np.ones(param_space_size)
 variance_initial_param = 0
 variance_action = 0.1
 batch_size = 5
-num_batch = 400
+num_batch = 350
 discount_factor = 0.99
-runs = 16
+runs = 20
 learning_rate = 1e-5
 ess_min = 70
 adaptive = "No"
@@ -66,23 +66,23 @@ adaptive = "No"
 simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
 # source task for lqg1d
-source_dataset_batch_size = 4
+source_dataset_batch_size = 20
 discount_factor = 0.99
-env_param_min = 0.9
-env_param_max = 1
+env_param_min = 0.5
+env_param_max = 1.5
 policy_param_min = -1
 policy_param_max = -0.1
-linspace_env = 2
-linspace_policy = 2
+linspace_env = 11
+linspace_policy = 10
 n_config_cv = linspace_policy * linspace_env #number of configurations to use to fit the control variates
 
-estimators = ["MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
+estimators = ["IS", "PD-IS", "MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
 
-learning_rates = [5e-6, 7e-6, 7e-6, 9e-6, 5e-6]
+learning_rates = [1e-6, 2e-6, 5e-6, 7e-6, 7e-6, 1e-5, 1e-5]#, 7e-6, 7e-6, 9e-6, 5e-6]
 
 seeds = [np.random.randint(1000000) for _ in range(runs)]
 
-results = Parallel(n_jobs=8)(delayed(simulationParallel)(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed) for seed in seeds) #lqg1d
+results = Parallel(n_jobs=10)(delayed(simulationParallel)(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed) for seed in seeds) #lqg1d
 #results = [simulationParallel(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed) for seed in seeds]
 
 with open('results.pkl', 'wb') as output:
