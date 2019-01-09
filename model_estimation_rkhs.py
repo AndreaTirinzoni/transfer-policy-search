@@ -93,13 +93,13 @@ class ModelEstimatorRKHS:
             if self.use_gp:
                 return self.gp.predict(x).reshape(self.state_dim, )
             else:
-                return np.matmul(self.kernel(self.X, x), self.A).reshape(self.state_dim, )
+                return np.matmul(self.kernel(self.X, x).T, self.A).reshape(self.state_dim, )
         else:
             X = np.concatenate([state, action[:,:,np.newaxis]], axis=2).reshape(state.shape[0] * state.shape[1], state.shape[2])
             if self.use_gp:
                 return self.gp.predict(X).reshape(state.shape)
             else:
-                return np.matmul(self.kernel(self.X, X), self.A).reshape(state.shape)
+                return np.matmul(self.kernel(self.X, X).T, self.A).reshape(state.shape)
 
     def _update_weight_matrix(self, X, M, W, F_src, alpha_src, c1, c2):
         """
@@ -109,13 +109,13 @@ class ModelEstimatorRKHS:
         K = self.kernel(X)  # Gram matrix
         # For loop here is faster than concatenating and summing
         F_bar = alpha_src[0] * F_src[0]
-        for j in range(M - 1):
+        for j in range(len(F_src) - 1):
             F_bar += alpha_src[j + 1] * F_src[j + 1]
-        inv = np.linalg.inv(np.matmul(c1*np.sum(alpha_src)*W + c2, K) + self.lambda_*self.R*np.eye(X.shape[0]))
+        inv = np.linalg.pinv(np.matmul(c1*np.sum(alpha_src)*W + c2, K) + self.lambda_*self.R*np.eye(X.shape[0]))
         self.A = np.matmul(inv, c1*np.matmul(W, F_bar) + c2*M)
         self.X = X
 
-    def _collect_dataset_update(self, policy_params, alpha, target_param, use_gp=False):
+    def _collect_dataset_update(self, policy_params, alpha, target_param):
         """
         Collects a dataset for updating the transition model. The collection is under a mixture distribution of
         given policies and the previous learned model. This function also the weight function W to be used in
@@ -124,10 +124,13 @@ class ModelEstimatorRKHS:
         If use_gp is true, the current GP model is used to simulate transitions instead of the old learned model.
         """
 
+        policy_params = np.array(policy_params)
+        alpha = np.array(alpha)
+
         states = np.zeros((self.R, self.T, self.state_dim))
         actions = np.zeros((self.R, self.T))
-        probs_mixture = np.ones(self.R)
-        probs_target = np.ones(self.R)
+        probs_mixture = np.ones((self.R, self.T, policy_params.shape[0]))
+        probs_target = np.ones((self.R, self.T))
 
         for r in range(self.R):
 
@@ -145,17 +148,19 @@ class ModelEstimatorRKHS:
                 # We save the clipped action for learning the model
                 actions[r, t] = a_clipped
 
-                probs_target[r] *= np.exp(-(np.dot(target_param, s) - a)**2 / (2*self.sigma_pi**2))
-                probs_mixture[r] *= np.sum(np.exp(-(np.dot(policy_params, s) - a)**2 / (2*self.sigma_pi**2)) * alpha)
+                probs_target[r, t] = np.exp(-(np.dot(target_param, s) - a)**2 / (2*self.sigma_pi**2))
+                probs_mixture[r, t, :] = np.exp(-(np.dot(policy_params, s) - a)**2 / (2*self.sigma_pi**2))
 
                 s = ns
 
+        probs_target = np.cumprod(probs_target, axis=1).reshape(self.R*self.T,)
+        probs_mixture = np.sum(np.cumprod(probs_mixture, axis=1) * alpha[np.newaxis, np.newaxis, :], axis=2).reshape(self.R*self.T,)
         W = np.diag(probs_target / probs_mixture)
         X = np.concatenate([states, actions[:,:,np.newaxis]], axis=2).reshape(self.R*self.T, self.state_dim+1)
 
         return X, W, states, actions
 
-    def update_model(self, N, alpha_tgt, alpha_src, alpha_0, policy_params, target_param):
+    def update_model(self, dataset):
         """
         Updates the current transition model.
 
@@ -167,10 +172,20 @@ class ModelEstimatorRKHS:
         :param target_param: current target policy parameters
         """
 
-        X, W, states, actions = self._collect_dataset_update(policy_params, alpha_tgt / np.sum(alpha_tgt),
-                                                             target_param, use_gp=False)
+        # TODO check this part
+        N = dataset.source_param.shape[0]
+        alpha_0 = dataset.episodes_per_config[-1] / N
+        alpha_tgt = dataset.episodes_per_config[dataset.n_config_cv:] / N
+        alpha_src = dataset.episodes_per_config[:dataset.n_config_cv] / N
 
-        C_alpha = (1 - alpha_0)^2 / (alpha_0 * np.log(1 / alpha_0))
+        target_param = dataset.source_param[-1, 1:1+self.state_dim]
+
+        param_indices = np.concatenate(([0], np.cumsum(dataset.episodes_per_config[:-1])))[dataset.n_config_cv:]
+        policy_params = dataset.source_param[param_indices, 1:1+self.state_dim]
+
+        X, W, states, actions = self._collect_dataset_update(policy_params, alpha_tgt / np.sum(alpha_tgt), target_param)
+
+        C_alpha = (1 - alpha_0)**2 / (alpha_0 * np.log(1 / alpha_0))
         c1 = C_alpha / (2 * self.sigma_env**2 * N)
         c2 = 4 * np.sum(alpha_tgt) / (self.sigma_env**2 * alpha_0**2)
 
