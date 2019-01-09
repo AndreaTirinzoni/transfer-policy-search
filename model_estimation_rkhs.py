@@ -80,6 +80,13 @@ class ModelEstimatorRKHS:
         X, _, F = self._split_dataset(dataset)
         return np.mean((self.gp.predict(X) - F)**2)
 
+    def eval_model(self, dataset):
+        """
+        Evaluates the current RKHS model on a dataset of target trajectories. Returns the estimated MSE.
+        """
+        X, _, F = self._split_dataset(dataset)
+        return np.mean((np.matmul(self.kernel(self.X, X).T, self.A) - F)**2)
+
     def transition(self, state, action):
         """
         Simulates one or more transitions using the current model.
@@ -95,7 +102,7 @@ class ModelEstimatorRKHS:
             else:
                 return np.matmul(self.kernel(self.X, x).T, self.A).reshape(self.state_dim, )
         else:
-            X = np.concatenate([state, action[:,:,np.newaxis]], axis=2).reshape(state.shape[0] * state.shape[1], state.shape[2])
+            X = np.concatenate([state, action[:,:,np.newaxis]], axis=2).reshape(state.shape[0] * state.shape[1], self.state_dim+1)
             if self.use_gp:
                 return self.gp.predict(X).reshape(state.shape)
             else:
@@ -111,7 +118,7 @@ class ModelEstimatorRKHS:
         F_bar = alpha_src[0] * F_src[0]
         for j in range(len(F_src) - 1):
             F_bar += alpha_src[j + 1] * F_src[j + 1]
-        inv = np.linalg.pinv(np.matmul(c1*np.sum(alpha_src)*W + c2, K) + self.lambda_*self.R*np.eye(X.shape[0]))
+        inv = np.linalg.pinv(c1*np.sum(alpha_src)*np.matmul(W, K) + c2*K + self.lambda_*self.R*np.eye(X.shape[0]))
         self.A = np.matmul(inv, c1*np.matmul(W, F_bar) + c2*M)
         self.X = X
 
