@@ -109,6 +109,12 @@ class LQG1D(gym.Env):
     def get_state(self):
         return np.array(self.state)
 
+    def clip_state(self, state):
+        return np.clip(state, -self.max_pos, self.max_pos)
+
+    def clip_action(self, action):
+        return np.clip(action, -self.max_action, self.max_action)
+
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
