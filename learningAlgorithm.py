@@ -5,6 +5,7 @@ import random
 import re
 import discreteModelEstimation as discreteEstimator
 import simulationClasses as sc
+import time
 
 class BatchStats:
 
@@ -234,7 +235,7 @@ def weightsPolicySearch(policy_param, env_param, source_dataset, simulation_para
     return [weights, 0]
 
 
-def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, batch_size):
+def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, batch_size, compute_n_def=0):
 
     [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src, clipped_action_t, trajectories_length] = getEpisodesInfoFromSource(source_dataset, env_param)
     variance_action = simulation_param.variance_action
@@ -1032,8 +1033,10 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
 
         if model_estimation == 1:
             if dicrete_estimation == 1:
+                start = time.time()
                 env = model_estimator.chooseTransitionModel(env_param, param, simulation_param, source_dataset.source_param, source_dataset.episodes_per_config, source_dataset.n_config_cv, source_dataset.initial_size, dataset_model_estimation)
                 setEnvParametersTarget(env, source_dataset, env_param)
+                print("Durata: {0}s".format(time.time() - start))
             else:
                 #TODO GP estimation
                 env = 1
