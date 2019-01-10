@@ -90,7 +90,7 @@ for i_run in range(runs):
         source_dataset = sc.SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised, n_config_cv)
         simulation_param.learning_rate = learning_rates[i_learning_rate]
 
-        result = la.learnPolicyWithModelEstimation(env_param, simulation_param, source_dataset, model_proposals, estimator, off_policy=off_policy) #1e-6
+        result = la.learnPolicyWithModelEstimation(env_param, simulation_param, source_dataset, model_proposals, estimator, off_policy=off_policy, model_estimation=0, dicrete_estimation=1, multid_approx=0) #1e-6
 
         disc_rewards[estimator].append(result.disc_rewards)
         policy[estimator].append(result.policy_parameter)

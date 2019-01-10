@@ -22,6 +22,7 @@ class SimulationParam:
         self.learning_rate = learning_rate
         self.ess_min = ess_min
         self.adaptive = adaptive
+        self.defensive_sample = None
 
 class SourceDataset:
 

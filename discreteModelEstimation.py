@@ -159,7 +159,7 @@ class Models:
             alpha_0 = episodes_per_config[-1] / n
             alpha_tr = np.sum(episodes_per_config[n_config_cv:]) / np.sum(episodes_per_config)
             sigma = simulation_param.variance_action
-            loss_function[i] = 1/n * expected_value_current_proposal + 4 * alpha_tr / (sigma) * expected_value_mixture
+            loss_function[i] = 1/n * expected_value_current_proposal + 4 * alpha_tr / (alpha_0 * sigma) * expected_value_mixture
 
         return loss_function
 

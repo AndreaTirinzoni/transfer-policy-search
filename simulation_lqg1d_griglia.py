@@ -60,8 +60,8 @@ num_batch = 350
 discount_factor = 0.99
 runs = 20
 learning_rate = 1e-5
-ess_min = 70
-adaptive = "No"
+ess_min = 50
+adaptive = "Yes"
 
 simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
@@ -76,25 +76,14 @@ linspace_env = 11
 linspace_policy = 10
 n_config_cv = linspace_policy * linspace_env #number of configurations to use to fit the control variates
 
-# Proposal envs
-omega_env = np.array([0.8, 0.9, 1, 1.1, 1.2, 1.01, 1.001])#np.linspace(env_param_min, env_param_max, linspace_env)
-print(omega_env)
-model_proposals = []
-
-for i in range(omega_env.shape[0]):
-    env_proposal = gym.make('LQG1D-v0')
-    env_proposal.setParams(np.concatenate(([omega_env[i]], np.ravel(env_proposal.B), [env_proposal.sigma_noise**2])))
-    model_proposals.append(env_proposal)
-
-
 estimators = ["IS", "PD-IS", "MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
 
 learning_rates = [1e-6, 2e-6, 5e-6, 7e-6, 7e-6, 1e-5, 1e-5]#, 7e-6, 7e-6, 9e-6, 5e-6]
 
 seeds = [np.random.randint(1000000) for _ in range(runs)]
 
-results = Parallel(n_jobs=10)(delayed(simulationParallel)(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed) for seed in seeds) #lqg1d
-#results = [simulationParallel(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed) for seed in seeds]
+#results = Parallel(n_jobs=10)(delayed(simulationParallel)(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed) for seed in seeds) #lqg1d
+results = [simulationParallel(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed) for seed in seeds]
 
 with open('results.pkl', 'wb') as output:
     pickle.dump(results, output, pickle.HIGHEST_PROTOCOL)
