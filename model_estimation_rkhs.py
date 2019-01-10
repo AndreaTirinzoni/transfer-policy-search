@@ -8,7 +8,7 @@ class ModelEstimatorRKHS:
     Model estimation algorithm using reproducing kernel Hilbert spaces.
     """
 
-    def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, state_dim, action_dim=1):
+    def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, state_dim, action_dim=1, use_gp=False):
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.T = T
@@ -30,7 +30,10 @@ class ModelEstimatorRKHS:
         self.rkhs_env = RKHS_Env(self, source_envs[0], sigma_env)
 
         # Whether the current GP model should be used to simulate trajectories
-        self.use_gp = False
+        self.use_gp = use_gp
+
+        # Whether the model has been fitted once
+        self.model_fitted = False
 
     def _split_dataset(self, dataset):
         """
@@ -97,13 +100,13 @@ class ModelEstimatorRKHS:
 
         if state.ndim == 1:
             x = np.append(state, action)[np.newaxis, :]
-            if self.use_gp:
+            if self.use_gp or not self.model_fitted:
                 return self.gp.predict(x).reshape(self.state_dim, )
             else:
                 return np.matmul(self.kernel(self.X, x).T, self.A).reshape(self.state_dim, )
         else:
             X = np.concatenate([state, action[:,:,np.newaxis]], axis=2).reshape(state.shape[0] * state.shape[1], self.state_dim+1)
-            if self.use_gp:
+            if self.use_gp or not self.model_fitted:
                 return self.gp.predict(X).reshape(state.shape)
             else:
                 return np.matmul(self.kernel(self.X, X).T, self.A).reshape(state.shape)
@@ -179,6 +182,8 @@ class ModelEstimatorRKHS:
         :param target_param: current target policy parameters
         """
 
+        self.update_gp(dataset)
+
         # TODO check this part
         N = dataset.source_param.shape[0]
         alpha_0 = dataset.episodes_per_config[-1] / N
@@ -200,6 +205,8 @@ class ModelEstimatorRKHS:
         F_src = [env.stepDenoisedCurrent(states, actions).reshape(X.shape[0], self.state_dim) for env in self.source_envs]
 
         self._update_weight_matrix(X, M, W, F_src, alpha_src, c1, c2)
+
+        self.model_fitted = True
 
 
 

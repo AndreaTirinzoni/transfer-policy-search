@@ -245,8 +245,7 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
     if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
         state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_action_t)
     else:
-        #TODO if transition models estimated using GP
-        state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_action_t)
+        state_t1_denoised_current = algorithm_configuration.model_estimator.transition(state_t, clipped_action_t)
 
     state_t1_denoised = source_dataset.next_states_unclipped_denoised
     state_t1_denoised[source_dataset.initial_size:, :, :] = state_t1_denoised_current[source_dataset.initial_size:, :, :]
@@ -313,8 +312,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
     if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
         state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_actions)
     else:
-        #TODO if transition models estimated using GP
-        state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_actions)
+        state_t1_denoised_current = algorithm_configuration.model_estimator.transition(state_t, clipped_actions)
 
     variance_env = env_param_src[:, -1] # variance of the model transition
 
@@ -400,8 +398,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
     if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
         state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_actions)
     else:
-        #TODO if transition models estimated using GP
-        state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_actions)
+        state_t1_denoised_current = algorithm_configuration.model_estimator.transition(state_t, clipped_actions)
 
     variance_env = env_param_src[:, -1] # variance of the model transition
 
@@ -968,7 +965,7 @@ def setEnvParametersTarget(env, source_dataset, env_param):
     source_dataset.source_param[source_length:, 1+env_param.param_space_size:1+env_param.param_space_size+env_param.env_param_space_size] = env.getEnvParam().T
 
 
-def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1, model_estimation=0, dicrete_estimation=1, multid_approx=0, proposal_envs=None):
+def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1, model_estimation=0, dicrete_estimation=1, multid_approx=0, model_estimator=None, verbose=True):
 
     param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
 
@@ -988,13 +985,7 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
     algorithm_configuration.multid_approx = multid_approx
     algorithm_configuration.dicrete_estimation = dicrete_estimation
     algorithm_configuration.model_estimation = model_estimation
-
-    if model_estimation == 1:
-            if dicrete_estimation == 1:
-                model_estimator = discreteEstimator.Models(proposal_envs)
-            else:
-                #TODO GP estimation
-                model_estimator = discreteEstimator.Models(proposal_envs) #create object model estimator
+    algorithm_configuration.model_estimator = model_estimator
 
     if off_policy == 1:
         if re.match("^.*MIS.*", estimator):
@@ -1016,7 +1007,8 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
 
     for i_batch in range(simulation_param.num_batch):
 
-        #print("Batch: " + str(i_batch))
+        if verbose:
+            print("Iteration {0}".format(i_batch))
 
         batch_size = n_def
 
@@ -1028,20 +1020,36 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
 
         if batch_size != 0:
             #Generate the episodes and compute the rewards over the batch
+            if verbose:
+                print("Collecting {0} episodes...")
+                start = time.time()
             [source_task_tgt, source_param_tgt, episodes_per_configuration_tgt, next_states_unclipped_tgt, actions_clipped_tgt, next_states_unclipped_denoised_tgt] = addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, batch_size, discount_factor_timestep, algorithm_configuration.adaptive, n_def_estimation=0)
             dataset_model_estimation = sc.SourceDataset(source_task_tgt, source_param_tgt, episodes_per_configuration_tgt, next_states_unclipped_tgt, actions_clipped_tgt, next_states_unclipped_denoised_tgt, 1)
+            if verbose:
+                print("Done collecting episodes ({0}s)".format(time.time()-start))
 
         if model_estimation == 1:
-            if dicrete_estimation == 1:
+            if verbose:
+                print("Updating model...")
                 start = time.time()
+
+            if dicrete_estimation == 1:
                 env = model_estimator.chooseTransitionModel(env_param, param, simulation_param, source_dataset.source_param, source_dataset.episodes_per_config, source_dataset.n_config_cv, source_dataset.initial_size, dataset_model_estimation)
                 setEnvParametersTarget(env, source_dataset, env_param)
-                print("Durata: {0}s".format(time.time() - start))
             else:
-                #TODO GP estimation
-                env = 1
+                model_estimator.update_model(source_dataset)
+
+            if verbose:
+                print("Done updating model ({0}s)".format(time.time() - start))
+
+        if verbose:
+            print("Updating policy...")
+            start = time.time()
 
         [source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size, discount_factor_timestep)
+
+        if verbose:
+            print("Done updating policy ({0}s)".format(time.time() - start))
 
         # Update statistics
         stats.total_rewards[i_batch] = tot_reward_batch
