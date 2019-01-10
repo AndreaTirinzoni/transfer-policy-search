@@ -35,7 +35,7 @@ def simulationParallel(env_src, episode_length, episodes_per_configuration, disc
         source_dataset = sc.SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised, n_config_cv)
         simulation_param.learning_rate = learning_rates[i_learning_rate]
 
-        result = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=off_policy, model_estimation=0, multid_approx=0)
+        result = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=off_policy, model_estimation=0, multid_approx=0, verbose=False)
 
         stats[estimator].append(result)
 
@@ -58,17 +58,17 @@ variance_action = 0.1
 batch_size = 5
 num_batch = 100
 discount_factor = 0.99
-runs = 5
+runs = 20
 learning_rate = 1e-5
 ess_min = 50
-adaptive = "Yes"
+adaptive = "No"
 
 simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
 # source task for cartpole
 
-policy_params = np.array([[-0.131, 0.246, 0.402, 0.854], [-0.103, 0.158, -0.023, 0.124], [-0.039, 0.299, 0.386, 0.782], [-0.103, -0.137, -0.038, 0.12], [-0.049, 0.176, 0.447, 0.810], [-0.105, -0.16, -0.0103, 0.128], [-0.111, -0.148, -0.027, 0.086], [-0.0115, 0.219, 0.416, 0.792]])
-env_params = np.array([[0.8, 0.8, 0.09], [0.8, 0.8, 0.09], [1.5, 0.5, 0.09], [1.5, 0.5, 0.09], [0.5, 1, 0.09], [0.5, 1, 0.09], [1.2, 0.9, 0.09], [1.2, 0.9, 0.09]])
+policy_params = np.array([[-0.131, 0.246, 0.402, 0.854], [-0.103, 0.158, -0.023, 0.124], [-0.039, 0.299, 0.386, 0.782], [-0.103, -0.137, -0.038, 0.12], [-0.049, 0.176, 0.447, 0.810], [-0.105, -0.16, -0.0103, 0.128]])#, [-0.111, -0.148, -0.027, 0.086], [-0.0115, 0.219, 0.416, 0.792]])
+env_params = np.array([[0.8, 0.8, 0.09], [0.8, 0.8, 0.09], [1.5, 0.5, 0.09], [1.5, 0.5, 0.09], [0.5, 1, 0.09], [0.5, 1, 0.09]])#, [1.2, 0.9, 0.09], [1.2, 0.9, 0.09]])
 
 source_dataset_batch_size = 20
 n_config_cv = policy_params.shape[0] * env_params.shape[0]

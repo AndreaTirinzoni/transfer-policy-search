@@ -1,5 +1,0 @@
-adaptive n_def=max(0, ...)
-ess_min = 90
-uguale source dataset
-1000 batch
-20 run
