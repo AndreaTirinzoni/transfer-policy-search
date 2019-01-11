@@ -56,7 +56,7 @@ mean_initial_param = -0.1 * np.ones(param_space_size)
 variance_initial_param = 0
 variance_action = 0.1
 batch_size = 5
-num_batch = 100
+num_batch = 70
 discount_factor = 0.99
 runs = 20
 learning_rate = 1e-5
@@ -67,19 +67,19 @@ simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param
 
 # source task for cartpole
 
-policy_params = np.array([[-0.131, 0.246, 0.402, 0.854], [-0.103, 0.158, -0.023, 0.124], [-0.039, 0.299, 0.386, 0.782], [-0.103, -0.137, -0.038, 0.12], [-0.049, 0.176, 0.447, 0.810], [-0.105, -0.16, -0.0103, 0.128]])#, [-0.111, -0.148, -0.027, 0.086], [-0.0115, 0.219, 0.416, 0.792]])
-env_params = np.array([[0.8, 0.8, 0.09], [0.8, 0.8, 0.09], [1.5, 0.5, 0.09], [1.5, 0.5, 0.09], [0.5, 1, 0.09], [0.5, 1, 0.09]])#, [1.2, 0.9, 0.09], [1.2, 0.9, 0.09]])
+policy_params = np.array([[-0.131, 0.246, 0.402, 0.854], [-0.103, 0.158, -0.023, 0.124], [-0.039, 0.299, 0.386, 0.782], [-0.103, -0.137, -0.038, 0.12], [-0.111, -0.148, -0.027, 0.086], [-0.0115, 0.219, 0.416, 0.792]])#, [-0.049, 0.176, 0.447, 0.810], [-0.105, -0.16, -0.0103, 0.128]
+env_params = np.array([[0.8, 0.8, 0.09], [0.8, 0.8, 0.09], [1.5, 0.5, 0.09], [1.5, 0.5, 0.09], [1.2, 0.9, 0.09], [1.2, 0.9, 0.09]])#, [0.5, 1, 0.09], [0.5, 1, 0.09]
 
 source_dataset_batch_size = 20
 n_config_cv = policy_params.shape[0] * env_params.shape[0]
 
-estimators = ["PD-IS", "PD-MIS", "PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]
+estimators = ["PD-IS", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]#["PD-IS", "PD-MIS", "PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]
 
 learning_rates = [7e-4, 1e-3, 2e-3, 5e-4]
 
 seeds = [np.random.randint(1000000) for _ in range(runs)]
 
-results = Parallel(n_jobs=10)(delayed(simulationParallel)(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, policy_params, env_params, n_config_cv, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed) for seed in seeds) #cartpole
+results = Parallel(n_jobs=1)(delayed(simulationParallel)(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, policy_params, env_params, n_config_cv, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed) for seed in seeds) #cartpole
 #results = [simulationParallel(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, policy_params, env_params, n_config_cv, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed) for seed in seeds]
 
 with open('results.pkl', 'wb') as output:

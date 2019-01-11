@@ -53,11 +53,11 @@ def optimalPolicy(env, num_batch, batch_size, discount_factor, variance_action, 
     return stats
 
 # Initialize environment and parameters
-env = gym.make('LQG1D-v0')
-param_space_size = 1
-state_space_size = 1
+env = gym.make('cartpolec-v0')
+param_space_size = 4
+state_space_size = 4
 env_space_size = 3
-episode_length = 20
+episode_length = 200
 
 #Initialize simulation parameters
 mean_initial_param = -0.1 * np.ones(param_space_size)
@@ -66,7 +66,7 @@ variance_action = 0.01
 batch_size = 10
 num_batch = 300
 discount_factor = 0.99
-learning_rate = 2e-5
+learning_rate = 1e-4
 
 runs = 5
 
@@ -133,7 +133,7 @@ var_alg2 = np.std(total_reward_reinforce_baseline, axis=0) / (m.sqrt(runs))
 var_alg3 = np.std(total_reward_gpomdp, axis=0) / (m.sqrt(runs))
 var_opt = np.zeros(num_batch)
 
-#plot.plot_curves([x, x, x, x], [mean_alg1, mean_alg2, mean_alg3, mean_opt], [var_alg1, var_alg2, var_alg3, var_opt], title = "Tot Rewards over batches", x_label = "Batch", y_label = "Discounted reward", names = ["REINFORCE", "REINFORCE with baseline", "G(PO)MDP", "Optimal policy"], file_name = "Rewards policy search")
+plot.plot_curves([x, x, x, x], [mean_alg1, mean_alg2, mean_alg3, mean_opt], [var_alg1, var_alg2, var_alg3, var_opt], title = "Tot Rewards over batches", x_label = "Batch", y_label = "Discounted reward", names = ["REINFORCE", "REINFORCE with baseline", "G(PO)MDP", "Optimal policy"], file_name = "Rewards policy search")
 
 mean_pol1 = np.mean(policy_reinforce, axis=0)
 mean_pol2 = np.mean(policy_reinforce_baseline, axis=0)
