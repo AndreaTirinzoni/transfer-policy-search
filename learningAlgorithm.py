@@ -3,7 +3,6 @@ import numpy as np
 import algorithmPolicySearch as alg
 import random
 import re
-import discreteModelEstimation as discreteEstimator
 import simulationClasses as sc
 import time
 
@@ -36,6 +35,7 @@ class AlgorithmConfiguration:
         self.multid_approx = None
         self.dicrete_estimation = None
         self.model_estimation = None
+        self.model_estimator = None
 
 
 def createBatch(env, batch_size, episode_length, param, state_space_size, variance_action):
@@ -658,7 +658,7 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
         num_episodes_target = simulation_param.batch_size
 
     #print("Problems: n_def-" + str(num_episodes_target) + " ess-" + str(ess) + " gradient-" + str(gradient))
-    #print("param: " + str(param) + " tot_rewards: " + str(tot_reward_batch) + " ess: " + str(ess) + " n_def: " + str(num_episodes_target))
+    print("param: " + str(param) + " tot_rewards: " + str(tot_reward_batch) + " ess: " + str(ess) + " n_def: " + str(num_episodes_target))
 
     return source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target
 
@@ -1009,6 +1009,7 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
 
         if verbose:
             print("Iteration {0}".format(i_batch))
+            print(estimator)
 
         batch_size = n_def
 
@@ -1057,74 +1058,3 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
         stats.policy_parameter[i_batch, :] = param
         stats.gradient[i_batch, :] = gradient
     return stats
-
-# def learnPolicyWithModelEstimation(env_param, simulation_param, source_dataset, proposals_env, estimator, off_policy=1, model_estimation=0, continuous_estimation=0, multid_approx=0):
-#
-#     param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
-#
-#     discount_factor_timestep = np.power(simulation_param.discount_factor*np.ones(env_param.episode_length), range(env_param.episode_length))
-#     # Adam initial params
-#     m_t = 0
-#     v_t = 0
-#     t = 0
-#
-#     # Keep track of useful statistics#
-#     stats = BatchStats(simulation_param.num_batch, env_param.param_space_size)
-#     n_def = simulation_param.batch_size
-#     ess = 0
-#
-#     algorithm_configuration = switch_estimator(estimator, simulation_param.adaptive)
-#     algorithm_configuration.off_policy = off_policy
-#     algorithm_configuration.multid_approx = multid_approx
-#     algorithm_configuration.dicrete_estimation = continuous_estimation
-#
-#     model_estimation = models.Models(proposals_env)
-#
-#     if off_policy == 1:
-#         if re.match("^.*MIS.*", estimator):
-#             source_dataset.source_distributions = computeMultipleImportanceWeightsSourceDistributions(source_dataset, simulation_param.variance_action, algorithm_configuration, env_param)
-#             [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)
-#
-#         else:
-#             [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)
-#
-#         if simulation_param.adaptive == "Yes":
-#             simulation_param.defensive_sample = 1
-#             defensive_sample = simulation_param.defensive_sample
-#             addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, simulation_param.adaptive, n_def_estimation=1)
-#             n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)[1]
-#             #n_def = 5
-#
-#             #n_def = 5
-#
-#     for i_batch in range(simulation_param.num_batch):
-#
-#         batch_size = n_def
-#
-#         if simulation_param.adaptive == "Yes":
-#             n_def = n_def + simulation_param.defensive_sample
-#
-#         stats.ess[i_batch] = ess
-#
-#         #Collect new episodes
-#         if batch_size != 0:
-#             #Generate the episodes and compute the rewards over the batch
-#             [source_task_tgt, source_param_tgt, episodes_per_configuration_tgt, next_states_unclipped_tgt, actions_clipped_tgt, next_states_unclipped_denoised_tgt] = addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, batch_size, discount_factor_timestep, algorithm_configuration.adaptive, n_def_estimation=0)
-#             dataset_model_estimation = sc.SourceDataset(source_task_tgt, source_param_tgt, episodes_per_configuration_tgt, next_states_unclipped_tgt, actions_clipped_tgt, next_states_unclipped_denoised_tgt, 1)
-#
-#         if model_estimation == 0:
-#             if env = model_estimation.chooseTransitionModel(env_param, param, simulation_param, source_dataset.source_param, source_dataset.episodes_per_config, source_dataset.n_config_cv, source_dataset.initial_size, dataset_model_estimation)
-#             setEnvParametersTarget(env, source_dataset, env_param)
-#
-#         env = model_estimation.chooseTransitionModel(env_param, param, simulation_param, source_dataset.source_param, source_dataset.episodes_per_config, source_dataset.n_config_cv, source_dataset.initial_size, dataset_model_estimation)
-#         setEnvParametersTarget(env, source_dataset, env_param)
-#
-#         [source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size, discount_factor_timestep)
-#
-#         # Update statistics
-#         stats.total_rewards[i_batch] = tot_reward_batch
-#         stats.disc_rewards[i_batch] = discounted_reward_batch
-#         stats.policy_parameter[i_batch, :] = param
-#         stats.gradient[i_batch, :] = gradient
-#
-#     return stats

@@ -10,12 +10,23 @@ import math as m
 from joblib import Parallel
 from joblib import delayed
 import simulationClasses as sc
+import discreteModelEstimation as estimatorDiscrete
+import model_estimation_rkhs as modelGP
 
-def simulationParallel(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed): #lqg simulation
+def simulationParallel(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed, model_proposals=None): #lqg simulation
 
     np.random.seed(seed)
 
     [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationAllCombinations(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
+
+    if model_proposals == None:
+        model_estimator = modelGP.ModelEstimatorRKHS()
+        discrete = 0
+    else:
+        model_estimator = estimatorDiscrete.Models(model_proposals)
+        discrete = 1
+
+
     i_learning_rate = 0
 
     stats = {}
@@ -35,7 +46,7 @@ def simulationParallel(env_src, episode_length, source_dataset_batch_size, disco
         source_dataset = sc.SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised, n_config_cv)
         simulation_param.learning_rate = learning_rates[i_learning_rate]
 
-        result = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=off_policy, model_estimation=0, multid_approx=0)
+        result = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=off_policy, model_estimation=1, dicrete_estimation=1, model_estimator=model_estimator)
 
         stats[estimator].append(result)
 
@@ -60,7 +71,7 @@ num_batch = 350
 discount_factor = 0.99
 runs = 20
 learning_rate = 1e-5
-ess_min = 70
+ess_min = 50
 adaptive = "No"
 
 simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
@@ -93,8 +104,8 @@ learning_rates = [1e-6, 2e-6, 5e-6, 7e-6, 7e-6, 1e-5, 1e-5]#, 7e-6, 7e-6, 9e-6, 
 
 seeds = [np.random.randint(1000000) for _ in range(runs)]
 
-results = Parallel(n_jobs=10)(delayed(simulationParallel)(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed) for seed in seeds) #lqg1d
-#results = [simulationParallel(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed) for seed in seeds]
+#results = Parallel(n_jobs=10)(delayed(simulationParallel)(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed, model_proposals) for seed in seeds) #lqg1d
+results = [simulationParallel(env_src, episode_length, source_dataset_batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, estimators, learning_rates, env_param, simulation_param, seed, model_proposals) for seed in seeds]
 
 with open('results.pkl', 'wb') as output:
     pickle.dump(results, output, pickle.HIGHEST_PROTOCOL)

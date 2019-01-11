@@ -35,7 +35,7 @@ def simulationParallel(env_src, episode_length, source_dataset_batch_size, disco
         source_dataset = sc.SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised, n_config_cv)
         simulation_param.learning_rate = learning_rates[i_learning_rate]
 
-        result = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=off_policy, model_estimation=0, multid_approx=0)
+        result = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=off_policy)
 
         stats[estimator].append(result)
 

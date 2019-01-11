@@ -36,7 +36,7 @@ def simulationParallel(env_src, episode_length, source_dataset_batch_size, disco
         source_dataset = sc.SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised, n_config_cv)
         simulation_param.learning_rate = learning_rates[i_learning_rate]
 
-        result = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=off_policy, model_estimation=0, multid_approx=0)
+        result = la.learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=off_policy)
 
         stats[estimator].append(result)
 
@@ -61,12 +61,11 @@ num_batch = 350
 discount_factor = 0.99
 runs = 20
 learning_rate = 1e-5
-ess_min = 70
-adaptive = "No"
+ess_min = 20
+adaptive = "Yes"
 
 simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
-# source task for lqg1d
 # source task for lqg1d
 source_dataset_batch_size = 1
 discount_factor = 0.99
