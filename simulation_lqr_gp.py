@@ -75,7 +75,7 @@ def main():
                 model_estimation = 1
                 model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1], sigma_env=env_tgt.sigma_noise,
                                            sigma_pi=np.sqrt(variance_action), T=episode_length, R=50, lambda_=0.00,
-                                           source_envs=source_envs, n_source=n_source, state_dim=1)
+                                           source_envs=source_envs, n_source=n_source, max_gp=50*20, state_dim=1)
                 if estimator.endswith("GP"):
                     model.use_gp = True
             name = estimator[:-3]

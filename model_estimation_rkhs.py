@@ -8,7 +8,7 @@ class ModelEstimatorRKHS:
     Model estimation algorithm using reproducing kernel Hilbert spaces.
     """
 
-    def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, state_dim, action_dim=1, use_gp=False):
+    def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, max_gp, state_dim, action_dim=1, use_gp=False):
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.T = T
@@ -18,6 +18,7 @@ class ModelEstimatorRKHS:
         self.sigma_env = sigma_env
         self.sigma_pi = sigma_pi
         self.n_source = np.array(n_source)
+        self.max_gp = max_gp
 
         self.kernel = kernel_rho**2 * RBF(length_scale=kernel_lambda)
         self.gp = GaussianProcessRegressor(kernel=self.kernel, alpha=sigma_env**2, optimizer=None)
@@ -67,6 +68,12 @@ class ModelEstimatorRKHS:
         X = X[mask, :]
         Y = Y[mask, :]
         F = F[mask, :]
+
+        # Limit the number of samples usable by GPs
+        if X.shape[0] > self.max_gp:
+            X = X[-self.max_gp:, :]
+            Y = Y[-self.max_gp:, :]
+            F = F[-self.max_gp:, :]
 
         return X, Y, F
 
