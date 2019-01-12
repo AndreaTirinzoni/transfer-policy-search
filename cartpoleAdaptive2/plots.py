@@ -21,7 +21,7 @@ def batchToEpisodes(statistic_batch, episodesPerBatch, linspace_episodes, max_ep
 with open('results.pkl', 'rb') as input:
     results = pickle.load(input)
 
-estimators = ["IS", "PD-IS", "MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
+estimators = ["PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]
 
 disc_rewards = {}
 tot_rewards = {}
@@ -70,14 +70,18 @@ for estimator in estimators:
         episodes_current_run = results[i][estimator][0].n_def
         disc_rewards_current_run_episodes = batchToEpisodes(disc_rewards_current_run, episodes_current_run.astype(int), linspace_episodes, max_episodes)
         disc_rewards[estimator].append(disc_rewards_current_run_episodes)
+        tot_rewards_current_run = results[i][estimator][0].total_rewards
+        episodes_current_run = results[i][estimator][0].n_def
+        tot_rewards_current_run_episodes = batchToEpisodes(tot_rewards_current_run, episodes_current_run.astype(int), linspace_episodes, max_episodes)
+        tot_rewards[estimator].append(tot_rewards_current_run_episodes)
         policy_current_run = results[i][estimator][0].policy_parameter
         policy_current_run_episodes = [batchToEpisodes(policy_current_run[:, t], episodes_current_run.astype(int), linspace_episodes, max_episodes) for t in range(param_policy_space)]
         policy[estimator].append(policy_current_run_episodes)
 
-# means = [np.mean(disc_rewards[estimator], axis=0) for estimator in estimators]
-# stds = [alpha * np.std(disc_rewards[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
-#
-# plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="Return", names=estimators)
+means = [np.mean(tot_rewards[estimator], axis=0) for estimator in estimators]
+stds = [alpha * np.std(tot_rewards[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
+
+plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="Return", names=estimators)
 
 # means = [np.mean(ess[estimator], axis=0) for estimator in estimators]
 # stds = [alpha * np.std(ess[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]

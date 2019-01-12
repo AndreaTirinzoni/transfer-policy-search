@@ -53,6 +53,7 @@ def main():
         if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]:
             off_policy = 0
             name = estimator
+            simulation_param.batch_size = 10
         else:
             off_policy = 1
 

@@ -33,10 +33,10 @@ def main():
 
 
     # source task for cartpole
-    policy_params = np.array([[-0.131, 0.246, 0.402, 0.854], [-0.103, 0.158, -0.023, 0.124], [-0.039, 0.299, 0.386, 0.782], [-0.103, -0.137, -0.038, 0.12], [-0.111, -0.148, -0.027, 0.086], [-0.0115, 0.219, 0.416, 0.792]])#, [-0.049, 0.176, 0.447, 0.810], [-0.105, -0.16, -0.0103, 0.128]])
-    env_params = np.array([[0.8, 0.8, 0.09], [0.8, 0.8, 0.09], [1.5, 0.5, 0.09], [1.5, 0.5, 0.09], [1.2, 0.9, 0.09], [1.2, 0.9, 0.09]])#, [0.5, 1, 0.09], [0.5, 1, 0.09]])
+    policy_params = np.array([[-0.131, 0.246, 0.402, 0.854]])#, [-0.103, 0.158, -0.023, 0.124], [-0.039, 0.299, 0.386, 0.782]])#, [-0.103, -0.137, -0.038, 0.12], [-0.111, -0.148, -0.027, 0.086], [-0.0115, 0.219, 0.416, 0.792]])#, [-0.049, 0.176, 0.447, 0.810], [-0.105, -0.16, -0.0103, 0.128]])
+    env_params = np.array([[0.8, 0.8, 0.09], [0.8, 0.8, 0.09]])#, [1.5, 0.5, 0.09], [1.5, 0.5, 0.09], [1.2, 0.9, 0.09], [1.2, 0.9, 0.09]])#, [0.5, 1, 0.09], [0.5, 1, 0.09]])
 
-    source_dataset_batch_size = 10
+    source_dataset_batch_size = 15
     n_config_cv = policy_params.shape[0]
 
     [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped,
@@ -55,12 +55,14 @@ def main():
         if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]:
             off_policy = 0
             name = estimator
+            simulation_param.batch_size = 5
         else:
             off_policy = 1
 
         simulation_param.learning_rate = learning_rate
         if estimator.endswith("SR"): #if sample reuse
             source_dataset_batch_size = 1
+            simulation_param.batch_size = 10
             discount_factor = 0.99
             policy_params = np.array([[-1]])
             name = estimator[:-3]
@@ -104,13 +106,13 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 1
+n_jobs = 10
 
 # Number of runs
 n_runs = 20
 
-estimators = ["PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]#["PD-IS", "PD-MIS", "PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]
-learning_rates = [2e-2, 5e-4]
+estimators = ["MIS-CV-BASELINE", "PD-MIS-CV-BASELINE", "GPOMDP"]#["PD-IS", "PD-MIS", "PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]
+learning_rates = [5e-3, 5e-3, 2e-3]
 num_batch = 70
 
 # Base folder where to log

@@ -268,7 +268,7 @@ def computeEssThird(policy_param, env_param, source_dataset, simulation_param, a
     n = trajectories_length.shape[0]
 
     weights = algorithm_configuration.computeWeights(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, 0)[0]
-    delta = 0.1
+    delta = 0.01
 
     if algorithm_configuration.pd == 0:
         ess = n / (1 + n * delta * (np.mean(weights) - 1)**2)
@@ -339,7 +339,6 @@ def essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_ma
             print(str(i_env_param) + " " + str(i_policy_param))
             [ess1_ij, min_index1] = computeEss(np.asarray(policy_param[i_policy_param] * np.ones(env_param.param_space_size)), env_params, source_dataset, simulation_param, algorithm_configuration)
             n_def1_ij = computeNdef(min_index1, np.asarray(policy_param[i_policy_param] * np.ones(env_param.param_space_size)), env_params, source_dataset, simulation_param, algorithm_configuration)
-            ess1[i_env_param, i_policy_param] = ess1_ij
             n_def1[i_env_param, i_policy_param] = n_def1_ij
 
             [ess2_ij, min_index2] = computeEssSecond(np.asarray(policy_param[i_policy_param] * np.ones(env_param.param_space_size)), env_params, source_dataset, simulation_param, algorithm_configuration)
@@ -349,7 +348,8 @@ def essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_ma
 
             [ess3_ij, min_index3] = computeEssThird(np.asarray(policy_param[i_policy_param] * np.ones(env_param.param_space_size)), env_params, source_dataset, simulation_param, algorithm_configuration)
             #n_def3_ij = computeNdefSecond(min_index2, np.asarray(policy_param[i_policy_param] * np.ones(env_param.param_space_size)), env_params, source_dataset, simulation_param, algorithm_configuration)
-            ess3[i_env_param, i_policy_param] = min(ess3_ij, ess2_ij)
+            ess3[i_env_param, i_policy_param] = 0 if ess3_ij <= ess2_ij else ess2_ij
+            ess1[i_env_param, i_policy_param] = min(n_def2_ij, ess3_ij) #ess1_ij
 
     return [ess1, n_def1, ess2, n_def2, ess3]
 
@@ -410,11 +410,11 @@ with open('n_def_version1.pkl', 'wb') as output:
 with open('n_def_version2.pkl', 'wb') as output:
     pickle.dump(n_def2, output, pickle.HIGHEST_PROTOCOL)
 
-# average = np.mean(ess1)
-# print(np.max(ess1))
-# ax = sns.heatmap(ess1, linewidth=0.5, vmax=np.max(ess1), vmin=np.min(ess1), center=average)
-# plt.show()
-#
+average = np.mean(ess1)
+print(np.max(ess1))
+ax = sns.heatmap(ess1, linewidth=0.5, vmax=np.max(ess1), vmin=np.min(ess1), center=average)
+plt.show()
+
 average = np.mean(ess2)
 print(np.max(ess2))
 ax = sns.heatmap(ess2, linewidth=0.5, vmax=np.max(ess2), vmin=np.min(ess2), center=average)
