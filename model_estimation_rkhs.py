@@ -8,7 +8,7 @@ class ModelEstimatorRKHS:
     Model estimation algorithm using reproducing kernel Hilbert spaces.
     """
 
-    def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, state_dim, action_dim=1, use_gp=False):
+    def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, state_dim, action_dim=1, use_gp=False):
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.T = T
@@ -17,6 +17,7 @@ class ModelEstimatorRKHS:
         self.source_envs = source_envs
         self.sigma_env = sigma_env
         self.sigma_pi = sigma_pi
+        self.n_source = np.array(n_source)
 
         self.kernel = kernel_rho**2 * RBF(length_scale=kernel_lambda)
         self.gp = GaussianProcessRegressor(kernel=self.kernel, alpha=sigma_env**2, optimizer=None)
@@ -58,7 +59,7 @@ class ModelEstimatorRKHS:
         F = f_t.reshape(f_t.shape[0]*f_t.shape[1], f_t.shape[2])
 
         # Handle variable-length trajectories
-        trajectories_length = dataset.source_param[:, 1 + 2*self.state_dim]
+        trajectories_length = dataset.source_param[:, -1]
         mask = trajectories_length[dataset.initial_size:, np.newaxis] >= np.repeat(np.arange(0, s_t.shape[1])[np.newaxis, :],repeats=s_t.shape[0], axis=0)
         # Reshape mask to NT
         mask = mask.reshape(s_t.shape[0]*s_t.shape[1],)
@@ -188,7 +189,7 @@ class ModelEstimatorRKHS:
         N = dataset.source_param.shape[0]
         alpha_0 = dataset.episodes_per_config[-1] / N
         alpha_tgt = dataset.episodes_per_config[dataset.n_config_cv:] / N
-        alpha_src = dataset.episodes_per_config[:dataset.n_config_cv] / N
+        alpha_src = self.n_source / N
 
         target_param = dataset.source_param[-1, 1:1+self.state_dim]
 
