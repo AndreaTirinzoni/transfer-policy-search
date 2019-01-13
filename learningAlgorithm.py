@@ -106,12 +106,14 @@ def computeNdef(min_index, param, env_param, source_dataset, simulation_param, a
     w_2 = np.linalg.norm(weights, 2)
     num_episodes_target1 = int(max(0, np.ceil((simulation_param.ess_min * w_1 / n) - (w_1 * n / (w_2 ** 2)))-1))
 
-    c = (np.mean(weights**3) + 3*(1-np.mean(weights)))/(1 + np.var(weights))**2
+    c = (np.mean(weights**3) + 3*(1-np.mean(weights)))/(1 + variance_weights)**2
     num_episodes_target2 = np.ceil((simulation_param.ess_min - n / (1 + variance_weights))/(min(1, c)))
-    num_episodes_target2 = int(np.clip(num_episodes_target2, 0, simulation_param.ess_min-1))
+    num_episodes_target2 = int(np.clip(num_episodes_target2, 0, simulation_param.ess_min-simulation_param.defensive_sample))
 
-    if np.mean(weights) < 0.1:
-        num_episodes_target2 = simulation_param.ess_min
+    delta = 0.1
+
+    if variance_weights < n * delta * (np.mean(weights) - 1)**2:
+        num_episodes_target2 = simulation_param.ess_min - simulation_param.defensive_sample
 
     return [num_episodes_target1, num_episodes_target2]
 
@@ -996,7 +998,6 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
             [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)
 
         if simulation_param.adaptive == "Yes":
-            simulation_param.defensive_sample = 1
             defensive_sample = simulation_param.defensive_sample
             addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, simulation_param.adaptive, n_def_estimation=1)
             n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)[1]
@@ -1022,7 +1023,7 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
         if batch_size != 0:
             #Generate the episodes and compute the rewards over the batch
             if verbose:
-                print("Collecting {0} episodes...")
+                print("Collecting {0} episodes...".format(batch_size))
                 start = time.time()
             [source_task_tgt, source_param_tgt, episodes_per_configuration_tgt, next_states_unclipped_tgt, actions_clipped_tgt, next_states_unclipped_denoised_tgt] = addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, batch_size, discount_factor_timestep, algorithm_configuration.adaptive, n_def_estimation=0)
             dataset_model_estimation = sc.SourceDataset(source_task_tgt, source_param_tgt, episodes_per_configuration_tgt, next_states_unclipped_tgt, actions_clipped_tgt, next_states_unclipped_denoised_tgt, 1)

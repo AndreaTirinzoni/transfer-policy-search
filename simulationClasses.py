@@ -10,7 +10,7 @@ class EnvParam:
 
 class SimulationParam:
 
-    def __init__(self, mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive):
+    def __init__(self, mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive, defensive_sample):
 
         self.mean_initial_param = mean_initial_param
         self.variance_initial_param = variance_initial_param
@@ -22,7 +22,7 @@ class SimulationParam:
         self.learning_rate = learning_rate
         self.ess_min = ess_min
         self.adaptive = adaptive
-        self.defensive_sample = None
+        self.defensive_sample = defensive_sample
 
 class SourceDataset:
 
