@@ -111,8 +111,8 @@ n_jobs = 20
 # Number of runs
 n_runs = 20
 
-estimators = ["PD-MIS", "MIS-CV-BASELINE", "PD-MIS-CV-BASELINE", "GPOMDP"]#["PD-IS", "PD-MIS", "PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]
-learning_rates = [8e-4, 7e-3, 7e-3, 2e-3]
+estimators = ["PD-MIS-SR", "MIS-CV-BASELINE-SR", "PD-MIS-CV-BASELINE-SR", "GPOMDP"]#["PD-IS", "PD-MIS", "PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]
+learning_rates = [2e-3, 2e-3, 2e-3, 2e-3]
 num_batch = 100
 
 # Base folder where to log
