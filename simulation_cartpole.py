@@ -64,9 +64,10 @@ def main():
             source_dataset_batch_size = 1
             simulation_param.batch_size = 10
             discount_factor = 0.99
-            policy_params = np.array([[0.8, 0.8, 0.09]])
+            policy_params = np.array([[-0.131, 0.246, 0.402, 0.854]])
+            env_params = np.array([[0.8, 0.8, 0.09]])
+            n_config_cv = 1
             name = estimator[:-3]
-            env_params = np.array([[-0.131, 0.246, 0.402, 0.854]])
             [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped,
              next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env_src, episode_length, source_dataset_batch_size,
                                                                           discount_factor, variance_action, policy_params,
@@ -106,7 +107,7 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 20
+n_jobs = 1
 
 # Number of runs
 n_runs = 20
