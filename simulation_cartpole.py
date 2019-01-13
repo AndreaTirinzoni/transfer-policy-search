@@ -62,9 +62,9 @@ def main():
         simulation_param.learning_rate = learning_rate
         if estimator.endswith("SR"): #if sample reuse
             source_dataset_batch_size = 1
-            simulation_param.batch_size = 10
+            simulation_param.batch_size = 5
             discount_factor = 0.99
-            policy_params = np.array([[-0.131, 0.246, 0.402, 0.854]])
+            policy_params = np.array([[-0.5, 0.8, 0.9, 1]])
             env_params = np.array([[0.8, 0.8, 0.09]])
             n_config_cv = 1
             name = estimator[:-3]
@@ -112,9 +112,9 @@ n_jobs = 1
 # Number of runs
 n_runs = 20
 
-estimators = ["PD-MIS-SR", "MIS-CV-BASELINE-SR", "PD-MIS-CV-BASELINE-SR", "GPOMDP"]#["PD-IS", "PD-MIS", "PD-MIS-CV-BASELINE-APPROXIMATED", "GPOMDP"]
-learning_rates = [2e-3, 2e-3, 2e-3, 2e-3]
-num_batch = 100
+estimators = ["MIS-CV-BASELINE-SR", "PD-MIS-SR", "PD-MIS-CV-BASELINE-SR", "GPOMDP"]
+learning_rates = [1e-2, 1e-2, 1e-2, 1e-2]
+num_batch = 70
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
