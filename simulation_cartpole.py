@@ -112,7 +112,7 @@ n_jobs = 1
 # Number of runs
 n_runs = 20
 
-estimators = ["MIS-CV-BASELINE-SR", "PD-MIS-SR", "PD-MIS-CV-BASELINE-SR", "GPOMDP"]
+estimators = ["PD-IS", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
 learning_rates = [1e-2, 1e-2, 1e-2, 1e-2]
 num_batch = 70
 
