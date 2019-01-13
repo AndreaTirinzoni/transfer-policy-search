@@ -36,21 +36,26 @@ def main():
     # source task for lqg1d
     episodes_per_configuration = 20
 
-    policy_params = np.array([[-0.1], [-0.1], [-0.1],
-                              [-0.3], [-0.3], [-0.3],
-                              [-0.5], [-0.5], [-0.5],
-                              [-0.7], [-0.7], [-0.7]])
-    env_params = np.array([[0.8, 1, 0.09], [1.2, 1, 0.09], [0.5, 1, 0.09],
-                           [0.8, 1, 0.09], [1.2, 1, 0.09], [0.5, 1, 0.09],
-                           [0.8, 1, 0.09], [1.2, 1, 0.09], [0.5, 1, 0.09],
-                           [0.8, 1, 0.09], [1.2, 1, 0.09], [0.5, 1, 0.09]])
+    pis = [[-0.1], [-0.3], [-0.5], [-0.7]]
+    envs = [[0.8, 1, 0.09], [1.2, 1, 0.09], [0.5, 1, 0.09]]
+
+    policy_params = []
+    env_params = []
+
+    for p in pis:
+        for e in envs:
+            policy_params.append(p)
+            env_params.append(e)
+
+    policy_params = np.array(policy_params)
+    env_params = np.array(env_params)
 
     source_envs = []
-    for param in [[0.8, 1, 0.09], [1.2, 1, 0.09], [0.5, 1, 0.09]]:
+    for param in np.array(envs):
         source_envs.append(gym.make('LQG1D-v0'))
         source_envs[-1].setParams(param)
     n_config_cv = policy_params.shape[0]
-    n_source = episodes_per_configuration * env_params.shape[0]
+    n_source = [episodes_per_configuration*len(pis) for _ in envs]
 
     learning_rates = [1e-5, 1e-5, 1e-5, 1e-5]
 
