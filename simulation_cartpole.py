@@ -64,9 +64,9 @@ def main():
             source_dataset_batch_size = 1
             simulation_param.batch_size = 10
             discount_factor = 0.99
-            policy_params = np.array([[-1]])
+            policy_params = np.array([[0.8, 0.8, 0.09]])
             name = estimator[:-3]
-            env_params = np.array([[1-5, 1, 0.09]])
+            env_params = np.array([[-0.131, 0.246, 0.402, 0.854]])
             [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped,
              next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env_src, episode_length, source_dataset_batch_size,
                                                                           discount_factor, variance_action, policy_params,
