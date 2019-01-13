@@ -25,18 +25,24 @@ def main():
     variance_action = 0.1
     batch_size = 5
     discount_factor = 0.99
-    ess_min = 50
-    adaptive = "No"
+    ess_min = 20
+    adaptive = "Yes"
+    n_min = 5
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size,
-                                          num_batch, discount_factor, None, None, ess_min, adaptive)
+                                          num_batch, discount_factor, None, None, ess_min, adaptive, n_min)
 
 
     # source task for lqg1d
     source_dataset_batch_size = 20
     discount_factor = 0.99
-    policy_params = np.array([[-0.2], [-0.5], [-0.8], [-0.2], [-0.5], [-0.8], [-0.2], [-0.5], [-0.8]])
-    env_params = np.array([[0.9, 1, 0.09], [1.5, 1, 0.09], [1.2, 1, 0.09], [0.9, 1, 0.09], [1.5, 1, 0.09], [1.2, 1, 0.09], [0.9, 1, 0.09], [1.5, 1, 0.09], [1.2, 1, 0.09]])
+    policy_params = np.array([[-0.1], [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7], [-0.8],
+                              [-0.1], [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7], [-0.8],
+                              [-0.1], [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7], [-0.8]])
+    env_params = np.array([[0.9, 1, 0.09], [0.9, 1, 0.09], [0.9, 1, 0.09], [0.9, 1, 0.09], [0.9, 1, 0.09], [0.9, 1, 0.09],
+                           [0.9, 1, 0.09], [0.9, 1, 0.09], [1.2, 1, 0.09], [1.2, 1, 0.09], [1.2, 1, 0.09], [1.2, 1, 0.09],
+                           [1.2, 1, 0.09], [1.2, 1, 0.09], [1.2, 1, 0.09], [1.2, 1, 0.09], [1.5, 1, 0.09], [1.5, 1, 0.09],
+                           [1.5, 1, 0.09], [1.5, 1, 0.09], [1.5, 1, 0.09], [1.5, 1, 0.09], [1.5, 1, 0.09], [1.5, 1, 0.09]])
 
     n_config_cv = policy_params.shape[0]
 
@@ -110,8 +116,8 @@ n_jobs = 10
 n_runs = 20
 
 estimators = ["IS", "PD-IS", "MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
-learning_rates = [1e-6, 2e-6, 5e-6, 7e-6, 7e-6, 1e-5, 1e-5]
-num_batch = 420
+learning_rates = [1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5]
+num_batch = 2
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
