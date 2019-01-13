@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF
+from sklearn.gaussian_process.kernels import RBF, DotProduct
 from envs.rkhs_env import RKHS_Env
 
 class ModelEstimatorRKHS:
@@ -8,7 +8,7 @@ class ModelEstimatorRKHS:
     Model estimation algorithm using reproducing kernel Hilbert spaces.
     """
 
-    def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, max_gp, state_dim, action_dim=1, use_gp=False):
+    def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, max_gp, state_dim, action_dim=1, use_gp=False, linear_kernel=False):
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.T = T
@@ -20,7 +20,10 @@ class ModelEstimatorRKHS:
         self.n_source = np.array(n_source)
         self.max_gp = max_gp
 
-        self.kernel = kernel_rho**2 * RBF(length_scale=kernel_lambda)
+        if linear_kernel:
+            self.kernel = DotProduct(sigma_0=0)
+        else:
+            self.kernel = kernel_rho**2 * RBF(length_scale=kernel_lambda)
         self.gp = GaussianProcessRegressor(kernel=self.kernel, alpha=sigma_env**2, optimizer=None)
 
         # Weight matrix of the learned model

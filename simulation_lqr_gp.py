@@ -24,28 +24,35 @@ def main():
     mean_initial_param = -0.1 * np.ones(param_space_size)
     variance_initial_param = 0
     variance_action = 0.1
-    batch_size = 5
+    batch_size = 10
     discount_factor = 0.99
-    ess_min = 50
-    adaptive = "No"
+    ess_min = 10
+    adaptive = "Yes"
+    n_min = 5
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size,
-                                          num_batch, discount_factor, None, None, ess_min, adaptive)
+                                          num_batch, discount_factor, None, None, ess_min, adaptive, n_min)
 
     # source task for lqg1d
-    episodes_per_configuration = 10
+    episodes_per_configuration = 20
 
-    policy_params = np.array([[-0.1], [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7]])
-    env_params = np.array([[0.8, 1, 0.09], [1.2, 1, 0.09]])
+    policy_params = np.array([[-0.1], [-0.1], [-0.1],
+                              [-0.3], [-0.3], [-0.3],
+                              [-0.5], [-0.5], [-0.5],
+                              [-0.7], [-0.7], [-0.7]])
+    env_params = np.array([[0.8, 1, 0.09], [1.2, 1, 0.09], [0.5, 1, 0.09],
+                           [0.8, 1, 0.09], [1.2, 1, 0.09], [0.5, 1, 0.09],
+                           [0.8, 1, 0.09], [1.2, 1, 0.09], [0.5, 1, 0.09],
+                           [0.8, 1, 0.09], [1.2, 1, 0.09], [0.5, 1, 0.09]])
 
     source_envs = []
-    for param in env_params:
+    for param in [[0.8, 1, 0.09], [1.2, 1, 0.09], [0.5, 1, 0.09]]:
         source_envs.append(gym.make('LQG1D-v0'))
         source_envs[-1].setParams(param)
-    n_config_cv = policy_params.shape[0] * env_params.shape[0]
-    n_source = [policy_params.shape[0]*episodes_per_configuration for _ in env_params]
+    n_config_cv = policy_params.shape[0]
+    n_source = episodes_per_configuration * env_params.shape[0]
 
-    learning_rates = [5e-6, 5e-6, 5e-6, 5e-6, 5e-6, 5e-6, 5e-6]
+    learning_rates = [1e-5, 1e-5, 1e-5, 1e-5]
 
     [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped,
      next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env_src, episode_length, episodes_per_configuration,
@@ -67,6 +74,7 @@ def main():
             off_policy = 0
             model_estimation = 0
             name = estimator
+            simulation_param.adaptive = "No"
         else:
             off_policy = 1
             if estimator.endswith("ID"):
@@ -75,10 +83,12 @@ def main():
                 model_estimation = 1
                 model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1], sigma_env=env_tgt.sigma_noise,
                                            sigma_pi=np.sqrt(variance_action), T=episode_length, R=50, lambda_=0.00,
-                                           source_envs=source_envs, n_source=n_source, max_gp=50*20, state_dim=1)
+                                           source_envs=source_envs, n_source=n_source, max_gp=10*5*20, state_dim=1,
+                                           linear_kernel=True)
                 if estimator.endswith("GP"):
                     model.use_gp = True
             name = estimator[:-3]
+            simulation_param.adaptive = "Yes"
 
         simulation_param.learning_rate = learning_rate
         source_dataset = sc.SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped,
@@ -87,7 +97,7 @@ def main():
         result = la.learnPolicy(env_param, simulation_param, source_dataset, name, off_policy=off_policy,
                                 model_estimation=model_estimation, dicrete_estimation=0, model_estimator=model)
 
-        stats[estimator].append(result.policy_parameter[:, 0])
+        stats[estimator].append(result)
 
     return stats
 
@@ -115,8 +125,8 @@ n_jobs = 10
 # Number of runs
 n_runs = 20
 
-estimators = ["GPOMDP", "MIS-ID", "MIS-CV-BASELINE-ID", "MIS-ES", "MIS-GP", "MIS-CV-BASELINE-ES", "MIS-CV-BASELINE-GP"]
-num_batch = 200
+estimators = ["GPOMDP", "MIS-CV-BASELINE-ID", "MIS-CV-BASELINE-ES", "MIS-CV-BASELINE-GP"]
+num_batch = 400
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
