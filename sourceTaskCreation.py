@@ -137,10 +137,10 @@ def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, var
     """
 
     i_episode = 0
-    episodes_per_configuration = np.zeros(policy_params.shape[0]*env_params.shape[0])
+    episodes_per_configuration = np.zeros(policy_params.shape[0])
     i_configuration = 0
     episode_per_param = batch_size
-    length_source_task = policy_params.shape[0]*env_params.shape[0]*episode_per_param
+    length_source_task = policy_params.shape[0]*episode_per_param
     source_task = np.zeros((length_source_task, episode_length, state_space_size + 2 + state_space_size)) # every line a task, every task has all [clipped_state, action, reward]
     # Every line is a task, every task has [discounted_return, policy_parameter, env_params, variance]
     source_param = np.zeros((length_source_task, 1+param_space_size+env_param_space_size+1))
@@ -150,14 +150,12 @@ def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, var
 
     discount_factor_timestep = np.power(discount_factor*np.ones(episode_length), range(episode_length))
 
-    for i_policy_param in range(policy_params.shape[0]):
+    for i in range(policy_params.shape[0]):
 
-        for i_env_param in range(env_params.shape[0]):
-
-            env.setParams(env_params[i_env_param, :])
+            env.setParams(env_params[i, :])
 
             # Reset the environment and pick the first action
-            [batch, trajectory_length] = createBatch(env, episode_per_param, episode_length, policy_params[i_policy_param, :], state_space_size, variance_action) # [state, action, reward, next_state]
+            [batch, trajectory_length] = createBatch(env, episode_per_param, episode_length, policy_params[i, :], state_space_size, variance_action) # [state, action, reward, next_state]
 
             #  Go through the episode and compute estimators
 
@@ -176,7 +174,7 @@ def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, var
 
             #I populate the source parameters
             source_param[i_episode:i_episode+episode_per_param, 0] = discounted_return
-            source_param[i_episode:i_episode+episode_per_param, 1:1+param_space_size] = policy_params[i_policy_param, :]
+            source_param[i_episode:i_episode+episode_per_param, 1:1+param_space_size] = policy_params[i, :]
             source_param[i_episode:i_episode+episode_per_param, 1+param_space_size:1+param_space_size+env_param_space_size] = env.getEnvParam().T
             source_param[i_episode:i_episode+episode_per_param, 1+param_space_size+env_param_space_size] = trajectory_length
 

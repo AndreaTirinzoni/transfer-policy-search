@@ -244,8 +244,6 @@ def computeEssSecond(policy_param, env_param, source_dataset, simulation_param, 
 
     weights = algorithm_configuration.computeWeights(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, 0)[0]
 
-    print("Mean weights: " + str(np.mean(weights)))
-
     if algorithm_configuration.pd == 0:
         variance_weights = 1/n * np.sum((weights-1)**2)
         ess = n / (1 + variance_weights)
@@ -257,6 +255,30 @@ def computeEssSecond(policy_param, env_param, source_dataset, simulation_param, 
             weights_timestep = weights[indices, t]
             variance_weights = 1/n * np.sum((weights_timestep-1)**2)
             ess[t] = n / (1 + variance_weights)
+
+        min_index = np.argmin(ess)
+        ess = ess[min_index]
+
+    return [ess, min_index]
+
+
+def computeEssThird(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration):
+
+    trajectories_length = getEpisodesInfoFromSource(source_dataset, env_param)[-1]
+    n = trajectories_length.shape[0]
+
+    weights = algorithm_configuration.computeWeights(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, 0)[0]
+    delta = 0.01
+
+    if algorithm_configuration.pd == 0:
+        ess = n / (1 + n * delta * (np.mean(weights) - 1)**2)
+        min_index = 0
+    else:
+        ess = np.zeros(weights.shape[1])
+        for t in range(weights.shape[1]):
+            indices = trajectories_length >= t
+            weights_timestep = weights[indices, t]
+            ess[t] = min(n / (1 + n * delta * (np.mean(weights_timestep) - 1)**2), n / (1 + n * (np.mean(weights_timestep) - 1)**2))
 
         min_index = np.argmin(ess)
         ess = ess[min_index]
@@ -305,6 +327,7 @@ def essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_ma
     env_parameters = np.linspace(env_param_min, env_param_max, linspace_env)
     ess1 = np.zeros((env_parameters.shape[0], policy_param.shape[0]))
     ess2 = np.zeros((env_parameters.shape[0], policy_param.shape[0]))
+    ess3 = np.zeros((env_parameters.shape[0], policy_param.shape[0]))
     n_def1 = np.zeros((env_parameters.shape[0], policy_param.shape[0]))
     n_def2 = np.zeros((env_parameters.shape[0], policy_param.shape[0]))
 
@@ -316,7 +339,6 @@ def essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_ma
             print(str(i_env_param) + " " + str(i_policy_param))
             [ess1_ij, min_index1] = computeEss(np.asarray(policy_param[i_policy_param] * np.ones(env_param.param_space_size)), env_params, source_dataset, simulation_param, algorithm_configuration)
             n_def1_ij = computeNdef(min_index1, np.asarray(policy_param[i_policy_param] * np.ones(env_param.param_space_size)), env_params, source_dataset, simulation_param, algorithm_configuration)
-            ess1[i_env_param, i_policy_param] = ess1_ij
             n_def1[i_env_param, i_policy_param] = n_def1_ij
 
             [ess2_ij, min_index2] = computeEssSecond(np.asarray(policy_param[i_policy_param] * np.ones(env_param.param_space_size)), env_params, source_dataset, simulation_param, algorithm_configuration)
@@ -324,7 +346,12 @@ def essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_ma
             ess2[i_env_param, i_policy_param] = ess2_ij
             n_def2[i_env_param, i_policy_param] = n_def2_ij
 
-    return [ess1, n_def1, ess2, n_def2]
+            [ess3_ij, min_index3] = computeEssThird(np.asarray(policy_param[i_policy_param] * np.ones(env_param.param_space_size)), env_params, source_dataset, simulation_param, algorithm_configuration)
+            #n_def3_ij = computeNdefSecond(min_index2, np.asarray(policy_param[i_policy_param] * np.ones(env_param.param_space_size)), env_params, source_dataset, simulation_param, algorithm_configuration)
+            ess3[i_env_param, i_policy_param] = 0 if ess3_ij <= ess2_ij else ess2_ij
+            ess1[i_env_param, i_policy_param] = min(n_def2_ij, ess3_ij) #ess1_ij
+
+    return [ess1, n_def1, ess2, n_def2, ess3]
 
 
 env = gym.make("LQG1D-v0")
@@ -365,7 +392,7 @@ algorithm_configuration = AlgorithmConfiguration(pd, computeWeights)
 source_dataset.source_distributions = computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance_action, algorithm_configuration, env_param)
 
 print("Computing ESS")
-[ess1, n_def1, ess2, n_def2] = essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env*2, linspace_policy*2, source_dataset, simulation_param, algorithm_configuration, env_param)
+[ess1, n_def1, ess2, n_def2, ess3] = essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env*4, linspace_policy*4, source_dataset, simulation_param, algorithm_configuration, env_param)
 
 
 with open('ess_version1.pkl', 'wb') as output:
@@ -374,13 +401,14 @@ with open('ess_version1.pkl', 'wb') as output:
 with open('ess_version2.pkl', 'wb') as output:
     pickle.dump(ess2, output, pickle.HIGHEST_PROTOCOL)
 
+with open('ess_version3.pkl', 'wb') as output:
+    pickle.dump(ess3, output, pickle.HIGHEST_PROTOCOL)
+
 with open('n_def_version1.pkl', 'wb') as output:
     pickle.dump(n_def1, output, pickle.HIGHEST_PROTOCOL)
 
 with open('n_def_version2.pkl', 'wb') as output:
     pickle.dump(n_def2, output, pickle.HIGHEST_PROTOCOL)
-
-print(ess2)
 
 average = np.mean(ess1)
 print(np.max(ess1))
@@ -390,6 +418,13 @@ plt.show()
 average = np.mean(ess2)
 print(np.max(ess2))
 ax = sns.heatmap(ess2, linewidth=0.5, vmax=np.max(ess2), vmin=np.min(ess2), center=average)
+plt.show()
+
+print(ess3)
+
+average = np.mean(ess3)
+print(np.max(ess3))
+ax = sns.heatmap(ess3, linewidth=0.5, vmax=np.max(ess3), vmin=np.min(ess3), center=average)
 plt.show()
 
 average = np.mean(n_def1)

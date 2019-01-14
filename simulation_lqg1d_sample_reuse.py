@@ -62,7 +62,7 @@ discount_factor = 0.99
 runs = 20
 learning_rate = 1e-5
 ess_min = 20
-adaptive = "No"
+adaptive = "Yes"
 
 simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive)
 
