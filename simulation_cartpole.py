@@ -20,22 +20,23 @@ def main():
 
     env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length)
 
-    mean_initial_param = np.zeros(param_space_size)
-    variance_initial_param = 0.1
+    mean_initial_param = np.random.normal(np.zeros(param_space_size), np.sqrt(0.1))
+    variance_initial_param = 0
     variance_action = 0.1
     batch_size = 5
     discount_factor = 0.99
-    ess_min = 50
-    adaptive = "No"
-    n_min = 5
+    ess_min = 20
+    adaptive = "Yes"
+    n_min = 10
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size,
                                           num_batch, discount_factor, None, None, ess_min, adaptive, n_min)
 
 
     # source task for cartpole
-    policy_params = np.array([[-0.049, 0.176, 0.447, 0.810], [-0.105, -0.16, -0.0103, 0.128], [-0.099, 0.199, 0.283, 0.738], [-0.059, -0.038, -0.076, 0.376]])#[-0.131, 0.246, 0.402, 0.854], [-0.103, 0.158, -0.023, 0.124], [-0.039, 0.299, 0.386, 0.782], [-0.103, -0.137, -0.038, 0.12], [-0.111, -0.148, -0.027, 0.086], [-0.0115, 0.219, 0.416, 0.792], [-0.049, 0.176, 0.447, 0.810], [-0.105, -0.16, -0.0103, 0.128]])
-    env_params = np.array([[0.5, 1, 0.09], [0.5, 1, 0.09], [1, 0.5, 0.09], [1, 0.5, 0.09]])#[0.8, 0.8, 0.09], [0.8, 0.8, 0.09], [1.5, 0.5, 0.09], [1.5, 0.5, 0.09], [1.2, 0.9, 0.09], [1.2, 0.9, 0.09], ])
+    #policy_params = np.array([[-0.0259, 0.2541, 0.2797, 0.7054], [-0.0659, 0.0610, 0.0910, 0.3631]])#[-0.049, 0.176, 0.447, 0.810], [-0.105, -0.16, -0.0103, 0.128], [-0.131, 0.246, 0.402, 0.854], [-0.103, 0.158, -0.023, 0.124], [-0.039, 0.299, 0.386, 0.782], [-0.103, -0.137, -0.038, 0.12], [-0.111, -0.148, -0.027, 0.086], [-0.0115, 0.219, 0.416, 0.792], [-0.049, 0.176, 0.447, 0.810], [-0.105, -0.16, -0.0103, 0.128]])
+    policy_params = np.array([[-0.0781, 0.1737, 0.2883, 0.6518], [-0.0757, -0.0379, 0.0585, 0.3026], [-0.0554, 0.1725, 0.2940, 0.6916], [-0.0796, -0.0363, 0.0526, 0.3152], [-0.103, 0.158, -0.023, 0.124], [-0.039, 0.299, 0.386, 0.782]])#, [-0.103, -0.137, -0.038, 0.12], [-0.111, -0.148, -0.027, 0.086]])#, , [-0.0115, 0.219, 0.416, 0.792], [-0.049, 0.176, 0.447, 0.810], [-0.105, -0.16, -0.0103, 0.128]])
+    env_params = np.array([[1.1, 0.6, 0.09], [1.1, 0.6, 0.09], [1.5, 0.5, 0.09], [1.5, 0.5, 0.09], [0.8, 0.8, 0.09], [0.8, 0.8, 0.09]])#, [1.5, 0.5, 0.09], [1.5, 0.5, 0.09]])#, , [1.2, 0.9, 0.09], [1.2, 0.9, 0.09], ])
 
     source_dataset_batch_size = 20
     n_config_cv = policy_params.shape[0]
@@ -56,9 +57,10 @@ def main():
         if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]:
             off_policy = 0
             name = estimator
-            simulation_param.batch_size = 5
+            simulation_param.batch_size = 15
         else:
             off_policy = 1
+            simulation_param.batch_size = 5
 
         simulation_param.learning_rate = learning_rate
         if estimator.endswith("SR"): #if sample reuse
@@ -108,15 +110,15 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 10
+n_jobs = 20
 
 # Number of runs
 n_runs = 20
 
-estimators = ["PD-MIS", "PD-MIS-SR", "PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE-SR",  "GPOMDP"]
+estimators = ["PD-IS", "PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE-SR", "GPOMDP"]
 #estimators = ["PD-MIS-SR", "PD-MIS-CV-BASELINE-SR", "GPOMDP"]
-learning_rates = [5e-4, 5e-4, 5e-4, 5e-4, 5e-4]
-num_batch = 60
+learning_rates = [9e-4, 9e-4, 9e-4, 9e-4]
+num_batch = 70
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
