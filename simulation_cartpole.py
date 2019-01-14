@@ -110,7 +110,7 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 20
+n_jobs = 1
 
 # Number of runs
 n_runs = 20
