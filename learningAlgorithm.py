@@ -998,10 +998,14 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
             [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)
 
         if simulation_param.adaptive == "Yes":
+            if model_estimation:
+                algorithm_configuration.model_estimation = 0
             defensive_sample = simulation_param.defensive_sample
             addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, simulation_param.adaptive, n_def_estimation=1)
             n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)[1]
-
+            if model_estimation:
+                algorithm_configuration.model_estimation = 1
+            n_def = simulation_param.batch_size - defensive_sample
         else:
             if simulation_param.adaptive == "Yes":
                 n_def = simulation_param.ess_min
