@@ -999,15 +999,14 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
 
         if simulation_param.adaptive == "Yes":
             if model_estimation:
-                algorithm_configuration.model_estimation = 0
+                defensive_sample = simulation_param.ess_min
+                addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, algorithm_configuration.adaptive, n_def_estimation=1)
+                n_def = 0# - defensive_sample
 
-            defensive_sample = simulation_param.ess_min
-            #addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, simulation_param.adaptive, n_def_estimation=1)
-            #n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)[1]
-            addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, algorithm_configuration.adaptive, n_def_estimation=1)
-            if model_estimation:
-                algorithm_configuration.model_estimation = 1
-            n_def = 0# - defensive_sample
+            else:
+                defensive_sample = simulation_param.defensive_sample
+                addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, algorithm_configuration.adaptive, n_def_estimation=1)
+                n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)[1]
 
     for i_batch in range(simulation_param.num_batch):
 
@@ -1045,11 +1044,11 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
             print("Updating policy...")
             start = time.time()
 
-        if simulation_param.adaptive == "Yes":
+        if algorithm_configuration.adaptive == "Yes":
             n_def = n_def + simulation_param.defensive_sample
-        if i_batch == 0:
-            algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration, simulation_param.ess_min, compute_n_def=1)
-            batch_size = 0
+            if i_batch == 0:
+                algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration, simulation_param.ess_min, compute_n_def=1)
+                batch_size = 0
 
         stats.n_def[i_batch] = n_def
         stats.ess[i_batch] = ess
