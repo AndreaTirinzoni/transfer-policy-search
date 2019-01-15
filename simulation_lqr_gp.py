@@ -26,9 +26,9 @@ def main():
     variance_action = 0.1
     batch_size = 10
     discount_factor = 0.99
-    ess_min = 20
+    ess_min = 10
     adaptive = "Yes"
-    n_min = 10
+    n_min = 5
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size,
                                           num_batch, discount_factor, None, None, ess_min, adaptive, n_min)
@@ -126,7 +126,7 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 1
+n_jobs = 10
 # Number of runs
 n_runs = 20
 
