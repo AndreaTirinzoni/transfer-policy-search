@@ -21,7 +21,14 @@ def batchToEpisodes(statistic_batch, episodesPerBatch, linspace_episodes, max_ep
 with open('results.pkl', 'rb') as input:
     results = pickle.load(input)
 
-estimators = ["PD-MIS-CV-BASELINE-SR", "PD-IS-SR", "PD-MIS-SR", "GPOMDP"]
+estimators = ["PD-IS", "PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE-SR", "GPOMDP"]
+
+runs = 20
+linspace_episodes = 5
+param_policy_space = 4
+n_def = 15*np.ones(70)#results[0]["GPOMDP"][0].n_def
+max_episodes = int(np.sum(n_def))
+stats_together = 0
 
 disc_rewards = {}
 tot_rewards = {}
@@ -37,13 +44,6 @@ for estimator in estimators:
     gradient[estimator] = []
     ess[estimator] = []
     n_def[estimator] = []
-
-runs = 20
-linspace_episodes = 5
-param_policy_space = 4
-n_def = results[0]["GPOMDP"][0].n_def
-max_episodes = int(np.sum(n_def))
-stats_together = 0
 
 x = range(int(max_episodes/linspace_episodes))
 
@@ -74,6 +74,9 @@ for estimator in estimators:
         episodes_current_run = results[i][estimator][0].n_def
         tot_rewards_current_run_episodes = batchToEpisodes(tot_rewards_current_run, episodes_current_run.astype(int), linspace_episodes, max_episodes)
         tot_rewards[estimator].append(tot_rewards_current_run_episodes)
+        n_def_current_run = results[i][estimator][0].n_def
+        episodes_current_run = results[i][estimator][0].n_def
+        n_def[estimator].append(episodes_current_run)
         policy_current_run = results[i][estimator][0].policy_parameter
         policy_current_run_episodes = []
         for t in range(param_policy_space):
