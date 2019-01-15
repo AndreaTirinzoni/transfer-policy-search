@@ -26,9 +26,9 @@ def main():
     variance_action = 0.1
     batch_size = 10
     discount_factor = 0.99
-    ess_min = 10
+    ess_min = 20
     adaptive = "Yes"
-    n_min = 5
+    n_min = 10
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size,
                                           num_batch, discount_factor, None, None, ess_min, adaptive, n_min)
@@ -93,7 +93,7 @@ def main():
                 if estimator.endswith("GP"):
                     model.use_gp = True
             name = estimator[:-3]
-            simulation_param.adaptive = "Yes"
+            simulation_param.adaptive = adaptive
 
         simulation_param.learning_rate = learning_rate
         source_dataset = sc.SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped,
@@ -126,11 +126,11 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 10
+n_jobs = 1
 # Number of runs
 n_runs = 20
 
-estimators = ["GPOMDP", "MIS-CV-BASELINE-ID", "MIS-CV-BASELINE-ES", "MIS-CV-BASELINE-GP"]
+estimators = ["MIS-CV-BASELINE-ES", "MIS-CV-BASELINE-GP"]
 num_batch = 400
 
 # Base folder where to log

@@ -94,7 +94,7 @@ def computeNdef(min_index, param, env_param, source_dataset, simulation_param, a
 
     trajectories_length = getEpisodesInfoFromSource(source_dataset, env_param)[-1]
     if algorithm_configuration.adaptive == "Yes":
-        weights = algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration, 1, compute_n_def=1)[0]
+        weights = algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration, simulation_param.defensive_sample, compute_n_def=1)[0]
 
     n = source_dataset.source_task.shape[0]
     if algorithm_configuration.pd == 1:
@@ -589,7 +589,7 @@ def computeEss(policy_param, env_param, source_dataset, simulation_param, algori
 
 def generateEpisodesAndComputeRewards(env_param, simulation_param, param, discount_factor_timestep):
 
-    batch_size = 5
+    batch_size = 10
     # Iterate for every episode in batch
 
     batch = createBatch(env_param.env, batch_size, env_param.episode_length, param, env_param.state_space_size, simulation_param.variance_action)[0] # [state, action, reward, next_state, next_state_unclipped, clipped_actions]
@@ -1000,15 +1000,14 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
         if simulation_param.adaptive == "Yes":
             if model_estimation:
                 algorithm_configuration.model_estimation = 0
-            defensive_sample = simulation_param.defensive_sample
-            addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, simulation_param.adaptive, n_def_estimation=1)
-            n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)[1]
+
+            defensive_sample = simulation_param.ess_min
+            #addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, simulation_param.adaptive, n_def_estimation=1)
+            #n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)[1]
+            addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, algorithm_configuration.adaptive, n_def_estimation=1)
             if model_estimation:
                 algorithm_configuration.model_estimation = 1
-            #n_def = simulation_param.batch_size - defensive_sample
-        else:
-            if simulation_param.adaptive == "Yes":
-                n_def = simulation_param.ess_min
+            n_def = 0# - defensive_sample
 
     for i_batch in range(simulation_param.num_batch):
 
@@ -1017,12 +1016,6 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
             print(estimator)
 
         batch_size = n_def
-
-        if simulation_param.adaptive == "Yes":
-            n_def = n_def + simulation_param.defensive_sample
-
-        stats.n_def[i_batch] = n_def
-        stats.ess[i_batch] = ess
 
         if batch_size != 0:
             #Generate the episodes and compute the rewards over the batch
@@ -1051,6 +1044,15 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
         if verbose:
             print("Updating policy...")
             start = time.time()
+
+        if simulation_param.adaptive == "Yes":
+            n_def = n_def + simulation_param.defensive_sample
+        if i_batch == 0:
+            algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration, simulation_param.ess_min, compute_n_def=1)
+            batch_size = 0
+
+        stats.n_def[i_batch] = n_def
+        stats.ess[i_batch] = ess
 
         [source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size, discount_factor_timestep)
 
