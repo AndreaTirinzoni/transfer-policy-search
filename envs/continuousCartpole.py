@@ -68,6 +68,8 @@ class ContinuousCartPoleEnv(gym.Env):
         self.masscart = env_param[0]
         self.length = env_param[1]
         self.sigma_env = np.sqrt(env_param[-1])
+        self.polemass_length = (self.masspole * self.length)
+        self.total_mass = (self.masspole + self.masscart)
 
     def stepPhysics(self, force):
         x, x_dot, theta, theta_dot = self.state
