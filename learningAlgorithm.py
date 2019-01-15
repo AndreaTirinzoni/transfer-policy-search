@@ -1006,7 +1006,7 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
             else:
                 defensive_sample = simulation_param.defensive_sample
                 addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, defensive_sample, discount_factor_timestep, algorithm_configuration.adaptive, n_def_estimation=1)
-                n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration)[1]
+                n_def = computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration, )[1]
 
     for i_batch in range(simulation_param.num_batch):
 
@@ -1046,7 +1046,7 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
 
         if algorithm_configuration.adaptive == "Yes":
             n_def = n_def + simulation_param.defensive_sample
-            if i_batch == 0:
+            if i_batch == 0 and model_estimation == 1 and dicrete_estimation == 0:
                 algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration, simulation_param.ess_min, compute_n_def=1)
                 batch_size = 0
 
