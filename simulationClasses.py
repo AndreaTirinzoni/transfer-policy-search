@@ -38,3 +38,4 @@ class SourceDataset:
         self.initial_size = source_task.shape[0]
         self.source_distributions = None
         self.mask_weights = None
+        self.source_distributions_cv = None
