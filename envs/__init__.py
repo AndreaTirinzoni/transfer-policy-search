@@ -19,3 +19,8 @@ register(
     id='testenv-v0',
     entry_point='envs.test:TestEnv'
 )
+
+register(
+    id='minigolf-v0',
+    entry_point='envs.minigolf:MiniGolf'
+)
