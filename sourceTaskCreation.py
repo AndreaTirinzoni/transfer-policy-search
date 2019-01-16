@@ -2,8 +2,9 @@ import gym
 import envs
 import numpy as np
 import math as m
+from features import identity
 
-def createBatch(env, batch_size, episode_length, param, state_space_size, variance_action):
+def createBatch(env, batch_size, episode_length, param, state_space_size, variance_action, features):
     """
     Create a batch of episodes
     :param env: OpenAI environment
@@ -44,7 +45,7 @@ def createBatch(env, batch_size, episode_length, param, state_space_size, varian
 
     return batch, trajectory_length
 
-def sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size):
+def sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size, features=identity):
     """
     Creates a source dataset
     :param env: OpenAI environment
@@ -86,7 +87,7 @@ def sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_
             env.setParams(np.concatenate(([env_param[i_env_param]], np.ravel(env.B), [env.sigma_noise**2])))
 
             # Reset the environment and pick the first action
-            [batch, trajectory_length] = createBatch(env, episode_per_param, episode_length, policy_param[i_policy_param], state_space_size, variance_action) # [state, action, reward, next_state]
+            [batch, trajectory_length] = createBatch(env, episode_per_param, episode_length, policy_param[i_policy_param], state_space_size, variance_action, features=features) # [state, action, reward, next_state]
 
             #  Go through the episode and compute estimators
             #I populate the source task
@@ -187,7 +188,7 @@ def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, var
     return source_task, source_param, episodes_per_configuration.astype(int), next_states_unclipped, actions_clipped, next_states_unclipped_denoised
 
 
-def sourceTaskCreationMixture(env, episode_length, batch_size, discount_factor, variance_action, policy_params, episodes_per_config, n_config_cv, param_space_size, state_space_size, env_param_space_size):
+def sourceTaskCreationMixture(env, episode_length, batch_size, discount_factor, variance_action, policy_params, episodes_per_config, n_config_cv, param_space_size, state_space_size, env_param_space_size, features=identity):
     """
     Creates a source dataset
     :param env: OpenAI environment
@@ -228,7 +229,7 @@ def sourceTaskCreationMixture(env, episode_length, batch_size, discount_factor, 
         policy_param_index = np.random.choice(np.arange(0, probabilities.shape[0]), p=probabilities)
         # Reset the environment and pick the first action
         policy_param = policy_params[policy_param_index]
-        [batch, trajectory_length] = createBatch(env, batch_size, episode_length, policy_param, state_space_size, variance_action) # [state, action, reward, next_state]
+        [batch, trajectory_length] = createBatch(env, batch_size, episode_length, policy_param, state_space_size, variance_action, features=features) # [state, action, reward, next_state]
 
         #  Go through the episode and compute estimators
 
