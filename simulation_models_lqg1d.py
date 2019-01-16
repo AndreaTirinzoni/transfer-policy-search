@@ -63,7 +63,7 @@ def main():
     n_config_cv = policy_params.shape[0]
     n_source = [episodes_per_configuration*len(pis) for _ in envs]
 
-    learning_rates = [1e-5, 1e-5, 1e-5, 1e-5, 1e-5]
+    learning_rates = [1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5]
 
     [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped,
      next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env_src, episode_length, episodes_per_configuration,
@@ -120,6 +120,10 @@ def main():
                     if estimator.endswith("GP"):
                         model.use_gp = True
 
+                    if estimator.endswith("GPM"):
+                        model.use_gp_generate_mixture = True
+                        estimator = estimator[:-1]
+
             name = estimator[:-3]
             simulation_param.adaptive = adaptive
 
@@ -154,12 +158,12 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 1
+n_jobs = 10
 # Number of runs
 n_runs = 20
 
-estimators = ["PD-MIS-CV-BASELINE-ID", "PD-MIS-CV-BASELINE-ES", "PD-MIS-CV-BASELINE-GP", "PD-MIS-CV-BASELINE-DI", "GPOMDP"]
-num_batch = 400
+estimators = ["PD-MIS-CV-BASELINE-ID", "PD-MIS-CV-BASELINE-ES", "PD-MIS-CV-BASELINE-GP", "PD-MIS-CV-BASELINE-GPM", "PD-MIS-CV-BASELINE-DI", "GPOMDP"]
+num_batch = 280
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -175,22 +179,22 @@ else:
 
 ################################################
 
-res = {}
-for estimator in estimators:
-    res[estimator] = []
-for stat in results:
-    for estimator in estimators:
-        res[estimator].append(stat[estimator])
-for estimator in estimators:
-    res[estimator] = np.array(res[estimator]).reshape(n_runs, num_batch)
-
-x = range(num_batch)
-
-from scipy.stats import t
-alpha = t.interval(0.95, n_runs-1, loc=0, scale=1)[1] if n_runs > 1 else 1
-
-means = [np.mean(res[estimator], axis=0) for estimator in estimators]
-stds = [alpha * np.std(res[estimator], axis=0) / np.sqrt(n_runs) for estimator in estimators]
-
-import utils.plot as plot
-plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="Return", names=estimators, file_name="plot")
+# res = {}
+# for estimator in estimators:
+#     res[estimator] = []
+# for stat in results:
+#     for estimator in estimators:
+#         res[estimator].append(stat[estimator])
+# for estimator in estimators:
+#     res[estimator] = np.array(res[estimator]).reshape(n_runs, num_batch)
+#
+# x = range(num_batch)
+#
+# from scipy.stats import t
+# alpha = t.interval(0.95, n_runs-1, loc=0, scale=1)[1] if n_runs > 1 else 1
+#
+# means = [np.mean(res[estimator], axis=0) for estimator in estimators]
+# stds = [alpha * np.std(res[estimator], axis=0) / np.sqrt(n_runs) for estimator in estimators]
+#
+# import utils.plot as plot
+# plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="Return", names=estimators, file_name="plot")

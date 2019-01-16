@@ -8,7 +8,7 @@ class ModelEstimatorRKHS:
     Model estimation algorithm using reproducing kernel Hilbert spaces.
     """
 
-    def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, max_gp, state_dim, action_dim=1, use_gp=False, linear_kernel=False):
+    def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, max_gp, state_dim, action_dim=1, use_gp=False, linear_kernel=False, use_gp_generate_mixture = False):
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.T = T
@@ -39,6 +39,9 @@ class ModelEstimatorRKHS:
 
         # Whether the model has been fitted once
         self.model_fitted = False
+
+        # Whether the model has been fitted once
+        self.use_gp_generate_mixture = use_gp_generate_mixture
 
     def _split_dataset(self, dataset):
         """
@@ -206,7 +209,13 @@ class ModelEstimatorRKHS:
         param_indices = np.concatenate(([0], np.cumsum(dataset.episodes_per_config[:-1])))[dataset.n_config_cv:]
         policy_params = dataset.source_param[param_indices, 1:1+self.state_dim]
 
+        if self.use_gp_generate_mixture:
+            self.use_gp = True
+
         X, W, states, actions = self._collect_dataset_update(policy_params, alpha_tgt / np.sum(alpha_tgt), target_param)
+
+        if self.use_gp_generate_mixture:
+            self.use_gp = False
 
         C_alpha = (1 - alpha_0)**2 / (alpha_0 * np.log(1 / alpha_0))
         c1 = C_alpha / (2 * self.sigma_env**2 * N) * 10
