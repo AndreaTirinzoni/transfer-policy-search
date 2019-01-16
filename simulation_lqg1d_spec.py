@@ -26,7 +26,7 @@ def main():
     batch_size = 5
     discount_factor = 0.99
     ess_min = 20
-    adaptive = "Yes"
+    adaptive = "No"
     n_min = 5
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size,
@@ -34,7 +34,7 @@ def main():
 
 
     # source task for lqg1d
-    source_dataset_batch_size = 20
+    source_dataset_batch_size = 2
     discount_factor = 0.99
     policy_params = np.array([[-0.1], [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7], [-0.8],
                               [-0.1], [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7], [-0.8],
@@ -110,14 +110,14 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 10
+n_jobs = 1
 
 # Number of runs
 n_runs = 20
 
-estimators = ["IS", "PD-IS", "MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
+estimators = ["PD-MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]#"IS", "PD-IS", "MIS",
 learning_rates = [1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5]
-num_batch = 2
+num_batch = 200
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

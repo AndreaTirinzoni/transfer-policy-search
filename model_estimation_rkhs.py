@@ -209,8 +209,13 @@ class ModelEstimatorRKHS:
         X, W, states, actions = self._collect_dataset_update(policy_params, alpha_tgt / np.sum(alpha_tgt), target_param)
 
         C_alpha = (1 - alpha_0)**2 / (alpha_0 * np.log(1 / alpha_0))
-        c1 = C_alpha / (2 * self.sigma_env**2 * N)
-        c2 = 4 * np.sum(alpha_tgt) / (self.sigma_env**2 * alpha_0**2)
+        c1 = C_alpha / (2 * self.sigma_env**2 * N) * 10
+        c2 = 4 * np.sum(alpha_tgt) / (self.sigma_env**2)# * alpha_0**2)
+        # mu_alpha =
+        # c2 = C_alpha / (2 * self.sigma_env**2 * N * (1-alpha_0))
+        # c3 = 4 * np.sum(alpha_tgt) / (self.sigma_env**2 * alpha_0**2)
+        # print("c1 ({0}s)".format(c2))
+        # print("c2 ({0}s)".format(c3))
 
         M = self.gp.predict(X)
         F_src = [env.stepDenoisedCurrent(states, actions).reshape(X.shape[0], self.state_dim) for env in self.source_envs]
