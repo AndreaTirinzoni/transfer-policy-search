@@ -68,11 +68,13 @@ class MiniGolf(gym.Env):
         if u < v_min:
             deceleration = 5/7*self.friction*9.81
             t = u / deceleration
-            xn = self.state - u*t + 0.5*9.81*t**2
+            xn = self.state - u * t + 0.5 * deceleration * t ** 2
             reward = -1
             done = False
         elif u > v_max:
             reward = -100
+
+        xn = np.clip(xn, self.min_pos, self.max_pos)
 
         self.state = xn
 
@@ -82,7 +84,7 @@ class MiniGolf(gym.Env):
     #Custom param for transfer
 
     def getEnvParam(self):
-        return np.asarray([self.putter_length, self.deceleration, self.hole_size, self.sigma_noise])
+        return np.asarray([self.putter_length, self.friction, self.hole_size, self.sigma_noise])
 
     def reset(self, state=None):
         if state is None:
@@ -105,44 +107,5 @@ class MiniGolf(gym.Env):
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
-
-    def _render(self, mode='human', close=False):
-        if close:
-            if self.viewer is not None:
-                self.viewer.close()
-                self.viewer = None
-            return
-
-        screen_width = 6000
-        screen_height = 4000
-
-        world_width = (self.max_pos * 2) * 2
-        scale = screen_width / world_width
-        bally = 100
-        ballradius = 3
-
-        if self.viewer is None:
-            clearance = 0  # y-offset
-            from gym.envs.classic_control import rendering
-            self.viewer = rendering.Viewer(screen_width, screen_height)
-            mass = rendering.make_circle(ballradius * 2)
-            mass.set_color(.8, .3, .3)
-            mass.add_attr(rendering.Transform(translation=(0, clearance)))
-            self.masstrans = rendering.Transform()
-            mass.add_attr(self.masstrans)
-            self.viewer.add_geom(mass)
-            self.track = rendering.Line((0, bally), (screen_width, bally))
-            self.track.set_color(0.5, 0.5, 0.5)
-            self.viewer.add_geom(self.track)
-            zero_line = rendering.Line((screen_width / 2, 0),
-                                       (screen_width / 2, screen_height))
-            zero_line.set_color(0.5, 0.5, 0.5)
-            self.viewer.add_geom(zero_line)
-
-        x = self.state[0]
-        ballx = x * scale + screen_width / 2.0
-        self.masstrans.set_translation(ballx, bally)
-
-        return self.viewer.render(return_rgb_array=mode == 'rgb_array')
 
 
