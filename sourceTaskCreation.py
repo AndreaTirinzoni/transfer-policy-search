@@ -118,7 +118,7 @@ def sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_
 
     return source_task, source_param, episodes_per_configuration.astype(int), next_states_unclipped, actions_clipped, next_states_unclipped_denoised
 
-def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size):
+def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size, features=identity):
     """
     Creates a source dataset
     :param env: OpenAI environment
@@ -156,7 +156,7 @@ def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, var
             env.setParams(env_params[i, :])
 
             # Reset the environment and pick the first action
-            [batch, trajectory_length] = createBatch(env, episode_per_param, episode_length, policy_params[i, :], state_space_size, variance_action) # [state, action, reward, next_state]
+            [batch, trajectory_length] = createBatch(env, episode_per_param, episode_length, policy_params[i, :], state_space_size, variance_action, features=features) # [state, action, reward, next_state]
 
             #  Go through the episode and compute estimators
 
