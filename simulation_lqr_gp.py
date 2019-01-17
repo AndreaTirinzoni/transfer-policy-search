@@ -26,7 +26,7 @@ def main():
     variance_action = 0.1
     batch_size = 10
     discount_factor = 0.99
-    ess_min = 10
+    ess_min = 20
     adaptive = "Yes"
     n_min = 5
 
@@ -36,8 +36,8 @@ def main():
     # source task for lqg1d
     episodes_per_configuration = 20
 
-    pis = [[-0.1], [-0.3], [-0.5], [-0.7]]
-    envs = [[0.8, 1, 0.09], [1.2, 1, 0.09], [0.5, 1, 0.09]]
+    pis = [[-0.1], [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7], [-0.8]]
+    envs = [[0.9, 1, 0.09], [1.2, 1, 0.09], [1.5, 1, 0.09]]
 
     policy_params = []
     env_params = []
@@ -57,8 +57,6 @@ def main():
     n_config_cv = policy_params.shape[0]
     n_source = [episodes_per_configuration*len(pis) for _ in envs]
 
-    learning_rates = [1e-5, 1e-5, 1e-5, 1e-5]
-
     [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped,
      next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env_src, episode_length, episodes_per_configuration,
                                                                   discount_factor, variance_action, policy_params,
@@ -75,29 +73,44 @@ def main():
 
         print(estimator)
 
-        if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]:
-            off_policy = 0
-            model_estimation = 0
-            name = estimator
-            simulation_param.adaptive = "No"
-        else:
-            off_policy = 1
-            if estimator.endswith("ID"):
-                model_estimation = 0
-            else:
-                model_estimation = 1
-                model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1], sigma_env=env_tgt.sigma_noise,
-                                           sigma_pi=np.sqrt(variance_action), T=episode_length, R=50, lambda_=0.00,
-                                           source_envs=source_envs, n_source=n_source, max_gp=10*5*20, state_dim=1,
-                                           linear_kernel=True)
-                if estimator.endswith("GP"):
-                    model.use_gp = True
-            name = estimator[:-3]
-            simulation_param.adaptive = adaptive
-
         simulation_param.learning_rate = learning_rate
-        source_dataset = sc.SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped,
-                                          actions_clipped, next_states_unclipped_denoised, n_config_cv)
+
+        if estimator.endswith("SR"):
+            off_policy = 1
+            model_estimation = 0
+            source_dataset_batch_size = 1
+            policy_params = np.array([[-0.1]])
+            env_params = np.array([[1.0, 1.0, 0.09]])
+            data = stc.sourceTaskCreationSpec(env_src, episode_length, source_dataset_batch_size, discount_factor,
+                                              variance_action, policy_params, env_params, param_space_size,
+                                              state_space_size, env_param_space_size)
+            source_dataset = sc.SourceDataset(*data, 1)
+            name = estimator[:-3]
+        else:
+            if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]:
+                off_policy = 0
+                model_estimation = 0
+                name = estimator
+            else:
+                off_policy = 1
+                if estimator.endswith("ID"):
+                    model_estimation = 0
+                else:
+                    model_estimation = 1
+                    model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1], sigma_env=env_tgt.sigma_noise,
+                                               sigma_pi=np.sqrt(variance_action), T=episode_length, R=50, lambda_=0.00,
+                                               source_envs=source_envs, n_source=n_source, max_gp=10*5*20, state_dim=1,
+                                               linear_kernel=True)
+                    if estimator.endswith("GP"):
+                        model.use_gp = True
+                    if estimator.endswith("MI"):
+                        model.use_gp_generate_mixture = True
+
+                name = estimator[:-3]
+
+            source_dataset = sc.SourceDataset(source_task, source_param, episodes_per_configuration,
+                                              next_states_unclipped,
+                                              actions_clipped, next_states_unclipped_denoised, n_config_cv)
 
         result = la.learnPolicy(env_param, simulation_param, source_dataset, name, off_policy=off_policy,
                                 model_estimation=model_estimation, dicrete_estimation=0, model_estimator=model)
@@ -126,12 +139,20 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 10
+n_jobs = 5
 # Number of runs
 n_runs = 20
 
-estimators = ["MIS-CV-BASELINE-ES", "MIS-CV-BASELINE-GP"]
-num_batch = 400
+estimators = ["GPOMDP",
+              "PD-MIS-CV-BASELINE-SR",
+              "PD-MIS-CV-BASELINE-ID",
+              "PD-MIS-CV-BASELINE-ES",
+              "PD-MIS-CV-BASELINE-GP",
+              "PD-MIS-CV-BASELINE-MI"]
+
+learning_rates = [1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5]
+
+num_batch = 20
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -147,22 +168,4 @@ else:
 
 ################################################
 
-res = {}
-for estimator in estimators:
-    res[estimator] = []
-for stat in results:
-    for estimator in estimators:
-        res[estimator].append(stat[estimator])
-for estimator in estimators:
-    res[estimator] = np.array(res[estimator]).reshape(n_runs, num_batch)
-
-x = range(num_batch)
-
-from scipy.stats import t
-alpha = t.interval(0.95, n_runs-1, loc=0, scale=1)[1] if n_runs > 1 else 1
-
-means = [np.mean(res[estimator], axis=0) for estimator in estimators]
-stds = [alpha * np.std(res[estimator], axis=0) / np.sqrt(n_runs) for estimator in estimators]
-
-import utils.plot as plot
-plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="Return", names=estimators, file_name="plot")
+print(folder)
