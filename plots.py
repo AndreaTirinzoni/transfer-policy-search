@@ -3,7 +3,7 @@ from utils import plot
 import numpy as np
 
 
-def batchToEpisodes(statistic_batch, episodesPerBatch, linspace_episodes, max_episodes):
+def batchToEpisodes(statistic_batch, episodesPerBatch, max_episodes):
 
     statistic_episode = np.ones(max_episodes)
 
@@ -16,17 +16,17 @@ def batchToEpisodes(statistic_batch, episodesPerBatch, linspace_episodes, max_ep
 
     statistic_episode[initial_index:] = statistic_batch[i]
 
-    return statistic_episode[0::linspace_episodes]
+    return statistic_episode
 
 with open('results.pkl', 'rb') as input:
     results = pickle.load(input)
 
-estimators = ["PD-IS", "PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE-SR", "GPOMDP"]
+estimators = ["GPOMDP", "PD-IS", "PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE-SR"]
 
 runs = 20
 linspace_episodes = 5
 param_policy_space = 4
-n_def = 15*np.ones(70)#results[0]["GPOMDP"][0].n_def
+n_def = results[0]["GPOMDP"][0].n_def
 max_episodes = int(np.sum(n_def))
 stats_together = 0
 
@@ -45,34 +45,21 @@ for estimator in estimators:
     ess[estimator] = []
     n_def[estimator] = []
 
-x = range(int(max_episodes/linspace_episodes))
+x = np.asarray(range(int(max_episodes)))
 
 from scipy.stats import t
 alpha = t.interval(0.95, runs-1, loc=0, scale=1)[1] if runs > 1 else 1
 
-# if stats_together == 0:
-#     for estimator in estimators:
-#         for i in range(runs):
-#             disc_rewards_current_run = disc_rewards[estimator][i]
-#             episodes_current_run = n_def[estimator][i]
-#             disc_rewards_current_run_episodes = batchToEpisodes(disc_rewards_current_run, episodes_current_run.astype(int), linspace_episodes, max_episodes)
-#             disc_rewards[estimator].append(disc_rewards_current_run_episodes)
-#             policy_current_run = policy[estimator][i]
-#             episodes_current_run = n_def[estimator][i]
-#             policy_current_run_episodes = [batchToEpisodes(policy_current_run[:, i], episodes_current_run.astype(int), linspace_episodes, max_episodes) for i in range(param_policy_space)]
-#             policy[estimator].append(policy_current_run_episodes)
-#
-#     else:
 
 for estimator in estimators:
     for i in range(runs):
         disc_rewards_current_run = results[i][estimator][0].disc_rewards
         episodes_current_run = results[i][estimator][0].n_def
-        disc_rewards_current_run_episodes = batchToEpisodes(disc_rewards_current_run, episodes_current_run.astype(int), linspace_episodes, max_episodes)
+        disc_rewards_current_run_episodes = batchToEpisodes(disc_rewards_current_run, episodes_current_run.astype(int), max_episodes)
         disc_rewards[estimator].append(disc_rewards_current_run_episodes)
         tot_rewards_current_run = results[i][estimator][0].total_rewards
         episodes_current_run = results[i][estimator][0].n_def
-        tot_rewards_current_run_episodes = batchToEpisodes(tot_rewards_current_run, episodes_current_run.astype(int), linspace_episodes, max_episodes)
+        tot_rewards_current_run_episodes = batchToEpisodes(tot_rewards_current_run, episodes_current_run.astype(int), max_episodes)
         tot_rewards[estimator].append(tot_rewards_current_run_episodes)
         n_def_current_run = results[i][estimator][0].n_def
         episodes_current_run = results[i][estimator][0].n_def
@@ -80,13 +67,13 @@ for estimator in estimators:
         policy_current_run = results[i][estimator][0].policy_parameter
         policy_current_run_episodes = []
         for t in range(param_policy_space):
-            policy_current_run_episodes.append(np.asarray([batchToEpisodes(policy_current_run[:, t], episodes_current_run.astype(int), linspace_episodes, max_episodes)]))
+            policy_current_run_episodes.append(np.asarray([batchToEpisodes(policy_current_run[:, t], episodes_current_run.astype(int), max_episodes)]))
         policy[estimator].append(policy_current_run_episodes)
 
-means = [np.mean(tot_rewards[estimator], axis=0) for estimator in estimators]
-stds = [alpha * np.std(tot_rewards[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
+means = [np.mean(tot_rewards[estimator], axis=0)[0::linspace_episodes] for estimator in estimators]
+stds = [alpha * np.std(tot_rewards[estimator], axis=0)[0::linspace_episodes] / np.sqrt(runs) for estimator in estimators]
 
-plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="Return", names=estimators)
+plot.plot_curves([x[0::linspace_episodes] for _ in estimators], means, stds, x_label="Iteration", y_label="Return", names=estimators)
 
 # means = [np.mean(ess[estimator], axis=0) for estimator in estimators]
 # stds = [alpha * np.std(ess[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
@@ -98,16 +85,19 @@ plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_la
 #
 # plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="Gradient", names=estimators)
 
-means = [np.mean(policy[estimator], axis=0) for estimator in estimators]
-stds = [alpha * np.std(policy[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
+means = [np.mean(policy[estimator], axis=0)[:, :, 0::linspace_episodes] for estimator in estimators]
+stds = [alpha * np.std(policy[estimator], axis=0)[:, :, 0::linspace_episodes] / np.sqrt(runs) for estimator in estimators]
 
 for i in range(param_policy_space):
-    plot.plot_curves([x for _ in estimators], [np.asarray(np.squeeze(means[estimator][i, :])) for estimator in range(len(estimators))], [np.asarray(np.squeeze(stds[estimator][i, :])) for estimator in range(len(estimators))], x_label="Iteration", y_label="Policy", names=estimators)
+    plot.plot_curves([x[0::linspace_episodes] for _ in estimators], [np.asarray(np.squeeze(means[estimator][i, :])) for estimator in range(len(estimators))], [np.asarray(np.squeeze(stds[estimator][i, :])) for estimator in range(len(estimators))], x_label="Iteration", y_label="Policy", names=estimators)
 
 means = [np.mean(n_def[estimator], axis=0) for estimator in estimators]
 stds = [alpha * np.std(n_def[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
 
-plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="N_DEF", names=estimators)
+num_batch = results[0]["GPOMDP"][0].n_def.shape[0]
+x = range(num_batch)
+
+plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="n_def", names=estimators)
 # means = [np.mean(rewards[estimator], axis=0) for estimator in estimators]
 # stds = [alpha * np.std(rewards[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
 #
