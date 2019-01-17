@@ -24,3 +24,8 @@ register(
     id='minigolf-v0',
     entry_point='envs.minigolf:MiniGolf'
 )
+
+register(
+    id='minigolf-v1',
+    entry_point='envs.minigolf_v1:MiniGolf'
+)
