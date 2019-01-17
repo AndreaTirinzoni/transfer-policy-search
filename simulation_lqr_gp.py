@@ -152,7 +152,7 @@ estimators = ["GPOMDP",
 
 learning_rates = [1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5]
 
-num_batch = 20
+num_batch = 400
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
