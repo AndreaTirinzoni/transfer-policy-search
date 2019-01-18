@@ -100,7 +100,7 @@ class MiniGolf(gym.Env):
         return self.get_state()
 
     def get_state(self):
-        #return np.array([np.asscalar(self.state)**i/20**i for i in range(6)])
+        return np.array([np.asscalar(self.state)**i/20**i for i in range(6)])
         return np.array(self.state)
 
     def get_true_state(self):
@@ -118,11 +118,41 @@ class MiniGolf(gym.Env):
         return [seed]
 
     def getDensity(self, env_parameters, state, action, next_state):
+
+        if state < next_state:
+            return 0
+
+        action = np.clip(action, self.min_action, self.max_action / 2)
+
         putter_length = env_parameters[0]
         friction = env_parameters[1]
         sigma_noise = env_parameters[-1]
         deceleration = 5 / 7 * friction * 9.81
+
         u = np.sqrt(2 * deceleration * (state - next_state))
         noise = (u / (action*putter_length) - 1) / sigma_noise
         return norm.pdf(noise)
 
+    def density(self, env_parameters, state, action, next_state):
+        """
+
+        :param env_parameters: list of env_params
+        :param state: NxTx1
+        :param action: NxT
+        :param next_state: NxTx1
+        :return: pdf NxTx1xn_param
+        """
+        assert state.ndim == 3 and action.ndim == 2 and next_state.ndim == 3
+
+        mask = state < next_state
+        action = np.clip(action, self.min_action, self.max_action / 2)
+        pdf = np.zeros((state.shape[0], state.shape[1], 1, env_parameters.shape[0]))
+        diff = np.abs(state - next_state)  # take the abs for the sqrt, but mask negative values later
+
+        for i in range(env_parameters.shape[0]):
+            deceleration = 5 / 7 * env_parameters[i, 1] * 9.81
+            u = np.sqrt(2 * deceleration * diff)
+            noise = (u / (action[:, :, np.newaxis] * env_parameters[i, 0]) - 1) / env_parameters[i, -1]
+            pdf[:, :, :, i] = norm.pdf(noise) * (1-mask)  # set to zero impossible transitions
+
+        return pdf
