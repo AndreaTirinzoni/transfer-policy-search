@@ -31,7 +31,7 @@ def main():
     n_min = 5
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size,
-                                          num_batch, discount_factor, None, None, ess_min, adaptive, n_min)
+                                          num_batch, discount_factor, None, None, ess_min, adaptive, n_min, use_adam=True)
 
     # source task for lqg1d
     episodes_per_configuration = 10
