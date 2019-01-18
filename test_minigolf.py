@@ -11,8 +11,8 @@ import gym
 
 def main():
 
-    env_tgt = gym.make('minigolf-v1')
-    env_src = gym.make('minigolf-v1')
+    env_tgt = gym.make('minigolf-v0')
+    env_src = gym.make('minigolf-v0')
     param_space_size = 6
     state_space_size = 6
     env_param_space_size = 4
@@ -20,8 +20,7 @@ def main():
 
     env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length)
 
-    mean_initial_param = np.random.normal(np.ones(param_space_size) * 0.8, 0.001)
-    mean_initial_param = np.array([1,1.1,1.2,1.3,1.4,1.5])
+    mean_initial_param = np.random.normal(np.ones(param_space_size) * 0.1, 0.001)
     variance_initial_param = 0
     variance_action = 0.1
     batch_size = 10
@@ -85,10 +84,10 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 4
+n_jobs = 20
 
 # Number of runs
-n_runs = 20
+n_runs = 4
 
 estimators = ["GPOMDP"]
 learning_rates = [1e-3, 1e-3, 1e-3, 1e-3]
@@ -150,16 +149,18 @@ stds = [alpha * np.std(res[estimator], axis=0) / np.sqrt(n_runs) for estimator i
 import utils.plot as plot
 plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="Total", names=estimators, file_name="plot")
 
-param = np.array([1,1.1,1.2,1.3,1.4,1.5])
-env = gym.make('minigolf-v1')
+param = np.array([1.5484506,  0.99343982, 0.56090925, 0.41320014, 0.341736, 0.29078371])
+env = gym.make('minigolf-v0')
 
-state = env.reset()
-true_s = env.get_true_state()
-for t in range(20):
-    action = np.dot(param, state) + np.random.randn() * 0.1
-    state, reward, done,_, _, _ = env.step(action)
-    true_ns = env.get_true_state()
-    print([true_s,action,true_ns,reward])
-    true_s = true_ns
-    if done:
-        break
+for i in range(5):
+    print("Episode {0}".format(i))
+    state = env.reset()
+    true_s = env.get_true_state()
+    for t in range(20):
+        action = np.dot(param, state) + np.random.randn() * 0.1
+        state, reward, done,_, _, _ = env.step(action)
+        true_ns = env.get_true_state()
+        print([true_s,action,true_ns,reward])
+        true_s = true_ns
+        if done:
+            break

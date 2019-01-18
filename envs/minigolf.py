@@ -37,8 +37,6 @@ class MiniGolf(gym.Env):
         self.sigma_noise = 0.3
         self.ball_radius = 0.02135
 
-        self.deceleration = 5 / 7 * self.friction * 9.81
-
         # gym attributes
         self.viewer = None
         low = np.array([self.min_pos])
@@ -59,16 +57,20 @@ class MiniGolf(gym.Env):
         self.sigma_noise = m.sqrt(env_param[-1])
 
     def step(self, action, render=False):
+        action = np.clip(action, self.min_action, self.max_action / 2)
+
         noise = 10
         while abs(noise) > 1:
             noise = self.np_random.randn() * self.sigma_noise
-        u = np.clip(action*self.putter_length*(1 + noise), self.min_action, self.max_action)
+        u = action * self.putter_length * (1 + noise)
 
         v_min = np.sqrt(10 / 7 * self.friction * 9.81 * self.state)
-        v_max = np.sqrt( (2*self.hole_size - self.ball_radius)**2*(9.81/(2*self.ball_radius)) + v_min**2)
+        v_max = np.sqrt((2*self.hole_size - self.ball_radius)**2*(9.81/(2*self.ball_radius)) + v_min**2)
 
-        t = u / self.deceleration
-        xn = self.state - u * t + 0.5 * self.deceleration * t ** 2
+        deceleration = 5 / 7 * self.friction * 9.81
+
+        t = u / deceleration
+        xn = self.state - u * t + 0.5 * deceleration * t ** 2
 
         reward = 0
         done = True
@@ -78,11 +80,9 @@ class MiniGolf(gym.Env):
         elif u > v_max:
             reward = -100
 
-        #xn = np.clip(xn, self.min_pos, self.max_pos)
-
         self.state = xn
 
-        # We return the unclipped state and the clipped action as the last argument (to be used for computing the importance weights only)
+        # TODO the last three values should not be used
         return self.get_state(), float(reward), done, xn, action, xn
 
     #Custom param for transfer
@@ -100,6 +100,11 @@ class MiniGolf(gym.Env):
         return self.get_state()
 
     def get_state(self):
+        #return np.array([np.asscalar(self.state)**i/20**i for i in range(6)])
+        return np.array(self.state)
+
+    def get_true_state(self):
+        """For testing purposes"""
         return np.array(self.state)
 
     def clip_state(self, state):
