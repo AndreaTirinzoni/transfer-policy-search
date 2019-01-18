@@ -709,10 +709,8 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
         gradient = algorithm_configuration.computeGradientUpdate(algorithm_configuration, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all, source_dataset.source_task.shape[0])
 
     #Update the parameter
-    if simulation_param.use_adam:
-        param, t, m_t, v_t, gradient = alg.adam(param, -gradient, t, m_t, v_t, alpha=simulation_param.learning_rate)
-    else:
-        param = param + simulation_param.learning_rate * gradient
+    #param, t, m_t, v_t, gradient = alg.adam(param, -gradient, t, m_t, v_t, alpha=0.01)
+    param = param + simulation_param.learning_rate * gradient
 
     if algorithm_configuration.off_policy == 1:
         [ess, min_index] = algorithm_configuration.computeEss(param, env_param, source_dataset, simulation_param, algorithm_configuration)

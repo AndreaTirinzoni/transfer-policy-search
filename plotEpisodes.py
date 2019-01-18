@@ -21,11 +21,12 @@ def batchToEpisodes(statistic_batch, episodesPerBatch, max_episodes):
 with open('results.pkl', 'rb') as input:
     results = pickle.load(input)
 
-estimators = ["GPOMDP", "PD-IS", "PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE-SR"]
+estimators = ["GPOMDP", "PD-IS", "PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE-SR"] #cartpole
+#estimators = ["PD-IS", "MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE_SR", "GPOMDP"] #lqg1d
 
 runs = 20
 linspace_episodes = 5
-param_policy_space = 4
+param_policy_space = 1
 n_def = results[0]["GPOMDP"][0].n_def
 max_episodes = int(np.sum(n_def))
 stats_together = 0
@@ -67,38 +68,30 @@ for estimator in estimators:
         policy_current_run = results[i][estimator][0].policy_parameter
         policy_current_run_episodes = []
         for t in range(param_policy_space):
-            policy_current_run_episodes.append(np.asarray([batchToEpisodes(policy_current_run[:, t], episodes_current_run.astype(int), max_episodes)]))
+            policy_current_run_episodes.append(np.asarray([batchToEpisodes(policy_current_run[:, t],
+                                                                           episodes_current_run.astype(int),
+                                                                           max_episodes)]))
         policy[estimator].append(policy_current_run_episodes)
+
+#Plotting the rewards
 
 means = [np.mean(tot_rewards[estimator], axis=0)[0::linspace_episodes] for estimator in estimators]
 stds = [alpha * np.std(tot_rewards[estimator], axis=0)[0::linspace_episodes] / np.sqrt(runs) for estimator in estimators]
 
-plot.plot_curves([x[0::linspace_episodes] for _ in estimators], means, stds, x_label="Iteration", y_label="Return", names=estimators)
+plot.plot_curves([x[0::linspace_episodes] for _ in estimators], means, stds, x_label="Episodes", y_label="Return", names=estimators)
 
-# means = [np.mean(ess[estimator], axis=0) for estimator in estimators]
-# stds = [alpha * np.std(ess[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
-#
-# plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="Ess", names=estimators)
-
-# means = [np.mean(gradient[estimator], axis=0) for estimator in estimators]
-# stds = [alpha * np.std(gradient[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
-#
-# plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="Gradient", names=estimators)
-
+#Plotting the policies
 means = [np.mean(policy[estimator], axis=0)[:, :, 0::linspace_episodes] for estimator in estimators]
 stds = [alpha * np.std(policy[estimator], axis=0)[:, :, 0::linspace_episodes] / np.sqrt(runs) for estimator in estimators]
 
 for i in range(param_policy_space):
-    plot.plot_curves([x[0::linspace_episodes] for _ in estimators], [np.asarray(np.squeeze(means[estimator][i, :])) for estimator in range(len(estimators))], [np.asarray(np.squeeze(stds[estimator][i, :])) for estimator in range(len(estimators))], x_label="Iteration", y_label="Policy", names=estimators)
+    plot.plot_curves([x[0::linspace_episodes] for _ in estimators], [np.asarray(np.squeeze(means[estimator][i, :])) for estimator in range(len(estimators))], [np.asarray(np.squeeze(stds[estimator][i, :])) for estimator in range(len(estimators))], x_label="Episodes", y_label="Policy", names=estimators)
 
+#Plotting n_def
 means = [np.mean(n_def[estimator], axis=0) for estimator in estimators]
 stds = [alpha * np.std(n_def[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
 
 num_batch = results[0]["GPOMDP"][0].n_def.shape[0]
 x = range(num_batch)
 
-plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="n_def", names=estimators)
-# means = [np.mean(rewards[estimator], axis=0) for estimator in estimators]
-# stds = [alpha * np.std(rewards[estimator], axis=0) / np.sqrt(runs) for estimator in estimators]
-#
-# plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_label="Return", names=estimators)
+plot.plot_curves([x for _ in estimators], means, stds, x_label="Episodes", y_label="n_def", names=estimators)
