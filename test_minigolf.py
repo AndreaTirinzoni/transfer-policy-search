@@ -84,14 +84,14 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 20
+n_jobs = 1
 
 # Number of runs
-n_runs = 4
+n_runs = 1
 
 estimators = ["GPOMDP"]
 learning_rates = [1e-3, 1e-3, 1e-3, 1e-3]
-num_batch = 300
+num_batch = 10
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -152,7 +152,7 @@ plot.plot_curves([x for _ in estimators], means, stds, x_label="Iteration", y_la
 param = np.array([1.5484506,  0.99343982, 0.56090925, 0.41320014, 0.341736, 0.29078371])
 env = gym.make('minigolf-v0')
 
-for i in range(5):
+for i in range(1):
     print("Episode {0}".format(i))
     state = env.reset()
     true_s = env.get_true_state()
@@ -161,6 +161,34 @@ for i in range(5):
         state, reward, done,_, _, _ = env.step(action)
         true_ns = env.get_true_state()
         print([true_s,action,true_ns,reward])
+        print("Pdf: {0}".format(env.getDensity(env.getEnvParam(), true_s, action, true_ns)))
+        print("Pdf2: {0}".format(env.density(env.getEnvParam().reshape(1,4), true_s.reshape(1,1,1), action.reshape(1,1), true_ns.reshape(1,1,1))))
         true_s = true_ns
         if done:
             break
+
+s = 10
+a = 3
+ns = np.linspace(-10, 20, num=100)
+pdf = np.zeros(ns.shape)
+for i in range(ns.shape[0]):
+    pdf[i] = env.getDensity(env.getEnvParam(), s, a, ns[i])
+import matplotlib.pyplot as plt
+plt.plot(ns, pdf)
+plt.show()
+
+s = np.linspace(5,10, num=6).reshape(3,2,1)
+a = np.array([3,3,3,3,3,3]).reshape(3,2)
+ns = np.linspace(-10, 20, num=100)
+pdfs = [np.zeros(ns.shape) for _ in range(6)]
+param = env.getEnvParam().reshape(1,4)
+for i in range(ns.shape[0]):
+    tmp = ns[i] * np.ones((3,2,1))
+    pdf = env.density(param, s, a, tmp)
+    pdfs[0][i] = pdf[0,0,0,0]
+    pdfs[1][i] = pdf[0, 1, 0, 0]
+import matplotlib.pyplot as plt
+plt.plot(ns, pdfs[0])
+plt.show()
+plt.plot(ns, pdfs[1])
+plt.show()
