@@ -62,7 +62,7 @@ def main():
 
     source_envs = []
     for param in np.array(envs):
-        source_envs.append(gym.make('LQG1D-v0'))
+        source_envs.append(gym.make('cartpolec-v0'))
         source_envs[-1].setParams(param)
     n_config_cv = policy_params.shape[0]
     n_source = [episodes_per_configuration*len(pis) for _ in envs]
@@ -107,9 +107,9 @@ def main():
                     model_estimation = 0
                 else:
                     model_estimation = 1
-                    model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1, 1, 1, 1], sigma_env=env_tgt.sigma_noise,
+                    model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1, 1, 1, 1], sigma_env=env_tgt.sigma_env,
                                                sigma_pi=np.sqrt(variance_action), T=episode_length, R=5, lambda_=0.00,
-                                               source_envs=source_envs, n_source=n_source, max_gp=1*5*20, state_dim=1,
+                                               source_envs=source_envs, n_source=n_source, max_gp=1*5*20, state_dim=4,
                                                linear_kernel=False)
                     if estimator.endswith("GP"):
                         model.use_gp = True
@@ -162,7 +162,7 @@ estimators = ["GPOMDP",
 
 learning_rates = [1e-3, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3]
 
-num_batch = 50
+num_batch = 5
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
