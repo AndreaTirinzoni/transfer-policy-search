@@ -37,7 +37,7 @@ def main():
     episodes_per_configuration = 10
 
     pis = [[-0.1], [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7], [-0.8]]
-    A = np.random.uniform(0.5, 1.5, 5)
+    A = np.random.uniform(0.6, 1.4, 5)
     B = np.random.uniform(0.8, 1.2, 5)
     envs = [[A[i], B[i], 0.09] for i in range(A.shape[0])]
 
@@ -152,7 +152,7 @@ estimators = ["GPOMDP",
               "PD-MIS-CV-BASELINE-GP",
               "PD-MIS-CV-BASELINE-MI"]
 
-learning_rates = [1e-4, 1e-4, 1e-4, 1e-4, 1e-4, 1e-4]
+learning_rates = [1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2]
 
 num_batch = 100
 

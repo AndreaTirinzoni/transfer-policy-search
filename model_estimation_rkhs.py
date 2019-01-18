@@ -8,7 +8,8 @@ class ModelEstimatorRKHS:
     Model estimation algorithm using reproducing kernel Hilbert spaces.
     """
 
-    def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, max_gp, state_dim, action_dim=1, use_gp=False, linear_kernel=False, use_gp_generate_mixture = False):
+    def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, max_gp, state_dim, action_dim=1,
+                 use_gp=False, linear_kernel=False, use_gp_generate_mixture=False, alpha_gp=None):
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.T = T
@@ -24,7 +25,7 @@ class ModelEstimatorRKHS:
             self.kernel = DotProduct(sigma_0=0)
         else:
             self.kernel = kernel_rho**2 * RBF(length_scale=kernel_lambda)
-        self.gp = GaussianProcessRegressor(kernel=self.kernel, alpha=sigma_env**2, optimizer=None)
+        self.gp = GaussianProcessRegressor(kernel=self.kernel, alpha=sigma_env**2 if alpha_gp is None else alpha_gp, optimizer=None)
 
         # Weight matrix of the learned model
         self.A = 0
@@ -204,7 +205,6 @@ class ModelEstimatorRKHS:
         self.update_gp(dataset)
         self.gp_fitted = True
 
-        # TODO check this part
         N = dataset.source_param.shape[0]
         alpha_0 = dataset.episodes_per_config[-1] / N
         alpha_tgt = dataset.episodes_per_config[dataset.n_config_cv:] / N
@@ -223,14 +223,14 @@ class ModelEstimatorRKHS:
         if self.use_gp_generate_mixture:
             self.use_gp = False
 
-        C_alpha = (1 - alpha_0)**2 / (alpha_0 * np.log(1 / alpha_0))
-        c1 = C_alpha / (2 * self.sigma_env**2 * N) * 10
-        c2 = 4 * np.sum(alpha_tgt) / (self.sigma_env**2)# * alpha_0**2)
-        # mu_alpha =
-        # c2 = C_alpha / (2 * self.sigma_env**2 * N * (1-alpha_0))
-        # c3 = 4 * np.sum(alpha_tgt) / (self.sigma_env**2 * alpha_0**2)
-        # print("c1 ({0}s)".format(c2))
-        # print("c2 ({0}s)".format(c3))
+        C = 5
+        if C <= (1 - alpha_0) / (2 * alpha_0):
+            u_alpha = 2 * C * (1 - alpha_0) ** 2 / (alpha_0 * C + 1 - alpha_0) ** 3
+        else:
+            u_alpha = 8 / (27 * alpha_0)
+
+        c1 = u_alpha / (2 * self.sigma_env**2 * N * (1 - alpha_0))
+        c2 = 4 * np.sum(alpha_tgt) / (self.sigma_env**2)  # TODO alpha_0 has been neglected
 
         M = self.gp.predict(X)
         F_src = [env.stepDenoisedCurrent(states, actions).reshape(X.shape[0], self.state_dim) for env in self.source_envs]
