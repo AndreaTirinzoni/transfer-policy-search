@@ -115,6 +115,16 @@ Any further steps are undefined behavior.
 
         return [np.array(self.state), float(reward), done, np.array(self.state), u, np.array(self.state)]
 
+    def clip_action(self, action):
+        return np.clip(action, -self.max_action, self.max_action)
+
+    def clip_state(self, state):
+        s0 = np.clip(state[0], -self.x_threshold * 2, self.x_threshold * 2)
+        s1 = np.clip(state[1], -2, 2)
+        s2 = np.clip(state[2], -self.theta_threshold_radians * 2, self.theta_threshold_radians * 2)
+        s3 = np.clip(state[3], -1, 1)
+        return np.array([s0, s1, s2, s3])
+
     def stepDenoised(self, env_parameters, state, action):
         force = self.force_mag * action
         state_t1 = self.stepPhysicsDenoised(env_parameters, state, force)
@@ -164,8 +174,11 @@ Any further steps are undefined behavior.
 
         return np.concatenate((x[:, :, np.newaxis], x_dot[:, :, np.newaxis], theta[:, :, np.newaxis], theta_dot[:, :, np.newaxis]), axis=2)
 
-    def reset(self):
-        self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
+    def reset(self, state=None):
+        if state is None:
+            self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
+        else:
+            self.state = state
         self.steps_beyond_done = None
         return np.array(self.state)
 

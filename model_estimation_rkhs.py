@@ -40,6 +40,9 @@ class ModelEstimatorRKHS:
         # Whether the model has been fitted once
         self.model_fitted = False
 
+        # Whether the GP has been fitted once
+        self.gp_fitted = False
+
         # Whether the model has been fitted once
         self.use_gp_generate_mixture = use_gp_generate_mixture
 
@@ -112,7 +115,9 @@ class ModelEstimatorRKHS:
         If state is an NxTxd matrix and action is an NxT matrix, it returns the NxTxd matrix containing all transitions.
         """
 
-        if state.ndim == 1:
+        if not self.gp_fitted:
+            return np.zeros(state.shape)
+        elif state.ndim == 1:
             x = np.append(state, action)[np.newaxis, :]
             if self.use_gp or not self.model_fitted:
                 return self.gp.predict(x).reshape(self.state_dim, )
@@ -197,6 +202,7 @@ class ModelEstimatorRKHS:
         """
 
         self.update_gp(dataset)
+        self.gp_fitted = True
 
         # TODO check this part
         N = dataset.source_param.shape[0]
