@@ -26,7 +26,7 @@ def main():
     variance_action = 0.1
     batch_size = 5
     discount_factor = 0.99
-    ess_min = 10
+    ess_min = 20
     adaptive = "Yes"
     n_min = 1
 
@@ -108,8 +108,8 @@ def main():
                 else:
                     model_estimation = 1
                     model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1, 1, 1, 1], sigma_env=env_tgt.sigma_env,
-                                               sigma_pi=np.sqrt(variance_action), T=episode_length, R=5, lambda_=0.00,
-                                               source_envs=source_envs, n_source=n_source, max_gp=1*5*20, state_dim=4,
+                                               sigma_pi=np.sqrt(variance_action), T=50, R=5, lambda_=0.00,
+                                               source_envs=source_envs, n_source=n_source, max_gp=250, state_dim=4,
                                                linear_kernel=False)
                     if estimator.endswith("GP"):
                         model.use_gp = True
@@ -149,7 +149,7 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 20
+n_jobs = 10
 # Number of runs
 n_runs = 20
 
@@ -162,7 +162,7 @@ estimators = ["GPOMDP",
 
 learning_rates = [1e-3, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3]
 
-num_batch = 5
+num_batch = 50
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

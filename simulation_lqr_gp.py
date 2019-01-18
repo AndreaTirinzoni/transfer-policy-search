@@ -34,10 +34,12 @@ def main():
                                           num_batch, discount_factor, None, None, ess_min, adaptive, n_min)
 
     # source task for lqg1d
-    episodes_per_configuration = 20
+    episodes_per_configuration = 10
 
     pis = [[-0.1], [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7], [-0.8]]
-    envs = [[0.9, 1, 0.09], [1.2, 1, 0.09], [1.5, 1, 0.09]]
+    A = np.random.uniform(0.5, 1.5, 5)
+    B = np.random.uniform(0.8, 1.2, 5)
+    envs = [[A[i], B[i], 0.09] for i in range(A.shape[0])]
 
     policy_params = []
     env_params = []
@@ -139,7 +141,7 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 5
+n_jobs = 20
 # Number of runs
 n_runs = 20
 
@@ -150,9 +152,9 @@ estimators = ["GPOMDP",
               "PD-MIS-CV-BASELINE-GP",
               "PD-MIS-CV-BASELINE-MI"]
 
-learning_rates = [1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5]
+learning_rates = [1e-4, 1e-4, 1e-4, 1e-4, 1e-4, 1e-4]
 
-num_batch = 400
+num_batch = 100
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
