@@ -1170,8 +1170,8 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
         stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.policy_parameter[i_batch, :] = param
         stats.gradient[i_batch, :] = gradient
-        stats.mean_w[i_batch, :] = mean_w
-        stats.var_w[i_batch, :] = var_w
-        stats.max_w[i_batch, :] = max_w
-        stats.min_w[i_batch, :] = min_w
+        stats.mean_w[i_batch] = mean_w
+        stats.var_w[i_batch] = var_w
+        stats.max_w[i_batch] = max_w
+        stats.min_w[i_batch] = min_w
     return stats
