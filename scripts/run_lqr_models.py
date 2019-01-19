@@ -1,3 +1,6 @@
+import sys
+sys.path.append("../")
+
 import argparse
 from joblib import Parallel,delayed
 import numpy as np
@@ -89,40 +92,37 @@ def main():
         discrete_estimation = 0
         model = None
 
-        if estimator.endswith("SR"):
-            off_policy = 1
-            data = stc.sourceTaskCreationSpec(env_src, episode_length, 1, args.gamma, variance_action,
-                                              np.array([[-0.1]]), np.array([[1.0, 1.0, 0.09]]), param_space_size,
-                                              state_space_size, env_param_space_size)
-            source_dataset = sc.SourceDataset(*data, 1)
-            name = estimator[:-3]
+        # Create a new dataset object
+        source_dataset = sc.SourceDataset(source_task, source_param, episodes_per_configuration,
+                                          next_states_unclipped, actions_clipped, next_states_unclipped_denoised,
+                                          n_config_cv)
+
+        if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]:
+            name = estimator
         else:
+            off_policy = 1
+            name = estimator[:-3]
 
-            if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]:
-                name = estimator
-            else:
-                off_policy = 1
-
-                if estimator.endswith("DI"):
-                    model_estimation = 1
-                    discrete_estimation = 1
-                    model = Models(possible_envs)
-                else:
-                    model_estimation = 1
-                    model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1], sigma_env=env_tgt.sigma_noise,
-                                               sigma_pi=np.sqrt(variance_action), T=episode_length, R=args.rkhs_samples, lambda_=0.00,
-                                               source_envs=source_envs, n_source=n_source, max_gp=args.max_gp_samples, state_dim=1,
-                                               linear_kernel=True)
-                    if estimator.endswith("GP"):
-                        model.use_gp = True
-                    if estimator.endswith("MI"):
-                        model.use_gp_generate_mixture = True
-
-                name = estimator[:-3]
-
-            source_dataset = sc.SourceDataset(source_task, source_param, episodes_per_configuration,
-                                              next_states_unclipped, actions_clipped, next_states_unclipped_denoised,
-                                              n_config_cv)
+            if estimator.endswith("SR"):
+                # Create a fake dataset for the sample-reuse algorithm
+                data = stc.sourceTaskCreationSpec(env_src, episode_length, 1, args.gamma, variance_action,
+                                                  np.array([[-0.1]]), np.array([[1.0, 1.0, 0.09]]), param_space_size,
+                                                  state_space_size, env_param_space_size)
+                source_dataset = sc.SourceDataset(*data, 1)
+            elif estimator.endswith("DI"):
+                model_estimation = 1
+                discrete_estimation = 1
+                model = Models(possible_envs)
+            elif estimator.endswith("GP") or estimator.endswith("ES") or estimator.endswith("MI"):
+                model_estimation = 1
+                model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1], sigma_env=env_tgt.sigma_noise,
+                                           sigma_pi=np.sqrt(variance_action), T=episode_length, R=args.rkhs_samples,
+                                           lambda_=0.0, source_envs=source_envs, n_source=n_source,
+                                           max_gp=args.max_gp_samples, state_dim=1, linear_kernel=True)
+                if estimator.endswith("GP"):
+                    model.use_gp = True
+                elif estimator.endswith("MI"):
+                    model.use_gp_generate_mixture = True
 
         result = la.learnPolicy(env_param, simulation_param, source_dataset, name, off_policy=off_policy,
                                 model_estimation=model_estimation, dicrete_estimation=discrete_estimation,
@@ -182,6 +182,11 @@ estimators = ["GPOMDP",
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 os.mkdir(folder)
 
+# Save args
+with open("{0}/params.txt".format(folder), 'w') as f:
+    for key, value in vars(args).items():
+        f.write("{0}: {1}\n".format(key, value))
+
 # Seeds for each run
 seeds = [np.random.randint(1000000) for _ in range(args.n_runs)]
 
@@ -189,6 +194,9 @@ if args.n_jobs == 1:
     results = [run(id, seed) for id, seed in zip(range(args.n_runs), seeds)]
 else:
     results = Parallel(n_jobs=args.n_jobs, backend='loky')(delayed(run)(id, seed) for id, seed in zip(range(args.n_runs), seeds))
+
+with open('{0}/results.pkl'.format(folder), 'wb') as output:
+    pickle.dump(results, output)
 
 ################################################
 
