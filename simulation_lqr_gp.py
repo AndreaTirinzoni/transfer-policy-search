@@ -7,6 +7,7 @@ import learningAlgorithm as la
 import sourceTaskCreation as stc
 import simulationClasses as sc
 from model_estimation_rkhs import ModelEstimatorRKHS
+from discreteModelEstimation import Models
 import gym
 
 
@@ -28,7 +29,7 @@ def main():
     discount_factor = 0.99
     ess_min = 20
     adaptive = "Yes"
-    n_min = 5
+    n_min = 1
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size,
                                           num_batch, discount_factor, None, None, ess_min, adaptive, n_min, use_adam=True)
@@ -65,6 +66,21 @@ def main():
                                                                   env_params, param_space_size, state_space_size,
                                                                   env_param_space_size)
 
+    # Envs for discrete model estimation
+    possible_env_params = [[1.0, 1.0, 0.09],
+                           [1.5, 1.0, 0.09],
+                           [0.5, 1.0, 0.09],
+                           [1.2, 0.8, 0.09],
+                           [0.8, 1.2, 0.09],
+                           [1.1, 0.9, 0.09],
+                           [0.9, 1.1, 0.09],
+                           [1.5, 0.5, 0.09]]
+
+    possible_envs = []
+    for param in np.array(possible_env_params):
+        possible_envs.append(gym.make('LQG1D-v0'))
+        possible_envs[-1].setParams(param)
+
     stats = {}
     for estimator in estimators:
         stats[estimator] = []
@@ -80,6 +96,7 @@ def main():
         if estimator.endswith("SR"):
             off_policy = 1
             model_estimation = 0
+            discrete_estimation = 0
             source_dataset_batch_size = 1
             policy_params = np.array([[-0.1]])
             env_params = np.array([[1.0, 1.0, 0.09]])
@@ -92,13 +109,20 @@ def main():
             if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]:
                 off_policy = 0
                 model_estimation = 0
+                discrete_estimation = 0
                 name = estimator
             else:
                 off_policy = 1
                 if estimator.endswith("ID"):
                     model_estimation = 0
+                    discrete_estimation = 0
+                elif estimator.endswith("DI"):
+                    model_estimation = 1
+                    discrete_estimation = 1
+                    model = Models(possible_envs)
                 else:
                     model_estimation = 1
+                    discrete_estimation = 0
                     model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1], sigma_env=env_tgt.sigma_noise,
                                                sigma_pi=np.sqrt(variance_action), T=episode_length, R=50, lambda_=0.00,
                                                source_envs=source_envs, n_source=n_source, max_gp=10*5*20, state_dim=1,
@@ -115,7 +139,8 @@ def main():
                                               actions_clipped, next_states_unclipped_denoised, n_config_cv)
 
         result = la.learnPolicy(env_param, simulation_param, source_dataset, name, off_policy=off_policy,
-                                model_estimation=model_estimation, dicrete_estimation=0, model_estimator=model)
+                                model_estimation=model_estimation, dicrete_estimation=discrete_estimation,
+                                model_estimator=model)
 
         stats[estimator].append(result)
 
@@ -150,7 +175,7 @@ estimators = ["GPOMDP",
               "PD-MIS-CV-BASELINE-ID",
               "PD-MIS-CV-BASELINE-ES",
               "PD-MIS-CV-BASELINE-GP",
-              "PD-MIS-CV-BASELINE-MI"]
+              "PD-MIS-CV-BASELINE-DI"]
 
 learning_rates = [1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2]
 
