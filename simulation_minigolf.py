@@ -3,7 +3,7 @@ import numpy as np
 import datetime
 import pickle
 import os
-import learningAlgorithm_feats as la
+import learningAlgorithm_noGaussianTransitions as la
 import sourceTaskCreation as stc
 import simulationClasses as sc
 import gym
@@ -36,7 +36,7 @@ def main():
 
     env_params = np.array([[1.0, 0.131, 0.1, 0.09]])
 
-    source_dataset_batch_size = 10
+    source_dataset_batch_size = 1
     n_config_cv = policy_params.shape[0]
 
     [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped,
@@ -107,12 +107,12 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 4
+n_jobs = 1
 
 # Number of runs
 n_runs = 20
 
-estimators = ["GPOMDP"]
+estimators = ["MIS", "PD-MIS-CV-BASELINE"]
 learning_rates = [1e-3, 1e-3, 1e-3, 1e-3]
 num_batch = 300
 
