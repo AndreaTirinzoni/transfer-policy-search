@@ -9,7 +9,7 @@ class ModelEstimatorRKHS:
     """
 
     def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, max_gp, state_dim, action_dim=1,
-                 use_gp=False, linear_kernel=False, use_gp_generate_mixture=False, alpha_gp=None):
+                 use_gp=False, linear_kernel=False, use_gp_generate_mixture=False, alpha_gp=None, target_env=None, balance_coeff=False):
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.T = T
@@ -46,6 +46,12 @@ class ModelEstimatorRKHS:
 
         # Whether the model has been fitted once
         self.use_gp_generate_mixture = use_gp_generate_mixture
+
+        # For testing
+        self.target_env = target_env
+
+        # Whether the coefficients for model estimation should be balanced
+        self.balance_coeff = balance_coeff
 
     def _split_dataset(self, dataset):
         """
@@ -127,9 +133,16 @@ class ModelEstimatorRKHS:
         else:
             X = np.concatenate([state, action[:,:,np.newaxis]], axis=2).reshape(state.shape[0] * state.shape[1], self.state_dim+1)
             if self.use_gp or not self.model_fitted:
-                return self.gp.predict(X).reshape(state.shape)
+                prediction = self.gp.predict(X).reshape(state.shape)
             else:
-                return np.matmul(self.kernel(self.X, X).T, self.A).reshape(state.shape)
+                prediction = np.matmul(self.kernel(self.X, X).T, self.A).reshape(state.shape)
+
+            if self.target_env is not None:
+                true = self.target_env.stepDenoisedCurrent(state, action)
+                mse = (prediction - true)**2
+                print("Model error. Mean: {0}, Max: {1}, Min:{2}, Var: {3}".format(np.mean(mse), np.max(mse), np.min(mse),
+                                                                                   np.var(mse)))
+            return prediction
 
     def _update_weight_matrix(self, X, M, W, F_src, alpha_src, c1, c2):
         """
@@ -229,8 +242,12 @@ class ModelEstimatorRKHS:
         else:
             u_alpha = 8 / (27 * alpha_0)
 
-        c1 = u_alpha / (2 * self.sigma_env**2 * N * (1 - alpha_0))
-        c2 = 4 * np.sum(alpha_tgt) / (self.sigma_env**2)  # TODO alpha_0 has been neglected
+        if not self.balance_coeff:
+            c1 = u_alpha / (2 * self.sigma_env**2 * N * (1 - alpha_0))
+            c2 = 4 * np.sum(alpha_tgt) / (self.sigma_env**2)  # TODO alpha_0 has been neglected
+        else:
+            c1 = np.sum(alpha_src)
+            c2 = np.sum(alpha_tgt)
 
         M = self.gp.predict(X)
         F_src = [env.stepDenoisedCurrent(states, actions).reshape(X.shape[0], self.state_dim) for env in self.source_envs]
