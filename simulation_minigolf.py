@@ -26,7 +26,7 @@ def main():
     batch_size = 10
     discount_factor = 1
     ess_min = 10
-    adaptive = "No"
+    adaptive = "Yes"
     n_min = 1
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size,
@@ -107,14 +107,14 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 4
+n_jobs = 3
 
 # Number of runs
-n_runs = 20
+n_runs = 18
 
-estimators = ["PD-IS", "GPOMDP", "MIS-CV-BASELINE", "PD-MIS-CV-BASELINE"]
+estimators = ["PD-MIS-CV-BASELINE"]
 learning_rates = [1e-3, 1e-3, 1e-3, 1e-3]
-num_batch = 300
+num_batch = 200
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
