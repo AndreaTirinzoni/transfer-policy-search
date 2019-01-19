@@ -121,7 +121,7 @@ def main():
                 model = Models(possible_envs)
             elif estimator.endswith("GP") or estimator.endswith("ES") or estimator.endswith("MI"):
                 model_estimation = 1
-                model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1, 1, 1, 1], sigma_env=env_tgt.sigma_noise,
+                model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1, 1, 1, 1], sigma_env=env_tgt.sigma_env,
                                            sigma_pi=np.sqrt(variance_action), T=arguments.rkhs_horizon, R=arguments.rkhs_samples,
                                            lambda_=0.0, source_envs=source_envs, n_source=n_source,
                                            max_gp=arguments.max_gp_samples, state_dim=4, linear_kernel=False,
