@@ -184,11 +184,11 @@ parser.add_argument("--quiet", default=False, action='store_true')
 arguments = parser.parse_args()
 
 estimators = ["GPOMDP",
-              "PD-MIS-CV-BASELINE-SR",
-              "PD-MIS-CV-BASELINE-ID",
-              "PD-MIS-CV-BASELINE-ES",
-              "PD-MIS-CV-BASELINE-GP",
-              "PD-MIS-CV-BASELINE-DI"]
+              "PD-MIS-SR",
+              "PD-MIS-ID",
+              "PD-MIS-ES",
+              "PD-MIS-GP",
+              "PD-MIS-DI"]
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
