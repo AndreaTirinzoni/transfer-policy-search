@@ -107,12 +107,12 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 1
+n_jobs = 4
 
 # Number of runs
 n_runs = 20
 
-estimators = ["MIS", "PD-MIS-CV-BASELINE"]
+estimators = ["PD-IS", "GPOMDP", "MIS-CV-BASELINE", "PD-MIS-CV-BASELINE"]
 learning_rates = [1e-3, 1e-3, 1e-3, 1e-3]
 num_batch = 300
 
