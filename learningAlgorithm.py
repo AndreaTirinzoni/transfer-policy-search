@@ -1164,6 +1164,7 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
 
         if verbose:
             print("Done updating policy ({0}s)".format(time.time() - start))
+            print("Weights. Mean: {0}, Var: {1}, Max: {2}, Min: [3}".format(mean_w,var_w,max_w,min_w))
 
         # Update statistics
         stats.total_rewards[i_batch] = tot_reward_batch
