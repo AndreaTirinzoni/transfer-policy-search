@@ -166,9 +166,9 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 20
+n_jobs = 1
 # Number of runs
-n_runs = 20
+n_runs = 1
 
 estimators = ["GPOMDP",
               "PD-MIS-CV-BASELINE-SR",
@@ -179,7 +179,7 @@ estimators = ["GPOMDP",
 
 learning_rates = [1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2]
 
-num_batch = 100
+num_batch = 5
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
