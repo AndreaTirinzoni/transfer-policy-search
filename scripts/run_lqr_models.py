@@ -31,14 +31,14 @@ def main():
     variance_initial_param = 0
     variance_action = 0.1
 
-    simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, args.batch_size,
-                                          args.iterations, args.gamma, None, args.learning_rate, args.ess_min,
-                                          "Yes" if args.adaptive else "No", args.n_min, use_adam=args.use_adam)
+    simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, arguments.batch_size,
+                                          arguments.iterations, arguments.gamma, None, arguments.learning_rate, arguments.ess_min,
+                                          "Yes" if arguments.adaptive else "No", arguments.n_min, use_adam=arguments.use_adam)
 
     # Source tasks
     pis = [[-0.1], [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7], [-0.8]]
-    A = np.random.uniform(0.6, 1.4, args.n_source_models)
-    B = np.random.uniform(0.8, 1.2, args.n_source_models)
+    A = np.random.uniform(0.6, 1.4, arguments.n_source_models)
+    B = np.random.uniform(0.8, 1.2, arguments.n_source_models)
     envs = [[A[i], B[i], 0.09] for i in range(A.shape[0])]
 
     policy_params = []
@@ -57,9 +57,9 @@ def main():
         source_envs.append(gym.make('LQG1D-v0'))
         source_envs[-1].setParams(param)
     n_config_cv = policy_params.shape[0]
-    n_source = [args.n_source_samples*len(pis) for _ in envs]
+    n_source = [arguments.n_source_samples*len(pis) for _ in envs]
 
-    data = stc.sourceTaskCreationSpec(env_src, episode_length, args.n_source_samples, args.gamma, variance_action,
+    data = stc.sourceTaskCreationSpec(env_src, episode_length, arguments.n_source_samples, arguments.gamma, variance_action,
                                       policy_params, env_params, param_space_size, state_space_size, env_param_space_size)
 
     # Envs for discrete model estimation
@@ -101,7 +101,7 @@ def main():
 
             if estimator.endswith("SR"):
                 # Create a fake dataset for the sample-reuse algorithm
-                data_sr = stc.sourceTaskCreationSpec(env_src, episode_length, 1, args.gamma, variance_action,
+                data_sr = stc.sourceTaskCreationSpec(env_src, episode_length, 1, arguments.gamma, variance_action,
                                                   np.array([[-0.1]]), np.array([[1.0, 1.0, 0.09]]), param_space_size,
                                                   state_space_size, env_param_space_size)
                 source_dataset = sc.SourceDataset(*data_sr, 1)
@@ -112,11 +112,11 @@ def main():
             elif estimator.endswith("GP") or estimator.endswith("ES") or estimator.endswith("MI"):
                 model_estimation = 1
                 model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1], sigma_env=env_tgt.sigma_noise,
-                                           sigma_pi=np.sqrt(variance_action), T=episode_length, R=args.rkhs_samples,
+                                           sigma_pi=np.sqrt(variance_action), T=episode_length, R=arguments.rkhs_samples,
                                            lambda_=0.0, source_envs=source_envs, n_source=n_source,
-                                           max_gp=args.max_gp_samples, state_dim=1, linear_kernel=True,
-                                           balance_coeff=args.balance_coeff,
-                                           target_env=env_tgt if args.print_mse else None)
+                                           max_gp=arguments.max_gp_samples, state_dim=1, linear_kernel=True,
+                                           balance_coeff=arguments.balance_coeff,
+                                           target_env=env_tgt if arguments.print_mse else None)
                 if estimator.endswith("GP"):
                     model.use_gp = True
                 elif estimator.endswith("MI"):
@@ -124,7 +124,7 @@ def main():
 
         result = la.learnPolicy(env_param, simulation_param, source_dataset, name, off_policy=off_policy,
                                 model_estimation=model_estimation, dicrete_estimation=discrete_estimation,
-                                model_estimator=model, verbose=not args.quiet)
+                                model_estimator=model, verbose=not arguments.quiet)
 
         stats[estimator].append(result)
 
@@ -170,7 +170,7 @@ parser.add_argument("--n_runs", default=1, type=int)
 parser.add_argument("--quiet", default=False, action='store_true')
 
 # Read arguments
-args = parser.parse_args()
+arguments = parser.parse_args()
 
 estimators = ["GPOMDP",
               "PD-MIS-CV-BASELINE-SR",
@@ -183,18 +183,18 @@ estimators = ["GPOMDP",
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 os.mkdir(folder)
 
-# Save args
+# Save arguments
 with open("{0}/params.txt".format(folder), 'w') as f:
-    for key, value in vars(args).items():
+    for key, value in vars(arguments).items():
         f.write("{0}: {1}\n".format(key, value))
 
 # Seeds for each run
-seeds = [np.random.randint(1000000) for _ in range(args.n_runs)]
+seeds = [np.random.randint(1000000) for _ in range(arguments.n_runs)]
 
-if args.n_jobs == 1:
-    results = [run(id, seed) for id, seed in zip(range(args.n_runs), seeds)]
+if arguments.n_jobs == 1:
+    results = [run(id, seed) for id, seed in zip(range(arguments.n_runs), seeds)]
 else:
-    results = Parallel(n_jobs=args.n_jobs, backend='loky')(delayed(run)(id, seed) for id, seed in zip(range(args.n_runs), seeds))
+    results = Parallel(n_jobs=arguments.n_jobs, backend='loky')(delayed(run)(id, seed) for id, seed in zip(range(arguments.n_runs), seeds))
 
 with open('{0}/results.pkl'.format(folder), 'wb') as output:
     pickle.dump(results, output)
