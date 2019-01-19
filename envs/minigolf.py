@@ -122,6 +122,7 @@ class MiniGolf(gym.Env):
             return 0
 
         action = np.clip(action, self.min_action, self.max_action / 2)
+        action = 1e-8 if action == 0 else action
 
         putter_length = env_parameters[0]
         friction = env_parameters[1]
@@ -130,7 +131,6 @@ class MiniGolf(gym.Env):
 
         u = np.sqrt(2 * deceleration * (state - next_state))
         noise = (u / (action*putter_length) - 1) / sigma_noise
-        noise[np.isnan(noise)] = 1e-8
 
         return norm.pdf(noise)
 
@@ -147,14 +147,14 @@ class MiniGolf(gym.Env):
 
         mask = state < next_state
         action = np.clip(action, self.min_action, self.max_action / 2)
+        action[action == 0] = 1e-8
         pdf = np.zeros((state.shape[0], state.shape[1], 1, env_parameters.shape[0]))
         diff = np.abs(state - next_state)  # take the abs for the sqrt, but mask negative values later
 
         for i in range(env_parameters.shape[0]):
             deceleration = 5 / 7 * env_parameters[i, 1] * 9.81
             u = np.sqrt(2 * deceleration * diff[:, :, :, i])
-            noise = (u / (action * env_parameters[i, 0]) - 1) / env_parameters[i, -1]
-            noise[np.isnan(noise)] = 1e-8
+            noise = (u / (action[:, :, np.newaxis, i] * env_parameters[i, 0]) - 1) / env_parameters[i, -1]
             pdf[:, :, :, i] = norm.pdf(noise) * (1-mask[:, :, :, i])  # set to zero impossible transitions
 
         return pdf[:, :, 0, :]
@@ -171,12 +171,12 @@ class MiniGolf(gym.Env):
 
         mask = state < next_state
         action = np.clip(action, self.min_action, self.max_action / 2)
+        action[action == 0] = 1e-8
         diff = np.abs(state - next_state)  # take the abs for the sqrt, but mask negative values later
 
-        deceleration = 5 / 7 * self.putter_length * 9.81
+        deceleration = 5 / 7 * self.friction * 9.81
         u = np.sqrt(2 * deceleration * diff)
-        noise = (u / (action[:, :, np.newaxis] * self.friction) - 1) / self.sigma_noise
-        noise[np.isnan(noise)] = 1e-8
+        noise = (u / (action[:, :, np.newaxis] * self.putter_length) - 1) / self.sigma_noise
         pdf = norm.pdf(noise) * (1-mask)  # set to zero impossible transitions
 
         return pdf[:, :, 0]
