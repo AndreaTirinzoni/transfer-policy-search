@@ -28,7 +28,7 @@ def main():
     discount_factor = 0.99
     ess_min = 20
     adaptive = "Yes"
-    n_min = 1
+    n_min = 3
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size,
                                           num_batch, discount_factor, None, None, ess_min, adaptive, n_min)
@@ -47,7 +47,9 @@ def main():
            [-0.0702051, 0.17653729, 0.32254312, 0.72004621],
            [-0.09675066, 0.16063462, 0.32343255, 0.73801456]]
 
-    envs = [[1.3, 0.4, 0.09], [0.9, 0.6, 0.09], [1.5, 0.7, 0.09]]
+    m = np.random.uniform(0.8, 1.2, 5)
+    l = np.random.uniform(0.4, 0.6, 5)
+    envs = [[m[i], l[i], 0.09] for i in range(m.shape[0])]
 
     policy_params = []
     env_params = []
@@ -108,9 +110,9 @@ def main():
                 else:
                     model_estimation = 1
                     model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1, 1, 1, 1], sigma_env=env_tgt.sigma_env,
-                                               sigma_pi=np.sqrt(variance_action), T=50, R=5, lambda_=0.00,
+                                               sigma_pi=np.sqrt(variance_action), T=20, R=20, lambda_=0.00,
                                                source_envs=source_envs, n_source=n_source, max_gp=250, state_dim=4,
-                                               linear_kernel=False)
+                                               linear_kernel=False, alpha_gp=1e-5)
                     if estimator.endswith("GP"):
                         model.use_gp = True
                     if estimator.endswith("MI"):
@@ -149,7 +151,7 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 10
+n_jobs = 20
 # Number of runs
 n_runs = 20
 
