@@ -10,8 +10,6 @@ import os
 import learningAlgorithm as la
 import sourceTaskCreation as stc
 import simulationClasses as sc
-from model_estimation_rkhs import ModelEstimatorRKHS
-from discreteModelEstimation import Models
 import gym
 
 
@@ -52,30 +50,10 @@ def main():
     policy_params = np.array(policy_params)
     env_params = np.array(env_params)
 
-    source_envs = []
-    for param in np.array(envs):
-        source_envs.append(gym.make('LQG1D-v0'))
-        source_envs[-1].setParams(param)
     n_config_cv = policy_params.shape[0]
-    n_source = [arguments.n_source_samples*len(pis) for _ in envs]
 
     data = stc.sourceTaskCreationSpec(env_src, episode_length, arguments.n_source_samples, arguments.gamma, variance_action,
                                       policy_params, env_params, param_space_size, state_space_size, env_param_space_size)
-
-    # Envs for discrete model estimation
-    possible_env_params = [[1.0, 1.0, 0.09],
-                           [1.5, 1.0, 0.09],
-                           [0.5, 1.0, 0.09],
-                           [1.2, 0.8, 0.09],
-                           [0.8, 1.2, 0.09],
-                           [1.1, 0.9, 0.09],
-                           [0.9, 1.1, 0.09],
-                           [1.5, 0.5, 0.09]]
-
-    possible_envs = []
-    for param in np.array(possible_env_params):
-        possible_envs.append(gym.make('LQG1D-v0'))
-        possible_envs[-1].setParams(param)
 
     stats = {}
     for estimator in estimators:
@@ -85,46 +63,24 @@ def main():
 
         print(estimator)
 
-        model_estimation = 0
-        off_policy = 0
-        discrete_estimation = 0
-        model = None
-
         # Create a new dataset object
         source_dataset = sc.SourceDataset(*data, n_config_cv)
 
-        if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]:
-            name = estimator
-        else:
-            off_policy = 1
+        off_policy = 0 if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"] else 1
+
+        name = estimator
+
+        if estimator.endswith("SR"):
+            # Create a fake dataset for the sample-reuse algorithm
+            data_sr = stc.sourceTaskCreationSpec(env_src, episode_length, 1, arguments.gamma, variance_action,
+                                              np.array([[-0.1]]), np.array([[1.0, 1.0, 0.09]]), param_space_size,
+                                              state_space_size, env_param_space_size)
+            source_dataset = sc.SourceDataset(*data_sr, 1)
             name = estimator[:-3]
 
-            if estimator.endswith("SR"):
-                # Create a fake dataset for the sample-reuse algorithm
-                data_sr = stc.sourceTaskCreationSpec(env_src, episode_length, 1, arguments.gamma, variance_action,
-                                                  np.array([[-0.1]]), np.array([[1.0, 1.0, 0.09]]), param_space_size,
-                                                  state_space_size, env_param_space_size)
-                source_dataset = sc.SourceDataset(*data_sr, 1)
-            elif estimator.endswith("DI"):
-                model_estimation = 1
-                discrete_estimation = 1
-                model = Models(possible_envs)
-            elif estimator.endswith("GP") or estimator.endswith("ES") or estimator.endswith("MI"):
-                model_estimation = 1
-                model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1], sigma_env=env_tgt.sigma_noise,
-                                           sigma_pi=np.sqrt(variance_action), T=episode_length, R=arguments.rkhs_samples,
-                                           lambda_=0.0, source_envs=source_envs, n_source=n_source,
-                                           max_gp=arguments.max_gp_samples, state_dim=1, linear_kernel=True,
-                                           balance_coeff=arguments.balance_coeff,
-                                           target_env=env_tgt if arguments.print_mse else None)
-                if estimator.endswith("GP"):
-                    model.use_gp = True
-                elif estimator.endswith("MI"):
-                    model.use_gp_generate_mixture = True
-
         result = la.learnPolicy(env_param, simulation_param, source_dataset, name, off_policy=off_policy,
-                                model_estimation=model_estimation, dicrete_estimation=discrete_estimation,
-                                model_estimator=model, verbose=not arguments.quiet)
+                                model_estimation=0, dicrete_estimation=0,
+                                model_estimator=None, verbose=not arguments.quiet)
 
         stats[estimator].append(result)
 
@@ -156,15 +112,11 @@ parser.add_argument("--learning_rate", default=1e-2, type=float)
 parser.add_argument("--gamma", default=0.99, type=float)
 parser.add_argument("--batch_size", default=10, type=int)
 parser.add_argument("--ess_min", default=20, type=int)
-parser.add_argument("--n_min", default=1, type=int)
+parser.add_argument("--n_min", default=5, type=int)
 parser.add_argument("--adaptive", default=False, action='store_true')
 parser.add_argument("--use_adam", default=False, action='store_true')
 parser.add_argument("--n_source_samples", default=10, type=int)
 parser.add_argument("--n_source_models", default=5, type=int)
-parser.add_argument("--max_gp_samples", default=1000, type=int)
-parser.add_argument("--rkhs_samples", default=50, type=int)
-parser.add_argument("--balance_coeff", default=False, action='store_true')
-parser.add_argument("--print_mse", default=False, action='store_true')
 parser.add_argument("--n_jobs", default=1, type=int)
 parser.add_argument("--n_runs", default=1, type=int)
 parser.add_argument("--quiet", default=False, action='store_true')
@@ -172,12 +124,7 @@ parser.add_argument("--quiet", default=False, action='store_true')
 # Read arguments
 arguments = parser.parse_args()
 
-estimators = ["GPOMDP",
-              "PD-MIS-CV-BASELINE-SR",
-              "PD-MIS-CV-BASELINE-ID",
-              "PD-MIS-CV-BASELINE-ES",
-              "PD-MIS-CV-BASELINE-GP",
-              "PD-MIS-CV-BASELINE-DI"]
+estimators = ["IS", "PD-IS", "MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE_SR", "GPOMDP"]
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

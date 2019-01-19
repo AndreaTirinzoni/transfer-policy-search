@@ -8,8 +8,9 @@ class ModelEstimatorRKHS:
     Model estimation algorithm using reproducing kernel Hilbert spaces.
     """
 
-    def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, max_gp, state_dim, action_dim=1,
-                 use_gp=False, linear_kernel=False, use_gp_generate_mixture=False, alpha_gp=None, target_env=None, balance_coeff=False):
+    def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, max_gp,
+                 state_dim, action_dim=1, use_gp=False, linear_kernel=False, use_gp_generate_mixture=False,
+                 alpha_gp=None, target_env=None, balance_coeff=False, use_iw=False):
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.T = T
@@ -52,6 +53,9 @@ class ModelEstimatorRKHS:
 
         # Whether the coefficients for model estimation should be balanced
         self.balance_coeff = balance_coeff
+
+        # Whether to use importance sampling to approximate the objective
+        self.use_iw = use_iw
 
     def _split_dataset(self, dataset):
         """
@@ -198,7 +202,7 @@ class ModelEstimatorRKHS:
 
         probs_target = np.cumprod(probs_target, axis=1).reshape(self.R*self.T,)
         probs_mixture = np.sum(np.cumprod(probs_mixture, axis=1) * alpha[np.newaxis, np.newaxis, :], axis=2).reshape(self.R*self.T,)
-        W = np.diag(probs_target / probs_mixture)
+        W = np.diag(probs_target / probs_mixture) if self.use_iw else np.eye(self.R*self.T)
         X = np.concatenate([states, actions[:,:,np.newaxis]], axis=2).reshape(self.R*self.T, self.state_dim+1)
 
         return X, W, states, actions
