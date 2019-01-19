@@ -20,21 +20,27 @@ def main():
 
     env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length)
 
-    mean_initial_param = np.random.normal(np.ones(param_space_size) * 0.1, 0.001)
+    mean_initial_param = np.random.normal(np.ones(param_space_size) * (-0.1), 0.001)
     variance_initial_param = 0
     variance_action = 0.1
-    batch_size = 10
+    batch_size = 8
     discount_factor = 1
-    ess_min = 10
-    adaptive = "No"
-    n_min = 1
+    ess_min = 20
+    adaptive = ""
+    n_min = 2
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size,
                                           num_batch, discount_factor, None, None, ess_min, adaptive, n_min)
 
-    policy_params = np.array([[0.1, 0.1, 0.1, 0.1, 0.1, 0.1]])
+    policy_params = np.array([[0.1, 0.1, 0.1, 0.1, 0.1, 0.1], [0.05, 2, -0.1, 0.3, 0.3, -0.5], [0.1, 0.1, 0.5, -0.1, 1.1, 0.45], [1, 0.2, 0.03, 0.26, 0.15, 0.98],
+                              [0.1, 0.1, 0.1, 0.1, 0.1, 0.1], [0.05, 2, -0.1, 0.3, 0.3, -0.5], [0.1, 0.1, 0.5, -0.1, 1.1, 0.45], [1, 0.2, 0.03, 0.26, 0.15, 0.98],
+                              [0.1, 0.1, 0.1, 0.1, 0.1, 0.1], [0.05, 2, -0.1, 0.3, 0.3, -0.5], [0.1, 0.1, 0.5, -0.1, 1.1, 0.45], [1, 0.2, 0.03, 0.26, 0.15, 0.98],
+                              [0.1, 0.1, 0.1, 0.1, 0.1, 0.1], [0.05, 2, -0.1, 0.3, 0.3, -0.5], [0.1, 0.1, 0.5, -0.1, 1.1, 0.45], [1, 0.2, 0.03, 0.26, 0.15, 0.98]])
 
-    env_params = np.array([[1.0, 0.131, 0.1, 0.09]])
+    env_params = np.array([[1.0, 0.131, 0.1, 0.09], [1.0, 0.131, 0.1, 0.09], [1.0, 0.131, 0.1, 0.09], [1.0, 0.131, 0.1, 0.09],
+                           [0.7, 0.18, 0.1, 0.09], [0.7, 0.18, 0.1, 0.09], [0.7, 0.18, 0.1, 0.09], [0.7, 0.18, 0.1, 0.09],
+                           [1.0, 0.1, 0.11, 0.09], [1.0, 0.1, 0.11, 0.09], [1.0, 0.1, 0.11, 0.09], [1.0, 0.1, 0.11, 0.09],
+                           [0.75, 0.07, 0.12, 0.09], [0.75, 0.07, 0.12, 0.09], [0.75, 0.07, 0.12, 0.09], [0.75, 0.07, 0.12, 0.09]])
 
     source_dataset_batch_size = 1
     n_config_cv = policy_params.shape[0]
@@ -107,14 +113,14 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 4
+n_jobs = 3
 
 # Number of runs
-n_runs = 20
+n_runs = 18
 
-estimators = ["PD-IS", "GPOMDP", "MIS-CV-BASELINE", "PD-MIS-CV-BASELINE"]
+estimators = ["PD-MIS-CV-BASELINE"]
 learning_rates = [1e-3, 1e-3, 1e-3, 1e-3]
-num_batch = 300
+num_batch = 200
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
