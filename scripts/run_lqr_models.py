@@ -33,7 +33,7 @@ def main():
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, args.batch_size,
                                           args.iterations, args.gamma, None, args.learning_rate, args.ess_min,
-                                          args.adaptive, args.n_min, use_adam=args.use_adam)
+                                          "Yes" if args.adaptive else "No", args.n_min, use_adam=args.use_adam)
 
     # Source tasks
     pis = [[-0.1], [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7], [-0.8]]
@@ -59,11 +59,9 @@ def main():
     n_config_cv = policy_params.shape[0]
     n_source = [args.n_source_samples*len(pis) for _ in envs]
 
-    [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped,
-     next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env_src, episode_length, args.n_source_samples,
-                                                                  args.gamma, variance_action, policy_params,
-                                                                  env_params, param_space_size, state_space_size,
-                                                                  env_param_space_size)
+    data = stc.sourceTaskCreationSpec(env_src, episode_length, args.n_source_samples, args.gamma, variance_action,
+                                      policy_params, env_params, param_space_size, state_space_size, env_param_space_size)
+
     # Envs for discrete model estimation
     possible_env_params = [[1.0, 1.0, 0.09],
                            [1.5, 1.0, 0.09],
@@ -93,9 +91,7 @@ def main():
         model = None
 
         # Create a new dataset object
-        source_dataset = sc.SourceDataset(source_task, source_param, episodes_per_configuration,
-                                          next_states_unclipped, actions_clipped, next_states_unclipped_denoised,
-                                          n_config_cv)
+        source_dataset = sc.SourceDataset(*data, n_config_cv)
 
         if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]:
             name = estimator
@@ -105,10 +101,10 @@ def main():
 
             if estimator.endswith("SR"):
                 # Create a fake dataset for the sample-reuse algorithm
-                data = stc.sourceTaskCreationSpec(env_src, episode_length, 1, args.gamma, variance_action,
+                data_sr = stc.sourceTaskCreationSpec(env_src, episode_length, 1, args.gamma, variance_action,
                                                   np.array([[-0.1]]), np.array([[1.0, 1.0, 0.09]]), param_space_size,
                                                   state_space_size, env_param_space_size)
-                source_dataset = sc.SourceDataset(*data, 1)
+                source_dataset = sc.SourceDataset(*data_sr, 1)
             elif estimator.endswith("DI"):
                 model_estimation = 1
                 discrete_estimation = 1
@@ -118,7 +114,9 @@ def main():
                 model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1], sigma_env=env_tgt.sigma_noise,
                                            sigma_pi=np.sqrt(variance_action), T=episode_length, R=args.rkhs_samples,
                                            lambda_=0.0, source_envs=source_envs, n_source=n_source,
-                                           max_gp=args.max_gp_samples, state_dim=1, linear_kernel=True)
+                                           max_gp=args.max_gp_samples, state_dim=1, linear_kernel=True,
+                                           balance_coeff=args.balance_coeff,
+                                           target_env=env_tgt if args.print_mse else None)
                 if estimator.endswith("GP"):
                     model.use_gp = True
                 elif estimator.endswith("MI"):
@@ -126,7 +124,7 @@ def main():
 
         result = la.learnPolicy(env_param, simulation_param, source_dataset, name, off_policy=off_policy,
                                 model_estimation=model_estimation, dicrete_estimation=discrete_estimation,
-                                model_estimator=model)
+                                model_estimator=model, verbose=not args.quiet)
 
         stats[estimator].append(result)
 
@@ -164,9 +162,12 @@ parser.add_argument("--use_adam", default=False, action='store_true')
 parser.add_argument("--n_source_samples", default=10, type=int)
 parser.add_argument("--n_source_models", default=5, type=int)
 parser.add_argument("--max_gp_samples", default=1000, type=int)
-parser.add_argument("--rkhs_samples", default=1000, type=int)
+parser.add_argument("--rkhs_samples", default=50, type=int)
+parser.add_argument("--balance_coeff", default=False, action='store_true')
+parser.add_argument("--print_mse", default=False, action='store_true')
 parser.add_argument("--n_jobs", default=1, type=int)
 parser.add_argument("--n_runs", default=1, type=int)
+parser.add_argument("--quiet", default=False, action='store_true')
 
 # Read arguments
 args = parser.parse_args()
