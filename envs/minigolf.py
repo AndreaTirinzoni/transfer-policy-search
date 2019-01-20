@@ -202,7 +202,10 @@ class MiniGolf(gym.Env):
 
         return reward, done
 
-    def stepDenoisedCurrent(self, state, action):
+    def stepDenoisedCurrent_backup(self, state, action):
+        """
+        Computes steps without noise.
+        """
 
         assert state.ndim == 3 and action.ndim == 2
 
@@ -211,3 +214,15 @@ class MiniGolf(gym.Env):
         deceleration = 5 / 7 * self.friction * 9.81
         t = u / deceleration
         return state - u * t + 0.5 * deceleration * t ** 2
+
+    def stepDenoisedCurrent(self, state, action):
+        """
+        Computes the mean transitions.
+        """
+
+        assert state.ndim == 3 and action.ndim == 2
+
+        action = np.clip(action, self.min_action, self.max_action / 2)[:, :, np.newaxis]
+        u = action * self.putter_length
+        deceleration = 5 / 7 * self.friction * 9.81
+        return state - 0.5 * u**2 * (1 + self.sigma_noise**2) / deceleration
