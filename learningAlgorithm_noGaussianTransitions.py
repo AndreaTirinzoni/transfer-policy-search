@@ -365,7 +365,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
 
             if algorithm_configuration.model_estimation == 1:
                 policy_src_new_param = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, source_dataset.n_config_cv:] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, source_dataset.n_config_cv:], feats[:, :, :, source_dataset.n_config_cv:]), axis=2))**2)/(2*variance_action))
-                model_src_new_param = density_state_t1_current[:, :, source_dataset.n_config_cv:]
+                model_src_new_param = density_state_t1_current
 
             else:
                 policy_src_new_param = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, -1], feats[:, :, :, 0]), axis=2))**2)/(2*variance_action))
@@ -487,7 +487,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
 
             if algorithm_configuration.model_estimation == 1:
                 policy_src_new_param = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, source_dataset.n_config_cv:] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, source_dataset.n_config_cv:], feats[:, :, :, source_dataset.n_config_cv:]), axis=2))**2)/(2*variance_action))
-                model_src_new_param = density_state_t1_current[:, :, source_dataset.n_config_cv:]
+                model_src_new_param = density_state_t1_current
 
             else:
                 policy_src_new_param = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, -1], feats[:, :, :, 0]), axis=2))**2)/(2*variance_action))
