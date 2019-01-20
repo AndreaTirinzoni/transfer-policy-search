@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, DotProduct
 from envs.rkhs_env import RKHS_Env
+from features import identity
 
 class ModelEstimatorRKHS:
     """
@@ -10,9 +11,10 @@ class ModelEstimatorRKHS:
 
     def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, max_gp,
                  state_dim, action_dim=1, use_gp=False, linear_kernel=False, use_gp_generate_mixture=False,
-                 alpha_gp=None, target_env=None, balance_coeff=False, use_iw=False):
+                 alpha_gp=None, target_env=None, balance_coeff=False, use_iw=False, features=identity, param_dim=None):
         self.state_dim = state_dim
         self.action_dim = action_dim
+        self.param_dim = state_dim if param_dim is None else param_dim
         self.T = T
         self.R = R  # Number of trajectories to approximate the objective
         self.lambda_ = lambda_
@@ -56,6 +58,9 @@ class ModelEstimatorRKHS:
 
         # Whether to use importance sampling to approximate the objective
         self.use_iw = use_iw
+
+        # Policy features
+        self.features = features
 
     def _split_dataset(self, dataset):
         """
@@ -148,6 +153,12 @@ class ModelEstimatorRKHS:
                                                                                    np.var(mse)))
             return prediction
 
+    def density(self, state, action, next_state):
+
+        prediction = self.transition(state, action)
+        return 1 / np.sqrt((2 * np.pi * self.sigma_env**2) ** self.state_dim) * \
+               np.exp(-np.sum((next_state - prediction)**2, axis=2) / (2 * self.sigma_env**2))
+
     def _update_weight_matrix(self, X, M, W, F_src, alpha_src, c1, c2):
         """
         Updates the current weight matrix of the learned transition model.
@@ -188,15 +199,15 @@ class ModelEstimatorRKHS:
 
             for t in range(self.T):
 
-                a = np.random.normal(np.dot(theta, s), self.sigma_pi)
+                a = np.random.normal(np.dot(theta, self.features(s)), self.sigma_pi)
                 ns, _, _, _, a_clipped, _ = self.rkhs_env.step(a)
 
                 states[r, t, :] = s
                 # We save the clipped action for learning the model
                 actions[r, t] = a_clipped
 
-                probs_target[r, t] = np.exp(-(np.dot(target_param, s) - a)**2 / (2*self.sigma_pi**2))
-                probs_mixture[r, t, :] = np.exp(-(np.dot(policy_params, s) - a)**2 / (2*self.sigma_pi**2))
+                probs_target[r, t] = np.exp(-(np.dot(target_param, self.features(s)) - a)**2 / (2*self.sigma_pi**2))
+                probs_mixture[r, t, :] = np.exp(-(np.dot(policy_params, self.features(s)) - a)**2 / (2*self.sigma_pi**2))
 
                 s = ns
 
@@ -210,13 +221,6 @@ class ModelEstimatorRKHS:
     def update_model(self, dataset):
         """
         Updates the current transition model.
-
-        :param N: total number of trajectories in the current dataset
-        :param alpha_tgt: proportion of trajectories from each target policy
-        :param alpha_src: proportion of trajectories from each source env
-        :param alpha_0: proportion of trajectories from the current target policy
-        :param policy_params: list of parameters of all target policies
-        :param target_param: current target policy parameters
         """
 
         self.update_gp(dataset)
@@ -227,10 +231,10 @@ class ModelEstimatorRKHS:
         alpha_tgt = dataset.episodes_per_config[dataset.n_config_cv:] / N
         alpha_src = self.n_source / N
 
-        target_param = dataset.source_param[-1, 1:1+self.state_dim]
+        target_param = dataset.source_param[-1, 1:1+self.param_dim]
 
         param_indices = np.concatenate(([0], np.cumsum(dataset.episodes_per_config[:-1])))[dataset.n_config_cv:]
-        policy_params = dataset.source_param[param_indices, 1:1+self.state_dim]
+        policy_params = dataset.source_param[param_indices, 1:1+self.param_dim]
 
         if self.use_gp_generate_mixture:
             self.use_gp = True
@@ -250,8 +254,8 @@ class ModelEstimatorRKHS:
             c1 = u_alpha / (2 * self.sigma_env**2 * N * (1 - alpha_0))
             c2 = 4 * np.sum(alpha_tgt) / (self.sigma_env**2)  # TODO alpha_0 has been neglected
         else:
-            c1 = np.sum(alpha_src)
-            c2 = np.sum(alpha_tgt)
+            c1 = np.sum(alpha_src)  # c1 = 0.5 * np.sum(alpha_src)
+            c2 = np.sum(alpha_tgt)  # c2 = 1 - c1
 
         M = self.gp.predict(X)
         F_src = [env.stepDenoisedCurrent(states, actions).reshape(X.shape[0], self.state_dim) for env in self.source_envs]

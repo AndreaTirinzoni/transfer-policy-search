@@ -107,10 +107,12 @@ class MiniGolf(gym.Env):
         return np.array(self.state)
 
     def clip_state(self, state):
-        return np.clip(state, self.min_pos, self.max_pos)
+        return state
+        #return np.clip(state, self.min_pos, self.max_pos)
 
     def clip_action(self, action):
-        return np.clip(action, self.min_action, self.max_action)
+        return action
+        #return np.clip(action, self.min_action, self.max_action)
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -199,3 +201,13 @@ class MiniGolf(gym.Env):
             reward = -100
 
         return reward, done
+
+    def stepDenoisedCurrent(self, state, action):
+
+        assert state.ndim == 3 and action.ndim == 2
+
+        action = np.clip(action, self.min_action, self.max_action / 2)[:, :, np.newaxis]
+        u = action * self.putter_length
+        deceleration = 5 / 7 * self.friction * 9.81
+        t = u / deceleration
+        return state - u * t + 0.5 * deceleration * t ** 2
