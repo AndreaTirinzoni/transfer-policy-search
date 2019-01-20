@@ -17,6 +17,10 @@ class BatchStats:
         self.gradient = np.zeros((num_batch, param_space_size))
         self.ess = np.zeros(num_batch)
         self.n_def = np.zeros(num_batch)
+        self.mean_w = np.zeros(num_batch)
+        self.var_w = np.zeros(num_batch)
+        self.max_w = np.zeros(num_batch)
+        self.min_w = np.zeros(num_batch)
 
 
 class AlgorithmConfiguration:
@@ -729,7 +733,8 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
     #print("Problems: n_def-" + str(num_episodes_target) + " ess-" + str(ess) + " gradient-" + str(gradient))
     print("param: " + str(param) + " tot_rewards: " + str(tot_reward_batch) + " gradient: " + str(gradient) + " n_def: " + str(num_episodes_target)+ " n_min: " + str(simulation_param.defensive_sample))
 
-    return source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target
+    return source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, num_episodes_target, \
+           np.mean(weights_source_target_update), np.var(weights_source_target_update), np.max(weights_source_target_update), np.min(weights_source_target_update)
 
 # Algorithm off policy using different estimators
 
@@ -1145,7 +1150,7 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
         stats.n_def[i_batch] = n_def
         stats.ess[i_batch] = ess
 
-        [source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def] = updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size, discount_factor_timestep)
+        [source_dataset, param, t, m_t, v_t, tot_reward_batch, discounted_reward_batch, gradient, ess, n_def, mean_w, var_w, max_w, min_w] = updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t, algorithm_configuration, batch_size, discount_factor_timestep)
 
         if verbose:
             print("Done updating policy ({0}s)".format(time.time() - start))
@@ -1155,4 +1160,8 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
         stats.disc_rewards[i_batch] = discounted_reward_batch
         stats.policy_parameter[i_batch, :] = param
         stats.gradient[i_batch, :] = gradient
+        stats.mean_w[i_batch] = mean_w
+        stats.var_w[i_batch] = var_w
+        stats.max_w[i_batch] = max_w
+        stats.min_w[i_batch] = min_w
     return stats
