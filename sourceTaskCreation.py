@@ -4,7 +4,7 @@ import numpy as np
 import math as m
 from features import identity
 
-def createBatch(env, batch_size, episode_length, param, state_space_size, variance_action, features):
+def createBatch(env, batch_size, episode_length, param, state_space_size, variance_action, features, env_target=None):
     """
     Create a batch of episodes
     :param env: OpenAI environment
@@ -27,6 +27,10 @@ def createBatch(env, batch_size, episode_length, param, state_space_size, varian
             mean_action = np.sum(np.multiply(param, features(state)))
             action = np.random.normal(mean_action, m.sqrt(variance_action))
             next_state, reward, done, unclipped_state, clipped_action, next_state_denoised = env.step(action)
+
+            if env_target is not None:
+                reward, done = env_target.reward(state, action, next_state)
+
             # Keep track of the transition
             # env.render()
             batch[i_batch, t, 0:state_space_size] = state
@@ -118,7 +122,7 @@ def sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_
 
     return source_task, source_param, episodes_per_configuration.astype(int), next_states_unclipped, actions_clipped, next_states_unclipped_denoised
 
-def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size, features=identity):
+def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, variance_action, policy_params, env_params, param_space_size, state_space_size, env_param_space_size, features=identity, env_target=None):
     """
     Creates a source dataset
     :param env: OpenAI environment
@@ -156,7 +160,7 @@ def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, var
             env.setParams(env_params[i, :])
 
             # Reset the environment and pick the first action
-            [batch, trajectory_length] = createBatch(env, episode_per_param, episode_length, policy_params[i, :], state_space_size, variance_action, features=features) # [state, action, reward, next_state]
+            [batch, trajectory_length] = createBatch(env, episode_per_param, episode_length, policy_params[i, :], state_space_size, variance_action, features=features, env_target=env_target) # [state, action, reward, next_state]
 
             #  Go through the episode and compute estimators
 

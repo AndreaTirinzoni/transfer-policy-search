@@ -180,3 +180,22 @@ class MiniGolf(gym.Env):
         pdf = norm.pdf(noise) * (1-mask)  # set to zero impossible transitions
 
         return pdf[:, :, 0]
+
+    def reward(self, state, action, next_state):
+
+        deceleration = 5 / 7 * self.friction * 9.81
+
+        u = np.sqrt(2 * deceleration * (state - next_state))
+
+        v_min = np.sqrt(10 / 7 * self.friction * 9.81 * state)
+        v_max = np.sqrt((2*self.hole_size - self.ball_radius)**2*(9.81/(2*self.ball_radius)) + v_min**2)
+
+        reward = 0
+        done = True
+        if u < v_min:
+            reward = -1
+            done = False
+        elif u > v_max:
+            reward = -100
+
+        return reward, done
