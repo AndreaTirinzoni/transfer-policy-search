@@ -67,7 +67,7 @@ def main():
 
     data = stc.sourceTaskCreationSpec(env_src, episode_length, arguments.n_source_samples, arguments.gamma, variance_action,
                                       policy_params, env_params, param_space_size, state_space_size, env_param_space_size,
-                                      features=feats)
+                                      features=feats, env_target=env_tgt)
 
     stats = {}
     for estimator in estimators:
@@ -88,7 +88,8 @@ def main():
             # Create a fake dataset for the sample-reuse algorithm
             data_sr = stc.sourceTaskCreationSpec(env_src, episode_length, 1, arguments.gamma, variance_action,
                                                  np.array([[0, 0, 0, 0]]), np.array([[1.0, 0.131, 0.1, 0.09]]),
-                                                 param_space_size, state_space_size, env_param_space_size, features=feats)
+                                                 param_space_size, state_space_size, env_param_space_size, features=feats,
+                                                 env_target=env_tgt)
             source_dataset = sc.SourceDataset(*data_sr, 1)
             name = estimator[:-3]
 
