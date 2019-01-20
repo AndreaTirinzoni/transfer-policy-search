@@ -116,8 +116,8 @@ def computeNdef(min_index, param, env_param, source_dataset, simulation_param, a
 
     delta = 0.1
 
-    if variance_weights < n * delta * (np.mean(weights) - 1)**2:
-        num_episodes_target2 = simulation_param.ess_min - simulation_param.defensive_sample
+    #if variance_weights < n * delta * (np.mean(weights) - 1)**2:
+    #    num_episodes_target2 = simulation_param.ess_min - simulation_param.defensive_sample
 
     return [num_episodes_target1, num_episodes_target2]
 
