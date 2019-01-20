@@ -7,10 +7,11 @@ import numpy as np
 import datetime
 import pickle
 import os
-import learningAlgorithm as la
+import learningAlgorithm_noGaussianTransitions as la
 import sourceTaskCreation as stc
 import simulationClasses as sc
 import gym
+from features import polynomial
 
 
 def main():
@@ -28,6 +29,7 @@ def main():
     mean_initial_param = np.random.normal(np.ones(param_space_size) * 0.2, 0.01)
     variance_initial_param = 0
     variance_action = 0.1
+    feats = polynomial
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, arguments.batch_size,
                                           arguments.iterations, arguments.gamma, None, arguments.learning_rate, arguments.ess_min,
@@ -64,7 +66,8 @@ def main():
     n_config_cv = policy_params.shape[0]
 
     data = stc.sourceTaskCreationSpec(env_src, episode_length, arguments.n_source_samples, arguments.gamma, variance_action,
-                                      policy_params, env_params, param_space_size, state_space_size, env_param_space_size)
+                                      policy_params, env_params, param_space_size, state_space_size, env_param_space_size,
+                                      features=feats)
 
     stats = {}
     for estimator in estimators:
@@ -85,13 +88,13 @@ def main():
             # Create a fake dataset for the sample-reuse algorithm
             data_sr = stc.sourceTaskCreationSpec(env_src, episode_length, 1, arguments.gamma, variance_action,
                                                  np.array([[0, 0, 0, 0]]), np.array([[1.0, 0.131, 0.1, 0.09]]),
-                                                 param_space_size, state_space_size, env_param_space_size)
+                                                 param_space_size, state_space_size, env_param_space_size, features=feats)
             source_dataset = sc.SourceDataset(*data_sr, 1)
             name = estimator[:-3]
 
         result = la.learnPolicy(env_param, simulation_param, source_dataset, name, off_policy=off_policy,
                                 model_estimation=0, dicrete_estimation=0,
-                                model_estimator=None, verbose=not arguments.quiet)
+                                model_estimator=None, verbose=not arguments.quiet, features=feats)
 
         stats[estimator].append(result)
 
