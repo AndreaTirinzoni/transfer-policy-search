@@ -50,7 +50,7 @@ def main():
            [1.41946655, 0.53908188, 0.33195278, 0.25586648]]
 
     putter_length = np.random.uniform(0.7, 1.0, arguments.n_source_models)
-    friction = np.random.uniform(0.065, 0.196, arguments.n_source_models)
+    friction = np.random.uniform(0.1, 0.15, arguments.n_source_models)
     hole_size = np.random.uniform(0.10, 0.15, arguments.n_source_models)
     envs = [[putter_length[i], friction[i], hole_size[i], 0.09] for i in range(arguments.n_source_models)]
 
@@ -119,11 +119,11 @@ def main():
                 model = Models(possible_envs)
             elif estimator.endswith("GP") or estimator.endswith("ES") or estimator.endswith("MI"):
                 model_estimation = 1
-                model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1], sigma_env=env_tgt.sigma_env,
+                model = ModelEstimatorRKHS(kernel_rho=10, kernel_lambda=[100, 10], sigma_env=env_tgt.sigma_noise,
                                            sigma_pi=np.sqrt(variance_action), T=arguments.rkhs_horizon, R=arguments.rkhs_samples,
                                            lambda_=0.0, source_envs=source_envs, n_source=n_source,
                                            max_gp=arguments.max_gp_samples, state_dim=1, linear_kernel=False,
-                                           balance_coeff=arguments.balance_coeff, alpha_gp=1e-5,
+                                           balance_coeff=arguments.balance_coeff, alpha_gp=1,
                                            target_env=env_tgt if arguments.print_mse else None, features=polynomial,
                                            param_dim=param_space_size)
                 if estimator.endswith("GP"):
