@@ -250,7 +250,7 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
     if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
         density_state_t1_current = env_param.env.densityCurrent(state_t, clipped_action_t, state_t1)
     else:
-        density_state_t1_current = algorithm_configuration.model_estimator.transition(state_t, clipped_action_t) #TODO density of gp
+        density_state_t1_current = algorithm_configuration.model_estimator.density(state_t, clipped_action_t, state_t1) #TODO check
 
     density_state_t1 = np.zeros((source_dataset.initial_size, state_t.shape[1]))
     for i in range(source_dataset.initial_size):
@@ -323,7 +323,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
     if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
         density_state_t1_current = env_param.env.densityCurrent(state_t, clipped_actions, state_t1)
     else:
-        density_state_t1_current = algorithm_configuration.model_estimator.transition(state_t, clipped_actions) #TODO density estimation
+        density_state_t1_current = algorithm_configuration.model_estimator.density(state_t, clipped_actions, state_t1) #TODO check
 
     if (batch_size != 0 or algorithm_configuration.model_estimation == 1) and compute_ess == 0:
 
@@ -445,7 +445,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
     if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
         density_state_t1_current = env_param.env.densityCurrent(state_t, clipped_actions, state_t1)
     else:
-        density_state_t1_current = algorithm_configuration.model_estimator.transition(state_t, clipped_actions) #TODO density estimation
+        density_state_t1_current = algorithm_configuration.model_estimator.density(state_t, clipped_actions, state_t1) #TODO check
 
     if (batch_size != 0 or algorithm_configuration.model_estimation == 1) and compute_ess == 0:
 
