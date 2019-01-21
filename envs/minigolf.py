@@ -36,6 +36,7 @@ class MiniGolf(gym.Env):
         self.hole_size = 0.10 # [0.10:0.15]
         self.sigma_noise = 0.3
         self.ball_radius = 0.02135
+        self.min_variance = 1e-2  # Minimum variance for computing the densities
 
         # gym attributes
         self.viewer = None
@@ -237,7 +238,7 @@ class MiniGolf(gym.Env):
         deceleration = 5 / 7 * self.friction * 9.81
         action = np.clip(action, self.min_action, self.max_action / 2)
         k = action**2 * self.putter_length**2 / (2 * deceleration)
-        return 2 * k**2 * self.sigma_noise**2 * (self.sigma_noise**2 + 2)
+        return 2 * k**2 * self.sigma_noise**2 * (self.sigma_noise**2 + 2) + self.min_variance
 
     def densityCurrent(self, state, action, next_state):
         """
@@ -274,7 +275,7 @@ class MiniGolf(gym.Env):
             # Compute mean next-state
             mean_ns = state[:, :, :, i] - k[:, :, np.newaxis, i] * (1 + env_parameters[i, -1])
             # Compute variance next-state
-            var_ns = 2 * k[:, :, np.newaxis, i]**2 * env_parameters[i, -1] * (env_parameters[i, -1] + 2)
+            var_ns = 2 * k[:, :, np.newaxis, i]**2 * env_parameters[i, -1] * (env_parameters[i, -1] + 2) + self.min_variance
 
             pdf[:, :, :, i] = norm.pdf((next_state[:, :, :, i] - mean_ns) / np.sqrt(var_ns))
 
