@@ -88,7 +88,7 @@ class MiniGolf(gym.Env):
     #Custom param for transfer
 
     def getEnvParam(self):
-        return np.asarray([self.putter_length, self.friction, self.hole_size, self.sigma_noise])
+        return np.asarray([self.putter_length, self.friction, self.hole_size, self.sigma_noise**2])
 
     def reset(self, state=None):
         if state is None:
