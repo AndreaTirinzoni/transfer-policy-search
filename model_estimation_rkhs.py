@@ -3,6 +3,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, DotProduct
 from envs.rkhs_env import RKHS_Env
 from features import identity
+from scipy.stats import norm
 
 class ModelEstimatorRKHS:
     """
@@ -11,7 +12,8 @@ class ModelEstimatorRKHS:
 
     def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, max_gp,
                  state_dim, action_dim=1, use_gp=False, linear_kernel=False, use_gp_generate_mixture=False,
-                 alpha_gp=None, target_env=None, balance_coeff=False, use_iw=False, features=identity, param_dim=None):
+                 alpha_gp=None, target_env=None, balance_coeff=False, use_iw=False, features=identity, param_dim=None,
+                 heteroscedastic=False, print_mse=False):
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.param_dim = state_dim if param_dim is None else param_dim
@@ -61,6 +63,12 @@ class ModelEstimatorRKHS:
 
         # Policy features
         self.features = features
+
+        # Wheter to use an heteroscedastic noise model
+        self.heteroscedastic = heteroscedastic
+
+        # Whether to print the model MSE
+        self.print_mse = print_mse
 
     def _split_dataset(self, dataset):
         """
@@ -146,7 +154,7 @@ class ModelEstimatorRKHS:
             else:
                 prediction = np.matmul(self.kernel(self.X, X).T, self.A).reshape(state.shape)
 
-            if self.target_env is not None:
+            if self.target_env is not None and self.print_mse:
                 true = self.target_env.stepDenoisedCurrent(state, action)
                 mse = (prediction - true)**2
                 print("Model error. Mean: {0}, Max: {1}, Min:{2}, Var: {3}".format(np.mean(mse), np.max(mse), np.min(mse),
@@ -156,8 +164,12 @@ class ModelEstimatorRKHS:
     def density(self, state, action, next_state):
 
         prediction = self.transition(state, action)
-        return 1 / np.sqrt((2 * np.pi * self.sigma_env**2) ** self.state_dim) * \
-               np.exp(-np.sum((next_state - prediction)**2, axis=2) / (2 * self.sigma_env**2))
+
+        if self.heteroscedastic:
+            var_ns = self.target_env.variance(action)
+            return norm.pdf((next_state - prediction)[:, :, 0] / np.sqrt(var_ns))
+        else:
+            return norm.pdf((next_state - prediction)[:, :, 0] / self.sigma_env)
 
     def _update_weight_matrix(self, X, M, W, F_src, alpha_src, c1, c2):
         """
