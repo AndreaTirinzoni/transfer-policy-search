@@ -124,8 +124,8 @@ def main():
                                            lambda_=0.0, source_envs=source_envs, n_source=n_source,
                                            max_gp=arguments.max_gp_samples, state_dim=1, linear_kernel=False,
                                            balance_coeff=arguments.balance_coeff, alpha_gp=1,
-                                           target_env=env_tgt if arguments.print_mse else None, features=polynomial,
-                                           param_dim=param_space_size)
+                                           print_mse=arguments.print_mse, features=polynomial,
+                                           param_dim=param_space_size, target_env=env_tgt, heteroscedastic=True)
                 if estimator.endswith("GP"):
                     model.use_gp = True
                 elif estimator.endswith("MI"):
