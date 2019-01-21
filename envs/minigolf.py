@@ -118,7 +118,7 @@ class MiniGolf(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def getDensity(self, env_parameters, state, action, next_state):
+    def getDensity_old(self, env_parameters, state, action, next_state):
 
         if state < next_state:
             return 0
@@ -136,7 +136,7 @@ class MiniGolf(gym.Env):
 
         return norm.pdf(noise)
 
-    def density(self, env_parameters, state, action, next_state):
+    def density_old(self, env_parameters, state, action, next_state):
         """
 
         :param env_parameters: list of env_params
@@ -161,7 +161,7 @@ class MiniGolf(gym.Env):
 
         return pdf[:, :, 0, :]
 
-    def densityCurrent(self, state, action, next_state):
+    def densityCurrent_old(self, state, action, next_state):
         """
         :param state: NxTx1
         :param action: NxT
@@ -202,7 +202,7 @@ class MiniGolf(gym.Env):
 
         return reward, done
 
-    def stepDenoisedCurrent_backup(self, state, action):
+    def stepDenoisedCurrent_old(self, state, action):
         """
         Computes steps without noise.
         """
@@ -235,12 +235,11 @@ class MiniGolf(gym.Env):
         assert action.ndim == 2
 
         deceleration = 5 / 7 * self.friction * 9.81
-        action = np.clip(action, self.min_action, self.max_action / 2)
-        action[action == 0] = 1e-8
+        action = np.clip(action, 1e-5, self.max_action / 2)
         k = action**2 * self.putter_length**2 / (2 * deceleration)
         return 2 * k**2 * self.sigma_noise**2 * (self.sigma_noise**2 + 2)
 
-    def densityCurrent_gaussian(self, state, action, next_state):
+    def densityCurrent(self, state, action, next_state):
         """
         :param state: NxTx1
         :param action: NxT
@@ -254,7 +253,7 @@ class MiniGolf(gym.Env):
         var_ns = self.variance(action)
         return norm.pdf((next_state - mean_ns)[:, :, 0] / np.sqrt(var_ns))
 
-    def density_gaussian(self, env_parameters, state, action, next_state):
+    def density(self, env_parameters, state, action, next_state):
         """
 
         :param env_parameters: list of env_params
@@ -265,13 +264,12 @@ class MiniGolf(gym.Env):
         """
         assert state.ndim == 4 and action.ndim == 3 and next_state.ndim == 4
 
-        action = np.clip(action, self.min_action, self.max_action / 2)
-        action[action == 0] = 1e-8
+        action = np.clip(action, 1e-5, self.max_action / 2)
         pdf = np.zeros((state.shape[0], state.shape[1], 1, env_parameters.shape[0]))
 
         for i in range(env_parameters.shape[0]):
             deceleration = 5 / 7 * env_parameters[i, 1] * 9.81
-            k = action ** 2 * env_parameters[0, 1] ** 2 / (2 * deceleration)
+            k = action ** 2 * env_parameters[i, 0] ** 2 / (2 * deceleration)
 
             # Compute mean next-state
             mean_ns = state[:, :, :, i] - k[:, :, np.newaxis, i] * (1 + env_parameters[i, -1] ** 2)
