@@ -274,10 +274,10 @@ class MiniGolf(gym.Env):
             k = action ** 2 * env_parameters[0, 1] ** 2 / (2 * deceleration)
 
             # Compute mean next-state
-            mean_ns = state - k[:, :, np.newaxis] * (1 + env_parameters[i, -1] ** 2)
+            mean_ns = state[:, :, :, i] - k[:, :, np.newaxis, i] * (1 + env_parameters[i, -1] ** 2)
             # Compute variance next-state
-            var_ns = 2 * k[:, :, np.newaxis]**2 * env_parameters[i, -1]**2 * (env_parameters[i, -1]**2 + 2)
+            var_ns = 2 * k[:, :, np.newaxis, i]**2 * env_parameters[i, -1]**2 * (env_parameters[i, -1]**2 + 2)
 
-            pdf[:, :, :, i] = norm.pdf((next_state - mean_ns) / np.sqrt(var_ns))
+            pdf[:, :, :, i] = norm.pdf((next_state[:, :, :, i] - mean_ns) / np.sqrt(var_ns))
 
         return pdf[:, :, 0, :]
