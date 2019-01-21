@@ -1129,7 +1129,7 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
             if dicrete_estimation == 1:
                 [source_task_tgt, source_param_tgt, episodes_per_configuration_tgt, next_states_unclipped_tgt, actions_clipped_tgt, next_states_unclipped_denoised_tgt] = getTargetEpisodesFromDataset(source_dataset)
                 dataset_model_estimation = sc.SourceDataset(source_task_tgt, source_param_tgt, episodes_per_configuration_tgt, next_states_unclipped_tgt, actions_clipped_tgt, next_states_unclipped_denoised_tgt, 1)
-                env = model_estimator.chooseTransitionModel(env_param, param, simulation_param, source_dataset.source_param, source_dataset.episodes_per_config, source_dataset.n_config_cv, source_dataset.initial_size, dataset_model_estimation)
+                env = model_estimator.chooseTransitionModel(env_param, param, simulation_param, source_dataset.source_param, source_dataset.episodes_per_config, source_dataset.n_config_cv, source_dataset.initial_size, dataset_model_estimation, algorithm_configuration.features)
                 setEnvParametersTarget(env, source_dataset, env_param)
             else:
                 model_estimator.update_model(source_dataset)
@@ -1164,4 +1164,6 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
         stats.var_w[i_batch] = var_w
         stats.max_w[i_batch] = max_w
         stats.min_w[i_batch] = min_w
+
+        print("Learning rate: ({0})".format(simulation_param.learning_rate))
     return stats
