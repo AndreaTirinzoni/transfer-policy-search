@@ -22,7 +22,7 @@ def main():
 
     env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length)
 
-    mean_initial_param = -0.1 * np.ones(param_space_size)
+    mean_initial_param = 0 * np.ones(param_space_size)
     variance_initial_param = 0
     variance_action = 0.1
     batch_size = 10
@@ -98,6 +98,7 @@ def main():
         else:
             off_policy = 1
             name = estimator
+            self_normalised = 0
 
 
         simulation_param.learning_rate = learning_rate
@@ -135,11 +136,11 @@ def run(id, seed):
 n_jobs = 1
 
 # Number of runs
-n_runs = 6
+n_runs = 20
 
-estimators = ["MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP", "IS", "PD-IS", "IS-SN"]
+estimators = ["GPOMDP", "PD-IS", "IS-SN", "PD-MIS-CV-BASELINE"]
 learning_rates = [8e-6, 8e-6, 8e-6, 8e-6, 8e-6, 8e-6, 8e-6, 8e-6]
-num_batch = 30
+num_batch = 350
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

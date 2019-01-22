@@ -1182,7 +1182,7 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
                 print("Done dumping model ({0}s)".format(time.time() - start1))
 
 
-        simulation_param.learnining_rate = 8e-6 - (8e-6 - 8e-7)/200*i_batch
+        #simulation_param.learnining_rate = 8e-6 - (8e-6 - 8e-7)/200*i_batch
         
         # Update statistics
         stats.total_rewards[i_batch] = tot_reward_batch
