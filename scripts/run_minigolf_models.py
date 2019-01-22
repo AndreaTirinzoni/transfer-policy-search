@@ -186,7 +186,8 @@ estimators = ["GPOMDP",
               "MIS-CV-BASELINE-SR",
               "MIS-CV-BASELINE-ID",
               "MIS-CV-BASELINE-ES",
-              "MIS-CV-BASELINE-GP"]
+              "MIS-CV-BASELINE-GP",
+              "MIS-CV-BASELINE-DI"]
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

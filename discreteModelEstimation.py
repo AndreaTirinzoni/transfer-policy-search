@@ -72,7 +72,7 @@ class Models:
 
     def computeExpectedValueCurrentProposal(self, env, env_param, param_policy, simulation_param, source_parameters, episodes_per_config, initial_size, features=identity):
 
-        batch_size = 2
+        batch_size = 20
         [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env, env_param.episode_length, batch_size, simulation_param.discount_factor, simulation_param.variance_action, param_policy[np.newaxis, :], env.getEnvParam().T, env_param.param_space_size, env_param.state_space_size, env_param.env_param_space_size, features)
         dataset_current_env = sc.SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised, 1)
 
@@ -145,7 +145,7 @@ class Models:
 
         combination_src_parameters = (param_policy_src[param_indices, :])
 
-        batch_size = 10
+        batch_size = 20
         [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationMixture(env, env_param.episode_length, batch_size, simulation_param.discount_factor, simulation_param.variance_action, combination_src_parameters, episodes_per_config, n_config_cv, env_param.param_space_size, env_param.state_space_size, env_param.env_param_space_size, features)
         dataset_mixture = sc.SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised, 1)
 
