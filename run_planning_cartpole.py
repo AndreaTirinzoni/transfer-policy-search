@@ -15,10 +15,10 @@ def main():
     """
     env_tgt = gym.make('LQG1D-v0')
 
-    with open('gp1.pkl', 'rb') as input:
+    with open('fitted_model_40.pkl', 'rb') as input:
         transition_model = pickle.load(input)
 
-    variance_env = env_tgt.getParam()[-1]
+    variance_env = env_tgt.getEnvParam()[-1]
 
     env_planning = Planning_env(transition_model, env_tgt, np.sqrt(variance_env))
     param_space_size = 1
@@ -84,7 +84,7 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 2
+n_jobs = 1
 
 # Number of runs
 n_runs = 6

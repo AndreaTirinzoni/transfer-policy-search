@@ -1175,14 +1175,15 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
             print("Done updating policy ({0}s)".format(time.time() - start))
             print("Weights. Mean: {0}, Var: {1}, Max: {2}, Min: {3}".format(mean_w,var_w,max_w,min_w))
 
-        if dump_model and i_batch%iteration_dump:
+        if dump_model and i_batch%iteration_dump == 0:
             start1 = time.time()
             model_estimator.dump(i_batch)
             if verbose:
-                print("Done dumping model ({0}s)".format(time.time() - start))
+                print("Done dumping model ({0}s)".format(time.time() - start1))
 
 
         simulation_param.learnining_rate = 8e-6 - (8e-6 - 8e-7)/200*i_batch
+        
         # Update statistics
         stats.total_rewards[i_batch] = tot_reward_batch
         stats.disc_rewards[i_batch] = discounted_reward_batch
