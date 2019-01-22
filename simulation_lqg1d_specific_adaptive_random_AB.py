@@ -29,7 +29,7 @@ def main():
     discount_factor = 0.99
     ess_min = 25
     adaptive = "Yes"
-    n_min = 5
+    n_min = 3
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size,
                                           num_batch, discount_factor, None, None, ess_min, adaptive, n_min)
@@ -69,7 +69,7 @@ def main():
     for estimator,learning_rate in zip(estimators, learning_rates):
 
         print(estimator)
-
+        simulation_param.learning_rate = learning_rate
         if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]:
             off_policy = 0
             name = estimator
@@ -124,14 +124,14 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 2
+n_jobs = 20
 
 # Number of runs
-n_runs = 6
+n_runs = 40
 
-estimators = ["IS", "PD-IS", "MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
-learning_rates = [1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5]
-num_batch = 350
+estimators = ["PD-IS", "PD-MIS-CV-BASELINE", "GPOMDP"]
+learning_rates = [8e-6, 8e-6, 8e-6, 8e-6, 8e-6, 8e-6, 8e-6]
+num_batch = 400
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
