@@ -76,11 +76,12 @@ def main():
             off_policy = 0
             name = estimator
             simulation_param.batch_size = 10
+            self_normalised = 0
         elif estimator == "IS-SN":
             self_normalised = 1
             name = estimator[:-3]
             #estimator = estimator[:-3]
-            off_policy = 0
+            off_policy = 1
         elif estimator.endswith("SR"): #if sample reuse
             source_dataset_batch_size = 1
             discount_factor = 0.99
@@ -88,6 +89,7 @@ def main():
             env_params = np.array([[1-5, 1, 0.09]])
             n_config_cv = 1
             name = estimator[:-3]
+            self_normalised = 0
             [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped,
              next_states_unclipped_denoised] = stc.sourceTaskCreationSpec(env_src, episode_length, source_dataset_batch_size,
                                                                           discount_factor, variance_action, policy_params,
@@ -135,9 +137,9 @@ n_jobs = 1
 # Number of runs
 n_runs = 6
 
-estimators = ["IS", "PD-IS", "IS-SN", "MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
+estimators = ["MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP", "IS", "PD-IS", "IS-SN"]
 learning_rates = [8e-6, 8e-6, 8e-6, 8e-6, 8e-6, 8e-6, 8e-6, 8e-6]
-num_batch = 4
+num_batch = 30
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
