@@ -75,6 +75,11 @@ class LQG1D(gym.Env):
         # We return the unclipped state and the clipped action as the last argument (to be used for computing the importance weights only)
         return self.get_state(), -np.asscalar(cost), False, np.array(xn_unclipped.ravel()), u, xn_unclipped_denoised
 
+    def reward(self, state, action, next_state):
+        u = np.clip(action, -self.max_action, self.max_action)
+        cost = np.dot(self.state, np.dot(self.Q, self.state)) + np.dot(u, np.dot(self.R, u))
+        return cost, False
+
     #Custom param for transfer
 
     def getEnvParam(self):

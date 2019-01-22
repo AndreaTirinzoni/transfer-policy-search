@@ -25,9 +25,9 @@ def main():
     mean_initial_param = -0.1 * np.ones(param_space_size)
     variance_initial_param = 0
     variance_action = 0.1
-    batch_size = 5
+    batch_size = 10
     discount_factor = 0.99
-    ess_min = 20
+    ess_min = 25
     adaptive = "Yes"
     n_min = 5
 
@@ -36,12 +36,12 @@ def main():
 
 
     # source task for lqg1d
-    source_dataset_batch_size = 10
+    source_dataset_batch_size = 1
     discount_factor = 0.99
 
-    pis = [[-0.1], [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7], [-0.8]]
-    A = np.random.uniform(0.5, 1.5, 5)
-    B = np.random.uniform(0.8, 1.2, 5)
+    pis = [[-0.1]]#, [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7], [-0.8]]
+    A = np.random.uniform(0.5, 1.5, 1)
+    B = np.random.uniform(0.8, 1.2, 1)
     variance_env = 0.09
     envs = []
     for i in range(len(A)):
@@ -124,14 +124,14 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 10
+n_jobs = 2
 
 # Number of runs
-n_runs = 20
+n_runs = 6
 
-estimators = ["IS", "PD-IS", "MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE_SR", "GPOMDP"]
-learning_rates = [1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5]
-num_batch = 500
+estimators = ["IS", "PD-IS", "MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
+learning_rates = [1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5, 1e-5]
+num_batch = 350
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
