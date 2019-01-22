@@ -28,7 +28,7 @@ def main():
     batch_size = 10
     discount_factor = 0.99
     ess_min = 25
-    adaptive = "Yes"
+    adaptive = "No"
     n_min = 3
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, batch_size,
@@ -66,6 +66,8 @@ def main():
     for estimator in estimators:
         stats[estimator] = []
 
+    self_normalised = 0
+
     for estimator,learning_rate in zip(estimators, learning_rates):
 
         print(estimator)
@@ -74,6 +76,9 @@ def main():
             off_policy = 0
             name = estimator
             simulation_param.batch_size = 10
+        if estimator == "IS-SN":
+            self_normalised = 1
+            name = estimator[:-3]
         else:
             off_policy = 1
 
@@ -98,7 +103,7 @@ def main():
 
         simulation_param.learning_rate = learning_rate
 
-        result = la.learnPolicy(env_param, simulation_param, source_dataset, name, off_policy=off_policy)
+        result = la.learnPolicy(env_param, simulation_param, source_dataset, name, off_policy=off_policy, self_normalised=self_normalised)
 
         stats[estimator].append(result)
 
@@ -124,13 +129,13 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 20
+n_jobs = 2
 
 # Number of runs
-n_runs = 40
+n_runs = 6
 
-estimators = ["PD-IS", "PD-MIS-CV-BASELINE", "GPOMDP"]
-learning_rates = [8e-6, 8e-6, 8e-6, 8e-6, 8e-6, 8e-6, 8e-6]
+estimators = ["IS", "PD-IS", "IS-SN", "MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "GPOMDP"]
+learning_rates = [8e-6, 8e-6, 8e-6, 8e-6, 8e-6, 8e-6, 8e-6, 8e-6]
 num_batch = 400
 
 # Base folder where to log

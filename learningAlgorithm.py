@@ -42,6 +42,7 @@ class AlgorithmConfiguration:
         self.model_estimation = None
         self.model_estimator = None
         self.features = None
+        self.self_normalied = None
 
 
 def createBatch(env, batch_size, episode_length, param, state_space_size, variance_action, features):
@@ -126,8 +127,11 @@ def computeNdef(min_index, param, env_param, source_dataset, simulation_param, a
 # Compute gradients
 
 def onlyGradient(algorithm_configuration, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all, N):
-    if(algorithm_configuration.pd == 0):
-        gradient = 1/N * np.sum((np.squeeze(np.array(weights_source_target_update))[:, np.newaxis] * gradient_off_policy_update) * np.sum(discounted_rewards_all, axis=1)[:, np.newaxis], axis=0)
+    if algorithm_configuration.pd == 0:
+        if algorithm_configuration.self_normalised == 1:
+            gradient = np.sum((np.squeeze(np.array(weights_source_target_update))[:, np.newaxis] * gradient_off_policy_update) * np.sum(discounted_rewards_all, axis=1)[:, np.newaxis], axis=0)
+        else:
+            gradient = 1/N * np.sum((np.squeeze(np.array(weights_source_target_update))[:, np.newaxis] * gradient_off_policy_update) * np.sum(discounted_rewards_all, axis=1)[:, np.newaxis], axis=0)
     else:
         gradient = 1/N * np.sum(np.sum((np.squeeze(np.array(weights_source_target_update))[:, :, np.newaxis] * gradient_off_policy_update) * discounted_rewards_all[:, :, np.newaxis], axis=1), axis=0)
 
@@ -306,6 +310,9 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
 
 
     weights = policy_tgt / policy_src * model_tgt / model_src
+
+    if algorithm_configuration.self_normalised == 1:
+        weights = weights / np.sum(weights, axis=0)
 
     return [weights, 0]
 
@@ -1064,8 +1071,8 @@ def setEnvParametersTarget(env, source_dataset, env_param):
     source_dataset.source_param[source_length:, 1+env_param.param_space_size:1+env_param.param_space_size+env_param.env_param_space_size] = env.getEnvParam().T
 
 
-def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1, model_estimation=0, dicrete_estimation=1, multid_approx=0, model_estimator=None, verbose=True, features=identity, dump_model = False,
-                                iteration_dump = 10):
+def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1, model_estimation=0, dicrete_estimation=1, multid_approx=0, model_estimator=None, verbose=True, features=identity, self_normalised=0, dump_model=False,
+                                iteration_dump=10):
 
     param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
 
@@ -1087,6 +1094,7 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
     algorithm_configuration.model_estimation = model_estimation
     algorithm_configuration.model_estimator = model_estimator
     algorithm_configuration.features = features
+    algorithm_configuration.self_normalised = self_normalised
 
     if off_policy == 1:
         if re.match("^.*MIS.*", estimator):
@@ -1174,7 +1182,7 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
                 print("Done dumping model ({0}s)".format(time.time() - start))
 
 
-        simulation_param.learnining_rate = 5e-6 - (5e-6 - 1e-7)/200*i_batch
+        simulation_param.learnining_rate = 8e-6 - (8e-6 - 8e-7)/200*i_batch
         # Update statistics
         stats.total_rewards[i_batch] = tot_reward_batch
         stats.disc_rewards[i_batch] = discounted_reward_batch
