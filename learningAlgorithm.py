@@ -1064,7 +1064,8 @@ def setEnvParametersTarget(env, source_dataset, env_param):
     source_dataset.source_param[source_length:, 1+env_param.param_space_size:1+env_param.param_space_size+env_param.env_param_space_size] = env.getEnvParam().T
 
 
-def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1, model_estimation=0, dicrete_estimation=1, multid_approx=0, model_estimator=None, verbose=True, features=identity):
+def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1, model_estimation=0, dicrete_estimation=1, multid_approx=0, model_estimator=None, verbose=True, features=identity, dump_model = False,
+                                iteration_dump = 10):
 
     param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
 
@@ -1166,6 +1167,14 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
             print("Done updating policy ({0}s)".format(time.time() - start))
             print("Weights. Mean: {0}, Var: {1}, Max: {2}, Min: {3}".format(mean_w,var_w,max_w,min_w))
 
+        if dump_model and i_batch%iteration_dump:
+            start1 = time.time()
+            model_estimator.dump(i_batch)
+            if verbose:
+                print("Done dumping model ({0}s)".format(time.time() - start))
+
+
+        simulation_param.learnining_rate = 5e-6 - (5e-6 - 1e-7)/200*i_batch
         # Update statistics
         stats.total_rewards[i_batch] = tot_reward_batch
         stats.disc_rewards[i_batch] = discounted_reward_batch

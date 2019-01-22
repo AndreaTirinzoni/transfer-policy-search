@@ -26,6 +26,6 @@ register(
 )
 
 register(
-    id='minigolf-v1',
-    entry_point='envs.minigolf_v1:MiniGolf'
+    id='planning-v0',
+    entry_point='envs.planning_env:Planning_env'
 )

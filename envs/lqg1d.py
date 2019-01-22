@@ -78,7 +78,7 @@ class LQG1D(gym.Env):
     def reward(self, state, action, next_state):
         u = np.clip(action, -self.max_action, self.max_action)
         cost = np.dot(self.state, np.dot(self.Q, self.state)) + np.dot(u, np.dot(self.R, u))
-        return cost, False
+        return -cost, False
 
     #Custom param for transfer
 
