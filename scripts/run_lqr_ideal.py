@@ -35,8 +35,12 @@ def main():
 
     # Source tasks
     pis = [[-0.1], [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7], [-0.8]]
-    A = np.random.uniform(0.6, 1.4, arguments.n_source_models)
-    B = np.random.uniform(0.8, 1.2, arguments.n_source_models)
+    if arguments.random_src:
+        A = np.random.uniform(0.6, 1.4, arguments.n_source_models)
+        B = np.random.uniform(0.8, 1.2, arguments.n_source_models)
+    else:
+        A = arguments.src_A
+        B = arguments.src_B
     envs = [[A[i], B[i], 0.09] for i in range(A.shape[0])]
 
     policy_params = []
@@ -115,7 +119,10 @@ parser.add_argument("--ess_min", default=20, type=int)
 parser.add_argument("--n_min", default=5, type=int)
 parser.add_argument("--adaptive", default=False, action='store_true')
 parser.add_argument("--use_adam", default=False, action='store_true')
+parser.add_argument("--random_src", default=True, action='store_true')
 parser.add_argument("--n_source_samples", default=10, type=int)
+parser.add_argument("--src_A", default=None, nargs="+")
+parser.add_argument("--src_B", default=None, nargs="+")
 parser.add_argument("--n_source_models", default=5, type=int)
 parser.add_argument("--n_jobs", default=1, type=int)
 parser.add_argument("--n_runs", default=1, type=int)
