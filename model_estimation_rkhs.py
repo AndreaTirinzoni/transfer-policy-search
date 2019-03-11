@@ -4,6 +4,7 @@ from sklearn.gaussian_process.kernels import RBF, DotProduct
 from envs.rkhs_env import RKHS_Env
 from features import identity
 from scipy.stats import norm
+import pickle
 
 class ModelEstimatorRKHS:
     """
@@ -13,7 +14,7 @@ class ModelEstimatorRKHS:
     def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, max_gp,
                  state_dim, action_dim=1, use_gp=False, linear_kernel=False, use_gp_generate_mixture=False,
                  alpha_gp=None, target_env=None, balance_coeff=False, use_iw=False, features=identity, param_dim=None,
-                 heteroscedastic=False, print_mse=False):
+                 heteroscedastic=False, print_mse=False, id = None):
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.param_dim = state_dim if param_dim is None else param_dim
@@ -25,6 +26,7 @@ class ModelEstimatorRKHS:
         self.sigma_pi = sigma_pi
         self.n_source = np.array(n_source)
         self.max_gp = max_gp
+        self.id = id
 
         if linear_kernel:
             self.kernel = DotProduct(sigma_0=0)
@@ -115,6 +117,46 @@ class ModelEstimatorRKHS:
         Updates the current GP model using a dataset of target trajectories.
         """
         X, Y, _ = self._split_dataset(dataset)
+        self.gp.fit(X, Y)
+
+    def fit_gp_source(self, dataset):
+        """
+        Updates the current GP model using a dataset of target trajectories.
+        """
+        # States from the target task
+        s_t = dataset.source_task[:, :, 0:self.state_dim]
+        # Clipped actions from the target task
+        a_t = dataset.clipped_actions[:, :, np.newaxis]
+        sa_t = np.concatenate([s_t, a_t], axis=2)
+        # State-action matrix (NTxd+1)
+        X = sa_t.reshape(sa_t.shape[0]*sa_t.shape[1], sa_t.shape[2])
+
+        # Next states from the target task
+        s_t1 = dataset.next_states_unclipped
+        # Next-state matrix (NTxd)
+        Y = s_t1.reshape(s_t1.shape[0]*s_t1.shape[1], s_t1.shape[2])
+
+        # f(s,a) from the target task
+        f_t = dataset.next_states_unclipped_denoised
+        # Transition function at each state-action pair (NTxd)
+        F = f_t.reshape(f_t.shape[0]*f_t.shape[1], f_t.shape[2])
+
+        # Handle variable-length trajectories
+        trajectories_length = dataset.source_param[:, -1]
+        mask = trajectories_length[:, np.newaxis] >= np.repeat(np.arange(0, s_t.shape[1])[np.newaxis, :],repeats=s_t.shape[0], axis=0)
+        # Reshape mask to NT
+        mask = mask.reshape(s_t.shape[0]*s_t.shape[1],)
+        # Mask matrices
+        X = X[mask, :]
+        Y = Y[mask, :]
+        F = F[mask, :]
+
+        # Limit the number of samples usable by GPs
+        if X.shape[0] > self.max_gp:
+            X = X[-self.max_gp:, :]
+            Y = Y[-self.max_gp:, :]
+            F = F[-self.max_gp:, :]
+
         self.gp.fit(X, Y)
 
     def eval_gp(self, dataset):
@@ -230,51 +272,62 @@ class ModelEstimatorRKHS:
 
         return X, W, states, actions
 
-    def update_model(self, dataset):
+    def update_model(self, dataset, source_task=False):
         """
         Updates the current transition model.
         """
-
-        self.update_gp(dataset)
-        self.gp_fitted = True
-
-        N = dataset.source_param.shape[0]
-        alpha_0 = dataset.episodes_per_config[-1] / N
-        alpha_tgt = dataset.episodes_per_config[dataset.n_config_cv:] / N
-        alpha_src = self.n_source / N
-
-        target_param = dataset.source_param[-1, 1:1+self.param_dim]
-
-        param_indices = np.concatenate(([0], np.cumsum(dataset.episodes_per_config[:-1])))[dataset.n_config_cv:]
-        policy_params = dataset.source_param[param_indices, 1:1+self.param_dim]
-
-        if self.use_gp_generate_mixture:
+        if source_task:
+            self.fit_gp_source(dataset)
             self.use_gp = True
+            self.gp_fitted = True
 
-        X, W, states, actions = self._collect_dataset_update(policy_params, alpha_tgt / np.sum(alpha_tgt), target_param)
-
-        if self.use_gp_generate_mixture:
-            self.use_gp = False
-
-        C = 5
-        if C <= (1 - alpha_0) / (2 * alpha_0):
-            u_alpha = 2 * C * (1 - alpha_0) ** 2 / (alpha_0 * C + 1 - alpha_0) ** 3
         else:
-            u_alpha = 8 / (27 * alpha_0)
+            self.update_gp(dataset)
+            self.gp_fitted = True
 
-        if not self.balance_coeff:
-            c1 = u_alpha / (2 * self.sigma_env**2 * N * (1 - alpha_0))
-            c2 = 4 * np.sum(alpha_tgt) / (self.sigma_env**2)  # TODO alpha_0 has been neglected
-        else:
-            c1 = np.sum(alpha_src)  # c1 = 0.5 * np.sum(alpha_src)
-            c2 = np.sum(alpha_tgt)  # c2 = 1 - c1
+            N = dataset.source_param.shape[0]
+            alpha_0 = dataset.episodes_per_config[-1] / N
+            alpha_tgt = dataset.episodes_per_config[dataset.n_config_cv:] / N
+            alpha_src = self.n_source / N
 
-        M = self.gp.predict(X)
-        F_src = [env.stepDenoisedCurrent(states, actions).reshape(X.shape[0], self.state_dim) for env in self.source_envs]
+            target_param = dataset.source_param[-1, 1:1+self.param_dim]
 
-        self._update_weight_matrix(X, M, W, F_src, alpha_src, c1, c2)
+            param_indices = np.concatenate(([0], np.cumsum(dataset.episodes_per_config[:-1])))[dataset.n_config_cv:]
+            policy_params = dataset.source_param[param_indices, 1:1+self.param_dim]
 
-        self.model_fitted = True
+            if self.use_gp_generate_mixture:
+                self.use_gp = True
+
+            X, W, states, actions = self._collect_dataset_update(policy_params, alpha_tgt / np.sum(alpha_tgt), target_param)
+
+            if self.use_gp_generate_mixture:
+                self.use_gp = False
+
+            C = 5
+            if C <= (1 - alpha_0) / (2 * alpha_0):
+                u_alpha = 2 * C * (1 - alpha_0) ** 2 / (alpha_0 * C + 1 - alpha_0) ** 3
+            else:
+                u_alpha = 8 / (27 * alpha_0)
+
+            if not self.balance_coeff:
+                c1 = u_alpha / (2 * self.sigma_env**2 * N * (1 - alpha_0))
+                c2 = 4 * np.sum(alpha_tgt) / (self.sigma_env**2)  # TODO alpha_0 has been neglected
+            else:
+                c1 = np.sum(alpha_src)  # c1 = 0.5 * np.sum(alpha_src)
+                c2 = np.sum(alpha_tgt)  # c2 = 1 - c1
+
+            M = self.gp.predict(X)
+            F_src = [env.stepDenoisedCurrent(states, actions).reshape(X.shape[0], self.state_dim) for env in self.source_envs]
+
+            self._update_weight_matrix(X, M, W, F_src, alpha_src, c1, c2)
+
+            self.model_fitted = True
+
+    def dump(self, i_batch):
+
+        with open("fitted_model_" + str(self.id) + "_" + str(i_batch) + ".pkl", 'wb') as output:
+            pickle.dump(self.gp, output, pickle.HIGHEST_PROTOCOL)
+
 
 
 
