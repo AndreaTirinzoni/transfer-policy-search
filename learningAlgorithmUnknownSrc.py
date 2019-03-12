@@ -44,6 +44,7 @@ class AlgorithmConfiguration:
         self.features = None
         self.self_normalied = None
         self.source_estimator = None
+        self.unknown_src = None
 
 
 def createBatch(env, batch_size, episode_length, param, state_space_size, variance_action, features):
@@ -345,14 +346,16 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
 
     if (batch_size != 0 or algorithm_configuration.model_estimation == 1) and compute_ess == 0:
 
-        state_t1_denoised_src_env = algorithm_configuration.source_estimator.stepDenoised(state_t, clipped_actions, source_dataset.policy_per_model)
+        if algorithm_configuration.unknown_src:
+            state_t1_denoised_src_env = algorithm_configuration.source_estimator.stepDenoised(state_t, clipped_actions, source_dataset.policy_per_model)
         state_t = np.repeat(state_t[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t
         state_t1 = np.repeat(state_t1[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t+1
         feats = np.repeat(feats[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t+1
         unclipped_action_t = np.repeat(unclipped_action_t[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # action t
         clipped_actions = np.repeat(clipped_actions[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # clipped action t
 
-        #state_t1_denoised_src_env = env_param.env.stepDenoised(combination_src_parameters_env, state_t[:, :, :, 0:n_configuration_src], clipped_actions[:, :, 0:n_configuration_src])
+        if not algorithm_configuration.unknown_src:
+            state_t1_denoised_src_env = env_param.env.stepDenoised(combination_src_parameters_env, state_t[:, :, :, 0:n_configuration_src], clipped_actions[:, :, 0:n_configuration_src])
         state_t1_denoised_current = np.repeat(state_t1_denoised_current[:, :, :, np.newaxis], n_configuration_tgt, axis=3)
         state_t1_denoised = np.concatenate([state_t1_denoised_src_env, state_t1_denoised_current], axis=3)
 
@@ -467,7 +470,8 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
 
     if (batch_size != 0 or algorithm_configuration.model_estimation == 1) and compute_ess == 0:
 
-        state_t1_denoised_src_env = algorithm_configuration.source_estimator.stepDenoised(state_t, clipped_actions, source_dataset.policy_per_model)
+        if algorithm_configuration.unknown_src:
+            state_t1_denoised_src_env = algorithm_configuration.source_estimator.stepDenoised(state_t, clipped_actions, source_dataset.policy_per_model)
 
         state_t = np.repeat(state_t[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t
         state_t1 = np.repeat(state_t1[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t+1
@@ -475,7 +479,9 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
         unclipped_action_t = np.repeat(unclipped_action_t[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # action t
         clipped_actions = np.repeat(clipped_actions[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # clipped action t
 
-        #state_t1_denoised_src_env = env_param.env.stepDenoised(combination_src_parameters_env, state_t[:, :, :, 0:n_configuration_src], clipped_actions[:, :, 0:n_configuration_src])
+        if not algorithm_configuration.unknown_src:
+            state_t1_denoised_src_env = env_param.env.stepDenoised(combination_src_parameters_env, state_t[:, :, :, 0:n_configuration_src], clipped_actions[:, :, 0:n_configuration_src])
+
         state_t1_denoised_current = np.repeat(state_t1_denoised_current[:, :, :, np.newaxis], n_configuration_tgt, axis=3)
         state_t1_denoised = np.concatenate([state_t1_denoised_src_env, state_t1_denoised_current], axis=3)
 
@@ -769,7 +775,9 @@ def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance
 
     feats = algorithm_configuration.features(state_t, source_dataset.mask_weights)
 
-    state_t1_denoised = algorithm_configuration.source_estimator.stepDenoised(state_t, clipped_actions, source_dataset.policy_per_model)
+    if algorithm_configuration.unknown_src:
+        state_t1_denoised = algorithm_configuration.source_estimator.stepDenoised(state_t, clipped_actions, source_dataset.policy_per_model)
+
     state_t = np.repeat(state_t[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t
     state_t1 = np.repeat(state_t1[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t+1
     feats = np.repeat(feats[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # features
@@ -777,7 +785,8 @@ def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance
     clipped_actions = np.repeat(clipped_actions[:, :, np.newaxis], combination_src_parameters_env.shape[0], axis=2) # action t
     variance_env = env_param_src[:, -1] # variance of the model transition
 
-    #state_t1_denoised = env_param.env.stepDenoised(combination_src_parameters_env, state_t, clipped_actions)
+    if not algorithm_configuration.unknown_src:
+        state_t1_denoised = env_param.env.stepDenoised(combination_src_parameters_env, state_t, clipped_actions)
 
     if algorithm_configuration.pd == 0:
         src_distributions_policy = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :], feats), axis=2))**2)/(2*variance_action))
@@ -1103,6 +1112,7 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
     algorithm_configuration.features = features
     algorithm_configuration.self_normalised = self_normalised
     algorithm_configuration.source_estimator = source_estimator
+    algorithm_configuration.unknown_src = False if source_estimator is None else True
 
     if off_policy == 1:
         if re.match("^.*MIS.*", estimator):

@@ -42,6 +42,8 @@ class AlgorithmConfiguration:
         self.model_estimation = None
         self.model_estimator = None
         self.features = None
+        self.source_estimator = None
+        self.unknown_src = None
 
 
 def createBatch(env, batch_size, episode_length, param, state_space_size, variance_action, features):
@@ -327,13 +329,18 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
 
     if (batch_size != 0 or algorithm_configuration.model_estimation == 1) and compute_ess == 0:
 
+        if algorithm_configuration.unknown_src:
+            density_state_t1 = algorithm_configuration.source_estimator.density(state_t, clipped_actions, state_t1, source_dataset.policy_per_model)
+
         state_t = np.repeat(state_t[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t
         state_t1 = np.repeat(state_t1[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t+1
         feats = np.repeat(feats[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t+1
         unclipped_action_t = np.repeat(unclipped_action_t[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # action t
         clipped_actions = np.repeat(clipped_actions[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # clipped action t
 
-        density_state_t1 = env_param.env.density(combination_src_parameters_env, state_t[:, :, :, 0:n_configuration_src], clipped_actions[:, :, 0:n_configuration_src], state_t1[:, :, :, 0:n_configuration_src])
+        if not algorithm_configuration.unknown_src:
+            density_state_t1 = env_param.env.density(combination_src_parameters_env, state_t[:, :, :, 0:n_configuration_src], clipped_actions[:, :, 0:n_configuration_src], state_t1[:, :, :, 0:n_configuration_src])
+
         density_state_t1_current = np.repeat(density_state_t1_current[:, :, np.newaxis], n_configuration_tgt, axis=2)
         density_state_t1 = np.concatenate([density_state_t1, density_state_t1_current], axis=2)
 
@@ -449,13 +456,18 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
 
     if (batch_size != 0 or algorithm_configuration.model_estimation == 1) and compute_ess == 0:
 
+        if algorithm_configuration.unknown_src:
+            density_state_t1 = algorithm_configuration.source_estimator.density(state_t, clipped_actions, state_t1, source_dataset.policy_per_model)
+
         state_t = np.repeat(state_t[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t
         state_t1 = np.repeat(state_t1[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t+1
         feats = np.repeat(feats[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t+1
         unclipped_action_t = np.repeat(unclipped_action_t[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # action t
         clipped_actions = np.repeat(clipped_actions[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # clipped action t
 
-        density_state_t1 = env_param.env.density(combination_src_parameters_env, state_t[:, :, :, 0:n_configuration_src], clipped_actions[:, :, 0:n_configuration_src], state_t1[:, :, :, 0:n_configuration_src])
+        if not algorithm_configuration.unknown_src:
+            density_state_t1 = env_param.env.density(combination_src_parameters_env, state_t[:, :, :, 0:n_configuration_src], clipped_actions[:, :, 0:n_configuration_src], state_t1[:, :, :, 0:n_configuration_src])
+
         density_state_t1_current = np.repeat(density_state_t1_current[:, :, np.newaxis], n_configuration_tgt, axis=2)
         density_state_t1 = np.concatenate([density_state_t1, density_state_t1_current], axis=2)
 
@@ -749,12 +761,17 @@ def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance
 
     feats = algorithm_configuration.features(state_t, source_dataset.mask_weights)
 
+    if algorithm_configuration.unknown_src:
+        density_state_t1 = algorithm_configuration.source_estimator.density(state_t, clipped_actions, state_t1, source_dataset.policy_per_model)
+
     state_t = np.repeat(state_t[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t
     state_t1 = np.repeat(state_t1[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # state t+1
     feats = np.repeat(feats[:, :, :, np.newaxis], combination_src_parameters.shape[0], axis=3) # features
     unclipped_action_t = np.repeat(unclipped_action_t[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # action t
     clipped_actions = np.repeat(clipped_actions[:, :, np.newaxis], combination_src_parameters_env.shape[0], axis=2) # action t
-    density_state_t1 = env_param.env.density(combination_src_parameters_env, state_t, clipped_actions, state_t1)
+
+    if not algorithm_configuration.unknown_src:
+        density_state_t1 = env_param.env.density(combination_src_parameters_env, state_t, clipped_actions, state_t1)
 
     if algorithm_configuration.pd == 0:
         src_distributions_policy = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :], feats), axis=2))**2)/(2*variance_action))
@@ -1049,7 +1066,7 @@ def setEnvParametersTarget(env, source_dataset, env_param):
     source_dataset.source_param[source_length:, 1+env_param.param_space_size:1+env_param.param_space_size+env_param.env_param_space_size] = env.getEnvParam().T
 
 
-def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1, model_estimation=0, dicrete_estimation=1, multid_approx=0, model_estimator=None, verbose=True, features=identity):
+def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_policy=1, model_estimation=0, dicrete_estimation=1, multid_approx=0, model_estimator=None, verbose=True, features=identity, source_estimator=None):
 
     param = np.random.normal(simulation_param.mean_initial_param, simulation_param.variance_initial_param)
 
@@ -1071,6 +1088,8 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
     algorithm_configuration.model_estimation = model_estimation
     algorithm_configuration.model_estimator = model_estimator
     algorithm_configuration.features = features
+    algorithm_configuration.source_estimator = source_estimator
+    algorithm_configuration.unknown_src = False if source_estimator is None else True
 
 
     if off_policy == 1:

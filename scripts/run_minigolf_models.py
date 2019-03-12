@@ -12,6 +12,7 @@ import sourceTaskCreation as stc
 import simulationClasses as sc
 from model_estimation_rkhs import ModelEstimatorRKHS
 from discreteModelEstimation import Models
+from source_estimator import SourceEstimator
 import gym
 from features import polynomial
 
@@ -56,9 +57,10 @@ def main():
 
     policy_params = []
     env_params = []
+    num_policy = len(pis)
 
-    for p in pis:
-        for e in envs:
+    for e in envs:
+        for p in pis:
             policy_params.append(p)
             env_params.append(e)
 
@@ -96,9 +98,11 @@ def main():
         off_policy = 0
         discrete_estimation = 0
         model = None
+        env_src_models = None
 
         # Create a new dataset object
         source_dataset = sc.SourceDataset(*data, n_config_cv)
+        source_dataset.policy_per_model = num_policy
 
         if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]:
             name = estimator
@@ -117,7 +121,7 @@ def main():
                 model_estimation = 1
                 discrete_estimation = 1
                 model = Models(possible_envs)
-            elif estimator.endswith("GP") or estimator.endswith("ES") or estimator.endswith("MI"):
+            elif estimator.endswith("GP") or estimator.endswith("ES") or estimator.endswith("MI") or estimator.endswith("NS"):
                 model_estimation = 1
                 model = ModelEstimatorRKHS(kernel_rho=10, kernel_lambda=[100, 10], sigma_env=env_tgt.sigma_noise,
                                            sigma_pi=np.sqrt(variance_action), T=arguments.rkhs_horizon, R=arguments.rkhs_samples,
@@ -126,14 +130,27 @@ def main():
                                            balance_coeff=arguments.balance_coeff, alpha_gp=1,
                                            print_mse=arguments.print_mse, features=polynomial,
                                            param_dim=param_space_size, target_env=env_tgt, heteroscedastic=True)
-                if estimator.endswith("GP"):
+                if estimator.endswith("GP") or estimator.endswith("NS"):
                     model.use_gp = True
                 elif estimator.endswith("MI"):
                     model.use_gp_generate_mixture = True
-
+                if estimator.endswith("NS"):
+                    n_models = int(source_dataset.episodes_per_config.shape[0]/source_dataset.policy_per_model)
+                    transition_models = []
+                    for i in range(n_models):
+                        model_estimator = ModelEstimatorRKHS(kernel_rho=10, kernel_lambda=[100, 10], sigma_env=env_tgt.sigma_noise,
+                                           sigma_pi=np.sqrt(variance_action), T=arguments.rkhs_horizon, R=arguments.rkhs_samples,
+                                           lambda_=0.0, source_envs=source_envs, n_source=n_source,
+                                           max_gp=arguments.max_gp_samples, state_dim=1, linear_kernel=False,
+                                           balance_coeff=arguments.balance_coeff, alpha_gp=1,
+                                           print_mse=arguments.print_mse, features=polynomial,
+                                           param_dim=param_space_size, target_env=env_tgt, heteroscedastic=True)
+                        transition_models.append(model_estimator)
+                    env_src_models = SourceEstimator(source_dataset, transition_models)
         result = la.learnPolicy(env_param, simulation_param, source_dataset, name, off_policy=off_policy,
                                 model_estimation=model_estimation, dicrete_estimation=discrete_estimation,
-                                model_estimator=model, verbose=not arguments.quiet, features=polynomial)
+                                model_estimator=model, verbose=not arguments.quiet, features=polynomial,
+                                source_estimator=env_src_models if estimator.endswith("NS") else None)
 
         stats[estimator].append(result)
 
@@ -183,6 +200,7 @@ parser.add_argument("--quiet", default=False, action='store_true')
 arguments = parser.parse_args()
 
 estimators = ["GPOMDP",
+              "MIS-CV-BASELINE-NS",
               "MIS-CV-BASELINE-SR",
               "MIS-CV-BASELINE-ID",
               "MIS-CV-BASELINE-ES",

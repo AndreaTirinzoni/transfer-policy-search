@@ -100,6 +100,7 @@ def main(id):
         off_policy = 0
         discrete_estimation = 0
         model = None
+        env_src_models = None
 
         # Create a new dataset object
         source_dataset = sc.SourceDataset(*data, n_config_cv)
@@ -120,7 +121,7 @@ def main(id):
                 model_estimation = 1
                 discrete_estimation = 1
                 model = Models(possible_envs)
-            elif estimator.endswith("GP") or estimator.endswith("ES") or estimator.endswith("MI"):
+            elif estimator.endswith("GP") or estimator.endswith("ES") or estimator.endswith("MI") or estimator.endswith("NS"):
                 model_estimation = 1
                 model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1, 1, 1, 1], sigma_env=env_tgt.sigma_env,
                                            sigma_pi=np.sqrt(variance_action), T=arguments.rkhs_horizon, R=arguments.rkhs_samples,
@@ -128,27 +129,27 @@ def main(id):
                                            max_gp=arguments.max_gp_samples, state_dim=4, linear_kernel=False,
                                            balance_coeff=arguments.balance_coeff, alpha_gp=1e-5,
                                            target_env=env_tgt if arguments.print_mse else None, id=id)
-                if estimator.endswith("GP"):
+                if estimator.endswith("GP") or estimator.endswith("NS"):
                     model.use_gp = True
                 elif estimator.endswith("MI"):
                     model.use_gp_generate_mixture = True
 
-            if arguments.source_task_unknown:
-                n_models = int(source_dataset.episodes_per_config.shape[0]/source_dataset.policy_per_model)
-                transition_models = []
-                for i in range(n_models):
-                    model_estimator = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1, 1, 1, 1], sigma_env=env_tgt.sigma_env,
-                                           sigma_pi=np.sqrt(variance_action), T=arguments.rkhs_horizon, R=arguments.rkhs_samples,
-                                           lambda_=0.0, source_envs=source_envs, n_source=n_source,
-                                           max_gp=arguments.max_gp_samples, state_dim=4, linear_kernel=False,
-                                           balance_coeff=arguments.balance_coeff, alpha_gp=1e-5,
-                                           target_env=env_tgt if arguments.print_mse else None, id=id)
-                    transition_models.append(model_estimator)
-                env_src_models = SourceEstimator(source_dataset, transition_models)
+                if estimator.endswith("NS"):
+                    n_models = int(source_dataset.episodes_per_config.shape[0]/source_dataset.policy_per_model)
+                    transition_models = []
+                    for i in range(n_models):
+                        model_estimator = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1, 1, 1, 1], sigma_env=env_tgt.sigma_env,
+                                               sigma_pi=np.sqrt(variance_action), T=arguments.rkhs_horizon, R=arguments.rkhs_samples,
+                                               lambda_=0.0, source_envs=source_envs, n_source=n_source,
+                                               max_gp=arguments.max_gp_samples, state_dim=4, linear_kernel=False,
+                                               balance_coeff=arguments.balance_coeff, alpha_gp=1e-5,
+                                               target_env=env_tgt if arguments.print_mse else None, id=id)
+                        transition_models.append(model_estimator)
+                    env_src_models = SourceEstimator(source_dataset, transition_models)
         result = la.learnPolicy(env_param, simulation_param, source_dataset, name, off_policy=off_policy,
                                 model_estimation=model_estimation, dicrete_estimation=discrete_estimation,
-                                model_estimator=model, verbose=not arguments.quiet, dump_model=True,
-                                iteration_dump=5, source_estimator=env_src_models if arguments.source_task_unknown else None)
+                                model_estimator=model, verbose=not arguments.quiet, dump_model=arguments.dump_estimated_model,
+                                iteration_dump=arguments.iteration_dump, source_estimator=env_src_models if estimator.endswith("NS") else None)
 
         stats[estimator].append(result)
 
@@ -189,7 +190,7 @@ parser.add_argument("--max_gp_samples", default=250, type=int)
 parser.add_argument("--rkhs_samples", default=20, type=int)
 parser.add_argument("--rkhs_horizon", default=20, type=int)
 parser.add_argument("--dump_estimated_model", default=False, action='store_true')
-parser.add_argument("--source_task_unknown", default=True, action='store_false')
+parser.add_argument("--source_task_unknown", default=False, action='store_true')
 parser.add_argument("--iteration_dump", default=5, type=int)
 parser.add_argument("--balance_coeff", default=False, action='store_true')
 parser.add_argument("--print_mse", default=False, action='store_true')
@@ -200,7 +201,13 @@ parser.add_argument("--quiet", default=False, action='store_true')
 # Read arguments
 arguments = parser.parse_args()
 
-estimators = ["PD-MIS-GP"]
+estimators = ["GPOMDP",
+              "PD-MIS-NS",
+              "PD-MIS-SR",
+              "PD-MIS-ID",
+              "PD-MIS-ES",
+              "PD-MIS-GP",
+              "PD-MIS-DI"]
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

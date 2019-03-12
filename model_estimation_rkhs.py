@@ -151,12 +151,6 @@ class ModelEstimatorRKHS:
         Y = Y[mask, :]
         F = F[mask, :]
 
-        # Limit the number of samples usable by GPs
-        if X.shape[0] > self.max_gp:
-            X = X[-self.max_gp:, :]
-            Y = Y[-self.max_gp:, :]
-            F = F[-self.max_gp:, :]
-
         self.gp.fit(X, Y)
 
     def eval_gp(self, dataset):

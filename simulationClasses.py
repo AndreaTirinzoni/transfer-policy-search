@@ -40,3 +40,4 @@ class SourceDataset:
         self.source_distributions = None
         self.mask_weights = None
         self.source_distributions_cv = None
+        self.policy_per_model = None
