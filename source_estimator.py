@@ -38,3 +38,20 @@ class SourceEstimator:
             state_t1_denoised[t:t+policy_per_model, :, :] = self.transition_models[i].transition(state[t:t+policy_per_model, :, :], action[t:t+policy_per_model, :, :])
             t += policy_per_model
         return state_t1_denoised
+
+    def density(self, state, action, state_t1, policy_per_model):
+        density_funct = np.zeros((state.shape[0], state.shape[1]))
+        density_funct = np.repeat(density_funct[:, :, np.newaxis], self.n_models*policy_per_model, axis=2)
+        t = 0
+        for i in range(self.n_models):
+            density_funct[:, :, t:t+policy_per_model] = self.transition_models[i].density(state, action, state_t1)[:, :, np.newaxis]
+            t += policy_per_model
+        return density_funct
+
+    def singleDensity(self, state, action, state_t1, policy_per_model):
+        density_funct = np.zeros((state.shape[0], state.shape[1]))
+        t = 0
+        for i in range(self.n_models):
+            density_funct[t:t+policy_per_model, :] = self.transition_models[i].density(state[t:t+policy_per_model, :, :], action[t:t+policy_per_model, :, :], state_t1[t:t+policy_per_model, :, :])
+            t += policy_per_model
+        return density_funct
