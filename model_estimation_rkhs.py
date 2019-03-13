@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, DotProduct
+from sklearn.utils import shuffle
 from envs.rkhs_env import RKHS_Env
 from features import identity
 from scipy.stats import norm
@@ -104,6 +105,7 @@ class ModelEstimatorRKHS:
         Y = Y[mask, :]
         F = F[mask, :]
 
+        X, Y, F = shuffle(X, Y, F, random_state=5)
         # Limit the number of samples usable by GPs
         if X.shape[0] > self.max_gp:
             X = X[-self.max_gp:, :]
@@ -150,6 +152,7 @@ class ModelEstimatorRKHS:
         X = X[mask, :]
         Y = Y[mask, :]
         F = F[mask, :]
+
 
         # Limit the number of samples usable by GPs
         if X.shape[0] > self.max_gp:

@@ -34,15 +34,15 @@ def main():
                                           "Yes" if arguments.adaptive else "No", arguments.n_min, use_adam=arguments.use_adam)
 
     # Source tasks
-    pis = [[-0.1], [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7], [-0.8]]
+    pis = [[-0.1], [-0.15], [-0.2], [-0.25], [-0.3], [-0.35], [-0.4], [-0.45]]
     if arguments.random_src:
         A = np.random.uniform(0.6, 1.4, arguments.n_source_models)
         B = np.random.uniform(0.8, 1.2, arguments.n_source_models)
     else:
-        A = arguments.src_A
-        B = arguments.src_B
+        A = np.array(arguments.src_A)
+        B = np.array(arguments.src_B)
     envs = [[A[i], B[i], 0.09] for i in range(A.shape[0])]
-
+    print(envs)
     policy_params = []
     env_params = []
 
@@ -119,10 +119,10 @@ parser.add_argument("--ess_min", default=20, type=int)
 parser.add_argument("--n_min", default=5, type=int)
 parser.add_argument("--adaptive", default=False, action='store_true')
 parser.add_argument("--use_adam", default=False, action='store_true')
-parser.add_argument("--random_src", default=True, action='store_true')
+parser.add_argument("--random_src", default=False, action='store_true')
 parser.add_argument("--n_source_samples", default=10, type=int)
-parser.add_argument("--src_A", default=None, nargs="+")
-parser.add_argument("--src_B", default=None, nargs="+")
+parser.add_argument("--src_A", default=None, nargs="+", type=float)
+parser.add_argument("--src_B", default=None, nargs="+", type=float)
 parser.add_argument("--n_source_models", default=5, type=int)
 parser.add_argument("--n_jobs", default=1, type=int)
 parser.add_argument("--n_runs", default=1, type=int)
@@ -131,7 +131,7 @@ parser.add_argument("--quiet", default=False, action='store_true')
 # Read arguments
 arguments = parser.parse_args()
 
-estimators = ["IS", "PD-IS", "MIS", "MIS-CV-BASELINE", "PD-MIS", "PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE_SR", "GPOMDP"]
+estimators = ["PD-IS", "MIS-CV-BASELINE", "PD-MIS-CV-BASELINE", "PD-MIS-CV-BASELINE_SR", "GPOMDP"]
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -150,7 +150,7 @@ if arguments.n_jobs == 1:
 else:
     results = Parallel(n_jobs=arguments.n_jobs, backend='loky')(delayed(run)(id, seed) for id, seed in zip(range(arguments.n_runs), seeds))
 
-with open('{0}/results.pkl'.format(folder), 'wb') as output:
+with open('{0}/results1.pkl'.format(folder), 'wb') as output:
     pickle.dump(results, output)
 
 ################################################

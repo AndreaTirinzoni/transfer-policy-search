@@ -226,7 +226,7 @@ if arguments.n_jobs == 1:
 else:
     results = Parallel(n_jobs=arguments.n_jobs, backend='loky')(delayed(run)(id, seed) for id, seed in zip(range(arguments.n_runs), seeds))
 
-with open('{0}/results.pkl'.format(folder), 'wb') as output:
+with open('{0}/results1.pkl'.format(folder), 'wb') as output:
     pickle.dump(results, output)
 
 ################################################
