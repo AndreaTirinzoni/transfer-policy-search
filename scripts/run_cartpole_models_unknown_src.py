@@ -141,7 +141,7 @@ def main(id):
                         model_estimator = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1, 1, 1, 1], sigma_env=env_tgt.sigma_env,
                                                sigma_pi=np.sqrt(variance_action), T=arguments.rkhs_horizon, R=arguments.rkhs_samples,
                                                lambda_=0.0, source_envs=source_envs, n_source=n_source,
-                                               max_gp=arguments.max_gp_samples, state_dim=4, linear_kernel=False,
+                                               max_gp=arguments.max_gp_samples_src, state_dim=4, linear_kernel=False,
                                                balance_coeff=arguments.balance_coeff, alpha_gp=1e-5,
                                                target_env=env_tgt if arguments.print_mse else None, id=id)
                         transition_models.append(model_estimator)
@@ -187,6 +187,7 @@ parser.add_argument("--use_adam", default=False, action='store_true')
 parser.add_argument("--n_source_samples", default=10, type=int)
 parser.add_argument("--n_source_models", default=2, type=int)
 parser.add_argument("--max_gp_samples", default=250, type=int)
+parser.add_argument("--max_gp_samples_src", default=1000, type=int)
 parser.add_argument("--rkhs_samples", default=20, type=int)
 parser.add_argument("--rkhs_horizon", default=20, type=int)
 parser.add_argument("--dump_estimated_model", default=False, action='store_true')
