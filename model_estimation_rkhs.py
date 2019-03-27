@@ -15,7 +15,7 @@ class ModelEstimatorRKHS:
     def __init__(self, kernel_rho, kernel_lambda, sigma_env, sigma_pi, T, R, lambda_, source_envs, n_source, max_gp,
                  state_dim, action_dim=1, use_gp=False, linear_kernel=False, use_gp_generate_mixture=False,
                  alpha_gp=None, target_env=None, balance_coeff=False, use_iw=False, features=identity, param_dim=None,
-                 heteroscedastic=False, print_mse=False, id = None):
+                 heteroscedastic=False, print_mse=False, id = None, max_gp_src=2500):
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.param_dim = state_dim if param_dim is None else param_dim
@@ -28,6 +28,7 @@ class ModelEstimatorRKHS:
         self.n_source = np.array(n_source)
         self.max_gp = max_gp
         self.id = id
+        self.max_gp_src = max_gp_src
 
         if linear_kernel:
             self.kernel = DotProduct(sigma_0=0)
@@ -154,13 +155,17 @@ class ModelEstimatorRKHS:
         F = F[mask, :]
 
 
+        X, Y, F = shuffle(X, Y, F, random_state=5)
+
         # Limit the number of samples usable by GPs
-        if X.shape[0] > self.max_gp:
-            X = X[-self.max_gp:, :]
-            Y = Y[-self.max_gp:, :]
-            F = F[-self.max_gp:, :]
+        if X.shape[0] > self.max_gp_src:
+            X = X[-self.max_gp_src:, :]
+            Y = Y[-self.max_gp_src:, :]
+            F = F[-self.max_gp_src:, :]
 
         self.gp.fit(X, Y)
+        print("mean error source GP: {0}".format(np.mean((self.gp.predict(X[0:self.max_gp_src, :]) - F[0:self.max_gp_src, :])**2)))
+        self.gp.predict(X)
 
     def eval_gp(self, dataset):
         """

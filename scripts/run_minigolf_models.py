@@ -144,7 +144,7 @@ def main():
                                            max_gp=arguments.max_gp_samples, state_dim=1, linear_kernel=False,
                                            balance_coeff=arguments.balance_coeff, alpha_gp=1,
                                            print_mse=arguments.print_mse, features=polynomial,
-                                           param_dim=param_space_size, target_env=env_tgt, heteroscedastic=True)
+                                           param_dim=param_space_size, target_env=env_tgt, heteroscedastic=True, max_gp_src=arguments.max_gp_samples_src)
                         transition_models.append(model_estimator)
                     env_src_models = SourceEstimator(source_dataset, transition_models)
         result = la.learnPolicy(env_param, simulation_param, source_dataset, name, off_policy=off_policy,
@@ -187,7 +187,8 @@ parser.add_argument("--adaptive", default=False, action='store_true')
 parser.add_argument("--use_adam", default=False, action='store_true')
 parser.add_argument("--n_source_samples", default=10, type=int)
 parser.add_argument("--n_source_models", default=5, type=int)
-parser.add_argument("--max_gp_samples", default=250, type=int)
+parser.add_argument("--max_gp_samples", default=1000, type=int)
+parser.add_argument("--max_gp_samples_src", default=2500, type=int)
 parser.add_argument("--rkhs_samples", default=20, type=int)
 parser.add_argument("--rkhs_horizon", default=20, type=int)
 parser.add_argument("--balance_coeff", default=False, action='store_true')
@@ -201,11 +202,7 @@ arguments = parser.parse_args()
 
 estimators = ["GPOMDP",
               "MIS-CV-BASELINE-NS",
-              "MIS-CV-BASELINE-SR",
-              "MIS-CV-BASELINE-ID",
-              "MIS-CV-BASELINE-ES",
-              "MIS-CV-BASELINE-GP",
-              "MIS-CV-BASELINE-DI"]
+              "MIS-CV-BASELINE-ID"]
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
