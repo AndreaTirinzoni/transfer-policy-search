@@ -202,6 +202,10 @@ arguments = parser.parse_args()
 
 estimators = ["GPOMDP",
               "MIS-CV-BASELINE-NS",
+              "MIS-CV-BASELINE-SR",
+              "MIS-CV-BASELINE-GP",
+              "MIS-CV-BASELINE-DI",
+              "MIS-CV-BASELINE-ES",
               "MIS-CV-BASELINE-ID"]
 
 # Base folder where to log
