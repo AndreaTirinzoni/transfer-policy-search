@@ -374,9 +374,9 @@ env_param_min = 0.6
 env_param_max = 1.5
 policy_param_min = -1
 policy_param_max = -0.1
-linspace_env = 5
-linspace_policy = 5
-
+linspace_env = 30
+linspace_policy = 30
+print("create dataset")
 [source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised] = stc.sourceTaskCreationAllCombinations(env, episode_length, batch_size, discount_factor, variance_action, env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env, linspace_policy, param_space_size, state_space_size, env_param_space_size)
 source_dataset = SourceDataset(source_task, source_param, episodes_per_configuration, next_states_unclipped, actions_clipped, next_states_unclipped_denoised)
 
@@ -392,7 +392,7 @@ algorithm_configuration = AlgorithmConfiguration(pd, computeWeights)
 source_dataset.source_distributions = computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance_action, algorithm_configuration, env_param)
 
 print("Computing ESS")
-[ess1, n_def1, ess2, n_def2, ess3] = essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env*4, linspace_policy*4, source_dataset, simulation_param, algorithm_configuration, env_param)
+[ess1, n_def1, ess2, n_def2, ess3] = essPerTarget(env_param_min, env_param_max, policy_param_min, policy_param_max, linspace_env*2, linspace_policy*2, source_dataset, simulation_param, algorithm_configuration, env_param)
 
 
 with open('ess_version1.pkl', 'wb') as output:
