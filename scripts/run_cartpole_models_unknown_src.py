@@ -129,7 +129,7 @@ def main(id):
                                            max_gp=arguments.max_gp_samples, state_dim=4, linear_kernel=False,
                                            balance_coeff=arguments.balance_coeff, alpha_gp=1e-5,
                                            target_env=env_tgt if arguments.print_mse else None, id=id)
-                if estimator.endswith("GP") or estimator.endswith("NS"):
+                if estimator.endswith("GP"):
                     model.use_gp = True
                 elif estimator.endswith("MI"):
                     model.use_gp_generate_mixture = True
