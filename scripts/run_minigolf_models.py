@@ -130,7 +130,7 @@ def main():
                                            balance_coeff=arguments.balance_coeff, alpha_gp=1,
                                            print_mse=arguments.print_mse, features=polynomial,
                                            param_dim=param_space_size, target_env=env_tgt, heteroscedastic=True)
-                if estimator.endswith("GP") or estimator.endswith("NS"):
+                if estimator.endswith("GP"):# or estimator.endswith("NS"):
                     model.use_gp = True
                 elif estimator.endswith("MI"):
                     model.use_gp_generate_mixture = True
