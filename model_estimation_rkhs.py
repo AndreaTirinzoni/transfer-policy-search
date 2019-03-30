@@ -106,7 +106,6 @@ class ModelEstimatorRKHS:
         Y = Y[mask, :]
         F = F[mask, :]
 
-        X, Y, F = shuffle(X, Y, F, random_state=5)
         # Limit the number of samples usable by GPs
         if X.shape[0] > self.max_gp:
             X = X[-self.max_gp:, :]
