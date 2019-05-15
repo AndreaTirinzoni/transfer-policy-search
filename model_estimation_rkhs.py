@@ -7,6 +7,7 @@ from features import identity
 from scipy.stats import norm
 import pickle
 
+
 class ModelEstimatorRKHS:
     """
     Model estimation algorithm using reproducing kernel Hilbert spaces.

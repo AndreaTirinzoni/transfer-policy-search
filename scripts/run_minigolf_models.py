@@ -7,11 +7,11 @@ import numpy as np
 import datetime
 import pickle
 import os
-import learningAlgorithm_noGaussianTransitions as la
-import sourceTaskCreation as stc
-import simulationClasses as sc
+import learning_algorithm_no_gaussian_transitions as la
+import source_task_creation as stc
+import simulation_classes as sc
 from model_estimation_rkhs import ModelEstimatorRKHS
-from discreteModelEstimation import Models
+from discrete_model_estimation import Models
 from source_estimator import SourceEstimator
 import gym
 from features import polynomial

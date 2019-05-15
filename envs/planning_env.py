@@ -7,7 +7,8 @@ A gym environment embedding learned transition functions using estimated models.
 This class can be used to simulate trajectories from learned models in case of planning problems
 """
 
-class Planning_env(gym.Env):
+
+class PlanningEnv(gym.Env):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second': 30
@@ -24,8 +25,11 @@ class Planning_env(gym.Env):
 
         action_clipped = self.base_env.clip_action(action)
         noise = np.random.randn() * self.sigma_noise
+        state = self.state
 
-        next_state_deterministic = self.transition_model.predict(self.state, action_clipped)
+        x = np.append(state, action)[np.newaxis, :]
+        next_state_deterministic = self.transition_model.predict(x).reshape(state.shape)
+
         next_state_unclipped = next_state_deterministic + noise
         next_state_clipped = self.base_env.clip_state(next_state_unclipped)
 
@@ -42,3 +46,6 @@ class Planning_env(gym.Env):
 
     def get_state(self):
         return np.array(self.state)
+
+    def getEnvParam(self):
+        return self.base_env.getEnvParam()

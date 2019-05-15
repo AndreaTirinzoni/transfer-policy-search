@@ -1,5 +1,6 @@
 import numpy as np
-import simulationClasses as sc
+import simulation_classes as sc
+
 
 class SourceEstimator:
 

@@ -7,9 +7,9 @@ import numpy as np
 import datetime
 import pickle
 import os
-import learningAlgorithm as la
-import sourceTaskCreation as stc
-import simulationClasses as sc
+import learning_algorithm as la
+import source_task_creation as stc
+import simulation_classes as sc
 import gym
 
 

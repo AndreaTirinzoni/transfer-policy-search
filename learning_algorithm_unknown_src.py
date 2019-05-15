@@ -3,7 +3,7 @@ import numpy as np
 import algorithmPolicySearch as alg
 import random
 import re
-import simulationClasses as sc
+import simulation_classes as sc
 import time
 from features import identity
 

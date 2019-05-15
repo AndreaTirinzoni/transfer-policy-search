@@ -1,7 +1,7 @@
 import numpy as np
-import sourceTaskCreation as stc
+import source_task_creation as stc
 import math as m
-import simulationClasses as sc
+import simulation_classes as sc
 from features import identity
 from features import polynomial
 

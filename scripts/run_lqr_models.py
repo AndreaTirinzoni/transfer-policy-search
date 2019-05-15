@@ -7,11 +7,11 @@ import numpy as np
 import datetime
 import pickle
 import os
-import learningAlgorithm as la
-import sourceTaskCreation as stc
-import simulationClasses as sc
+import learning_algorithm as la
+import source_task_creation as stc
+import simulation_classes as sc
 from model_estimation_rkhs import ModelEstimatorRKHS
-from discreteModelEstimation import Models
+from discrete_model_estimation import Models
 import gym
 
 
@@ -33,7 +33,7 @@ def main():
 
     simulation_param = sc.SimulationParam(mean_initial_param, variance_initial_param, variance_action, arguments.batch_size,
                                           arguments.iterations, arguments.gamma, None, arguments.learning_rate, arguments.ess_min,
-                                          "Yes" if arguments.adaptive else "No", arguments.n_min, use_adam=arguments.use_adam)
+                                          "No", arguments.n_min, use_adam=arguments.use_adam)
 
     # Source tasks
     pis = [[-0.1], [-0.2], [-0.3], [-0.4], [-0.5], [-0.6], [-0.7], [-0.8]]
@@ -163,6 +163,8 @@ parser.add_argument("--n_source_samples", default=10, type=int)
 parser.add_argument("--n_source_models", default=5, type=int)
 parser.add_argument("--max_gp_samples", default=1000, type=int)
 parser.add_argument("--rkhs_samples", default=50, type=int)
+parser.add_argument("--dump_model", default=False, action='store_true')
+parser.add_argument("--dump_model_iteration", default=10, type=int)
 parser.add_argument("--balance_coeff", default=False, action='store_true')
 parser.add_argument("--print_mse", default=False, action='store_true')
 parser.add_argument("--n_jobs", default=1, type=int)
@@ -172,7 +174,7 @@ parser.add_argument("--quiet", default=False, action='store_true')
 # Read arguments
 arguments = parser.parse_args()
 
-estimators = ["GPOMDP",
+estimators = ["PD-MIS-CV-BASELINE-DI", "GPOMDP",
               "PD-MIS-CV-BASELINE-SR",
               "PD-MIS-CV-BASELINE-ID",
               "PD-MIS-CV-BASELINE-ES",
@@ -196,7 +198,7 @@ if arguments.n_jobs == 1:
 else:
     results = Parallel(n_jobs=arguments.n_jobs, backend='loky')(delayed(run)(id, seed) for id, seed in zip(range(arguments.n_runs), seeds))
 
-with open('{0}/results.pkl'.format(folder), 'wb') as output:
+with open('{0}/results1.pkl'.format(folder), 'wb') as output:
     pickle.dump(results, output)
 
 ################################################

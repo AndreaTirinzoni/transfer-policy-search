@@ -7,11 +7,11 @@ import numpy as np
 import datetime
 import pickle
 import os
-import learningAlgorithm as la
-import sourceTaskCreation as stc
-import simulationClasses as sc
+import learning_algorithm as la
+import source_task_creation as stc
+import simulation_classes as sc
 from model_estimation_rkhs import ModelEstimatorRKHS
-from discreteModelEstimation import Models
+from discrete_model_estimation import Models
 import gym
 
 
@@ -207,7 +207,7 @@ if arguments.n_jobs == 1:
 else:
     results = Parallel(n_jobs=arguments.n_jobs, backend='loky')(delayed(run)(id, seed) for id, seed in zip(range(arguments.n_runs), seeds))
 
-with open('{0}/results.pkl'.format(folder), 'wb') as output:
+with open('{0}/results1.pkl'.format(folder), 'wb') as output:
     pickle.dump(results, output)
 
 ################################################

@@ -7,12 +7,12 @@ import numpy as np
 import datetime
 import pickle
 import os
-import learningAlgorithmUnknownSrc as la
-import sourceTaskCreation as stc
-import simulationClasses as sc
+import learning_algorithm_unknown_src as la
+import source_task_creation as stc
+import simulation_classes as sc
 from model_estimation_rkhs import ModelEstimatorRKHS
 from source_estimator import SourceEstimator
-from discreteModelEstimation import Models
+from discrete_model_estimation import Models
 import gym
 
 

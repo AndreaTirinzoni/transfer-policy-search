@@ -8,6 +8,7 @@ class EnvParam:
         self.env_param_space_size = env_param_space_size
         self.episode_length = episode_length
 
+
 class SimulationParam:
 
     def __init__(self, mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive, defensive_sample, use_adam=False):
@@ -24,6 +25,7 @@ class SimulationParam:
         self.adaptive = adaptive
         self.defensive_sample = defensive_sample
         self.use_adam = use_adam
+
 
 class SourceDataset:
 
