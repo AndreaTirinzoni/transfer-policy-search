@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 import pickle
 import os
-import learning_algorithm as la
+import learning_algorithm_together as la
 import source_task_creation as stc
 import simulation_classes as sc
 from model_estimation_rkhs import ModelEstimatorRKHS
@@ -24,8 +24,9 @@ def main():
     state_space_size = 4
     env_param_space_size = 3
     episode_length = 200
+    gaussian_transition = True
 
-    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length)
+    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length, gaussian_transition)
 
     mean_initial_param = np.random.normal(np.zeros(param_space_size), 0.01)
     variance_initial_param = 0
@@ -183,10 +184,7 @@ parser.add_argument("--quiet", default=False, action='store_true')
 # Read arguments
 arguments = parser.parse_args()
 
-estimators = ["GPOMDP",
-              "PD-MIS-SR",
-              "PD-MIS-ID",
-              "PD-MIS-ES",
+estimators = ["PD-MIS-NS",
               "PD-MIS-GP",
               "PD-MIS-DI"]
 

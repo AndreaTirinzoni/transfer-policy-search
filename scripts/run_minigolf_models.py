@@ -1,13 +1,11 @@
 import sys
-sys.path.append("../")
-
 import argparse
 from joblib import Parallel,delayed
 import numpy as np
 import datetime
 import pickle
 import os
-import learning_algorithm_no_gaussian_transitions as la
+import learning_algorithm_together as la
 import source_task_creation as stc
 import simulation_classes as sc
 from model_estimation_rkhs import ModelEstimatorRKHS
@@ -15,6 +13,8 @@ from discrete_model_estimation import Models
 from source_estimator import SourceEstimator
 import gym
 from features import polynomial
+
+sys.path.append("../")
 
 
 def main():
@@ -26,8 +26,9 @@ def main():
     state_space_size = 1
     env_param_space_size = 4
     episode_length = 20
+    gaussian_transitions = False
 
-    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length)
+    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length, gaussian_transitions)
 
     mean_initial_param = np.random.normal(np.ones(param_space_size) * 0.2, 0.01)
     variance_initial_param = 0
@@ -177,7 +178,7 @@ def run(id, seed):
 
 # Command line arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("--iterations", default=100, type=int)
+parser.add_argument("--iterations", default=5, type=int)
 parser.add_argument("--learning_rate", default=1e-2, type=float)
 parser.add_argument("--gamma", default=1.0, type=float)
 parser.add_argument("--batch_size", default=10, type=int)
@@ -201,12 +202,11 @@ parser.add_argument("--quiet", default=False, action='store_true')
 arguments = parser.parse_args()
 
 estimators = ["GPOMDP",
-              "MIS-CV-BASELINE-NS",
               "MIS-CV-BASELINE-SR",
               "MIS-CV-BASELINE-GP",
               "MIS-CV-BASELINE-DI",
-              "MIS-CV-BASELINE-ES",
-              "MIS-CV-BASELINE-ID"]
+              "MIS-CV-BASELINE-ID",
+              "MIS-CV-BASELINE-ES"]
 
 # Base folder where to log
 folder = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

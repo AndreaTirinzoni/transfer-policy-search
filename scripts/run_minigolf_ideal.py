@@ -1,6 +1,4 @@
 import sys
-sys.path.append("../")
-
 import argparse
 from joblib import Parallel,delayed
 import numpy as np
@@ -13,6 +11,8 @@ import simulation_classes as sc
 import gym
 from features import polynomial
 
+sys.path.append("../")
+
 
 def main():
 
@@ -23,8 +23,9 @@ def main():
     state_space_size = 1
     env_param_space_size = 4
     episode_length = 20
+    gaussian_transitions = False
 
-    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length)
+    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length, gaussian_transitions)
 
     mean_initial_param = np.random.normal(np.ones(param_space_size) * 0.2, 0.01)
     variance_initial_param = 0

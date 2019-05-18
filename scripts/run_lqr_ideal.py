@@ -1,8 +1,6 @@
 import sys
-sys.path.append("../")
-
 import argparse
-from joblib import Parallel,delayed
+from joblib import Parallel, delayed
 import numpy as np
 import datetime
 import pickle
@@ -11,6 +9,8 @@ import learning_algorithm as la
 import source_task_creation as stc
 import simulation_classes as sc
 import gym
+
+sys.path.append("../")
 
 
 def main():
@@ -22,8 +22,9 @@ def main():
     state_space_size = 1
     env_param_space_size = 3
     episode_length = 20
+    gaussian_transitions = True
 
-    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length)
+    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length, gaussian_transitions)
 
     mean_initial_param = -0.1 * np.ones(param_space_size)
     variance_initial_param = 0

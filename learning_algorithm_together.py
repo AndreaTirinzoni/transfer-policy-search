@@ -256,7 +256,7 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
     variance_action = simulation_param.variance_action
     variance_env = env_param_src[:, -1]
 
-    if not algorithm_configuration.gaussian_transitions:
+    if not env_param.gaussian_transition:
         if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
             state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_action_t)
         else:
@@ -340,12 +340,12 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
         source_dataset.mask_weights = np.concatenate((source_dataset.mask_weights, mask_new_trajectories), axis=0)
 
     if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
-        if algorithm_configuration.gaussian_transition:
+        if env_param.gaussian_transition:
             state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_actions)
         else:
             density_state_t1_current = env_param.env.densityCurrent(state_t, clipped_actions, state_t1)
     else:
-        if algorithm_configuration.gaussian_transition:
+        if env_param.gaussian_transition:
             state_t1_denoised_current = algorithm_configuration.model_estimator.transition(state_t, clipped_actions)
         else:
             density_state_t1_current = algorithm_configuration.model_estimator.density(state_t, clipped_actions, state_t1)
@@ -359,7 +359,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
     if (batch_size != 0 or algorithm_configuration.model_estimation == 1) and compute_ess == 0:
 
         if algorithm_configuration.unknown_src:
-            if algorithm_configuration.gaussian_transition:
+            if env_param.gaussian_transition:
                 state_t1_denoised_src_env = algorithm_configuration.source_estimator.stepDenoised(state_t, clipped_actions, source_dataset.policy_per_model)
             else:
                 density_state_t1 = algorithm_configuration.source_estimator.density(state_t, clipped_actions, state_t1, source_dataset.policy_per_model)
@@ -371,12 +371,12 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
         clipped_actions = np.repeat(clipped_actions[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # clipped action t
 
         if not algorithm_configuration.unknown_src:
-            if algorithm_configuration.gaussian_transition:
+            if env_param.gaussian_transition:
                 state_t1_denoised_src_env = env_param.env.stepDenoised(combination_src_parameters_env, state_t[:, :, :, 0:n_configuration_src], clipped_actions[:, :, 0:n_configuration_src])
             else:
                 density_state_t1 = env_param.env.density(combination_src_parameters_env, state_t[:, :, :, 0:n_configuration_src], clipped_actions[:, :, 0:n_configuration_src], state_t1[:, :, :, 0:n_configuration_src])
 
-        if algorithm_configuration.gaussian_transition:
+        if env_param.gaussian_transition:
             state_t1_denoised_current = np.repeat(state_t1_denoised_current[:, :, :, np.newaxis], n_configuration_tgt, axis=3)
             state_t1_denoised = np.concatenate([state_t1_denoised_src_env, state_t1_denoised_current], axis=3)
         else:
@@ -389,7 +389,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
                 # I compute the qj of the sources
                 policy_src_new_traj_src = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :n_configuration_src] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :n_configuration_src], feats[evaluated_trajectories:, :, :, :n_configuration_src]), axis=2))**2)/(2*variance_action))[:, :, :n_configuration_src]
 
-                if algorithm_configuration.gaussian_transition:
+                if env_param.gaussian_transition:
                     model_src_new_traj_src = 1/np.sqrt((2*m.pi*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[evaluated_trajectories:, :, :, :n_configuration_src] - state_t1_denoised[evaluated_trajectories:, :, :, :n_configuration_src])**2, axis=2) / (2*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis]))[:, :, :n_configuration_src]
                 else:
                     model_src_new_traj_src = density_state_t1[evaluated_trajectories:, :, :n_configuration_src]
@@ -399,13 +399,13 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
                 if compute_n_def == 1 or algorithm_configuration.adaptive == "No":
                     policy_src_new_traj_src = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :-1] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :-1], feats[evaluated_trajectories:, :, :, :-1]), axis=2))**2)/(2*variance_action))
 
-                    if algorithm_configuration.gaussian_transition:
+                    if env_param.gaussian_transition:
                         model_src_new_traj_src = 1/np.sqrt((2*m.pi*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[evaluated_trajectories:, :, :, :-1] - state_t1_denoised[evaluated_trajectories:, :, :, :-1])**2, axis=2) / (2*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis]))
                     else:
                         model_src_new_traj_src = density_state_t1[evaluated_trajectories:, :, :-1]
                 else:
                     policy_src_new_traj_src = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :], feats[evaluated_trajectories:, :, :, :]), axis=2))**2)/(2*variance_action))
-                    if algorithm_configuration.gaussian_transition:
+                    if env_param.gaussian_transition:
                         model_src_new_traj_src = 1/np.sqrt((2*m.pi*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[evaluated_trajectories:, :, :, :] - state_t1_denoised[evaluated_trajectories:, :, :, :])**2, axis=2) / (2*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis]))
                     else:
                         model_src_new_traj_src = density_state_t1[evaluated_trajectories:, :, :]
@@ -423,14 +423,14 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
             if algorithm_configuration.model_estimation == 1:
                 policy_src_new_param = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, source_dataset.n_config_cv:] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, source_dataset.n_config_cv:], feats[:, :, :, source_dataset.n_config_cv:]), axis=2))**2)/(2*variance_action))
 
-                if algorithm_configuration.gaussian_transition:
+                if env_param.gaussian_transition:
                     model_src_new_param = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[:, :, :, source_dataset.n_config_cv:] - state_t1_denoised_current[:, :, :, :])**2, axis=2) / (2*variance_env[:, np.newaxis, np.newaxis]))
                 else:
                     model_src_new_param = density_state_t1_current
             else:
                 policy_src_new_param = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, -1], feats[:, :, :, 0]), axis=2))**2)/(2*variance_action))
 
-                if algorithm_configuration.gaussian_transitions:
+                if env_param.gaussian_transition:
                     model_src_new_param = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[:, :, :, 0] - state_t1_denoised_current[:, :, :, 0])**2, axis=2) / (2*variance_env[:, np.newaxis]))
                 else:
                     model_src_new_param = density_state_t1_current[:, :, 0]
@@ -450,7 +450,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
 
         policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], feats[:, :, :, 0]), axis=2))**2)/(2*variance_action))
 
-        if algorithm_configuration.gaussian_transition:
+        if env_param.gaussian_transition:
             model_tgt = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[:, :, :, 0] - state_t1_denoised_current[:, :, :, 0])**2, axis=2) / (2*variance_env[:, np.newaxis]))
         else:
             model_tgt = density_state_t1_current[:, :, 0]
@@ -465,10 +465,10 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
 
         policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], feats), axis=2))**2)/(2*variance_action))
 
-        if algorithm_configuration.gaussian_transition:
+        if env_param.gaussian_transition:
             model_tgt = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[:, :, :, 0] - state_t1_denoised_current[:, :, :, 0])**2, axis=2) / (2*variance_env[:, np.newaxis]))
         else:
-            model_tgt = density_state_t1_current[:, :, 0]
+            model_tgt = density_state_t1_current
 
         policy_tgt[source_dataset.mask_weights] = 1
         model_tgt[source_dataset.mask_weights] = 1
@@ -509,12 +509,12 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
         source_dataset.mask_weights = np.concatenate((source_dataset.mask_weights, mask_new_trajectories), axis=0)
 
     if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
-        if algorithm_configuration.gaussian_transition:
+        if env_param.gaussian_transition:
             state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_actions)
         else:
             density_state_t1_current = env_param.env.densityCurrent(state_t, clipped_actions, state_t1)
     else:
-        if algorithm_configuration.gaussian_transition:
+        if env_param.gaussian_transition:
             state_t1_denoised_current = algorithm_configuration.model_estimator.transition(state_t, clipped_actions)
         else:
             density_state_t1_current = algorithm_configuration.model_estimator.density(state_t, clipped_actions, state_t1)
@@ -528,7 +528,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
     if (batch_size != 0 or algorithm_configuration.model_estimation == 1) and compute_ess == 0:
 
         if algorithm_configuration.unknown_src:
-            if algorithm_configuration.gaussian_transition:
+            if env_param.gaussian_transition:
                 state_t1_denoised_src_env = algorithm_configuration.source_estimator.stepDenoised(state_t, clipped_actions, source_dataset.policy_per_model)
             else:
                 density_state_t1 = algorithm_configuration.source_estimator.density(state_t, clipped_actions, state_t1, source_dataset.policy_per_model)
@@ -540,12 +540,12 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
         clipped_actions = np.repeat(clipped_actions[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # clipped action t
 
         if not algorithm_configuration.unknown_src:
-            if algorithm_configuration.gaussian_transition:
+            if env_param.gaussian_transition:
                 state_t1_denoised_src_env = env_param.env.stepDenoised(combination_src_parameters_env, state_t[:, :, :, 0:n_configuration_src], clipped_actions[:, :, 0:n_configuration_src])
             else:
                 density_state_t1 = env_param.env.density(combination_src_parameters_env, state_t[:, :, :, 0:n_configuration_src], clipped_actions[:, :, 0:n_configuration_src], state_t1[:, :, :, 0:n_configuration_src])
 
-        if algorithm_configuration.gaussian_transition:
+        if env_param.gaussian_transition:
             state_t1_denoised_current = np.repeat(state_t1_denoised_current[:, :, :, np.newaxis], n_configuration_tgt, axis=3)
             state_t1_denoised = np.concatenate([state_t1_denoised_src_env, state_t1_denoised_current], axis=3)
         else:
@@ -558,7 +558,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
                 # I compute the qj of the sources
                 policy_src_new_traj_src = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :n_configuration_src] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :n_configuration_src], feats[evaluated_trajectories:, :, :, :n_configuration_src]), axis=2))**2)/(2*variance_action))[:, :, :n_configuration_src]
 
-                if algorithm_configuration.gaussian_transition:
+                if env_param.gaussian_transition:
                     model_src_new_traj_src = 1/np.sqrt((2*m.pi*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[evaluated_trajectories:, :, :, :n_configuration_src] - state_t1_denoised[evaluated_trajectories:, :, :, :n_configuration_src])**2, axis=2) / (2*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis]))[:, :, :n_configuration_src]
                 else:
                     model_src_new_traj_src = density_state_t1[evaluated_trajectories:, :, :n_configuration_src]
@@ -568,13 +568,13 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
                 if compute_n_def == 1 or algorithm_configuration.adaptive == "No":
                     policy_src_new_traj_src = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :-1] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :-1], feats[evaluated_trajectories:, :, :, :-1]), axis=2))**2)/(2*variance_action))
 
-                    if algorithm_configuration.gaussian_transition:
+                    if env_param.gaussian_transition:
                         model_src_new_traj_src = 1/np.sqrt((2*m.pi*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[evaluated_trajectories:, :, :, :-1] - state_t1_denoised[evaluated_trajectories:, :, :, :-1])**2, axis=2) / (2*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis]))
                     else:
                         model_src_new_traj_src = density_state_t1[evaluated_trajectories:, :, :-1]
                 else:
                     policy_src_new_traj_src = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :], feats[evaluated_trajectories:, :, :, :]), axis=2))**2)/(2*variance_action))
-                    if algorithm_configuration.gaussian_transition:
+                    if env_param.gaussian_transition:
                         model_src_new_traj_src = 1/np.sqrt((2*m.pi*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[evaluated_trajectories:, :, :, :] - state_t1_denoised[evaluated_trajectories:, :, :, :])**2, axis=2) / (2*variance_env[evaluated_trajectories:, np.newaxis, np.newaxis]))
                     else:
                         model_src_new_traj_src = density_state_t1[evaluated_trajectories:, :, :]
@@ -582,8 +582,8 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
             policy_src_new_traj_src[mask_new_trajectories] = 1
             model_src_new_traj_src[mask_new_trajectories] = 1
 
-            policy_src_new_traj_src = np.prod(policy_src_new_traj_src, axis=1)
-            model_src_new_traj_src = np.prod(model_src_new_traj_src, axis=1)
+            policy_src_new_traj_src = np.cumprod(policy_src_new_traj_src, axis=1)
+            model_src_new_traj_src = np.cumprod(model_src_new_traj_src, axis=1)
 
             source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, (policy_src_new_traj_src * model_src_new_traj_src)), axis=0)
 
@@ -592,14 +592,14 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
             if algorithm_configuration.model_estimation == 1:
                 policy_src_new_param = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, source_dataset.n_config_cv:] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, source_dataset.n_config_cv:], feats[:, :, :, source_dataset.n_config_cv:]), axis=2))**2)/(2*variance_action))
 
-                if algorithm_configuration.gaussian_transition:
+                if env_param.gaussian_transition:
                     model_src_new_param = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[:, :, :, source_dataset.n_config_cv:] - state_t1_denoised_current[:, :, :, :])**2, axis=2) / (2*variance_env[:, np.newaxis, np.newaxis]))
                 else:
                     model_src_new_param = density_state_t1_current
             else:
                 policy_src_new_param = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, -1], feats[:, :, :, 0]), axis=2))**2)/(2*variance_action))
 
-                if algorithm_configuration.gaussian_transitions:
+                if env_param.gaussian_transition:
                     model_src_new_param = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[:, :, :, 0] - state_t1_denoised_current[:, :, :, 0])**2, axis=2) / (2*variance_env[:, np.newaxis]))
                 else:
                     model_src_new_param = density_state_t1_current[:, :, 0]
@@ -607,19 +607,19 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
             policy_src_new_param[source_dataset.mask_weights] = 1
             model_src_new_param[source_dataset.mask_weights] = 1
 
-            policy_src_new_param = np.prod(policy_src_new_param, axis=1)
-            model_src_new_param = np.prod(model_src_new_param, axis=1)
+            policy_src_new_param = np.cumprod(policy_src_new_param, axis=1)
+            model_src_new_param = np.cumprod(model_src_new_param, axis=1)
 
             if algorithm_configuration.model_estimation == 1:
-                source_distributions = np.concatenate((source_dataset.source_distributions, (policy_src_new_param * model_src_new_param)), axis=1)
+                source_distributions = np.concatenate((source_dataset.source_distributions, (policy_src_new_param * model_src_new_param)), axis=2)
                 source_dataset.source_distributions_cv = source_distributions
             else:
-                source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, (policy_src_new_param * model_src_new_param)[:, np.newaxis]), axis=1)
+                source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, (policy_src_new_param * model_src_new_param)[:, :, np.newaxis]), axis=2)
                 source_dataset.source_distributions_cv = source_dataset.source_distributions
 
         policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, 0] - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], feats[:, :, :, 0]), axis=2))**2)/(2*variance_action))
 
-        if algorithm_configuration.gaussian_transition:
+        if env_param.gaussian_transition:
             model_tgt = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[:, :, :, 0] - state_t1_denoised_current[:, :, :, 0])**2, axis=2) / (2*variance_env[:, np.newaxis]))
         else:
             model_tgt = density_state_t1_current[:, :, 0]
@@ -634,8 +634,8 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
 
         policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], feats), axis=2))**2)/(2*variance_action))
 
-        if algorithm_configuration.gaussian_transition:
-            model_tgt = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[:, :, :, 0] - state_t1_denoised_current[:, :, :, 0])**2, axis=2) / (2*variance_env[:, np.newaxis]))
+        if env_param.gaussian_transition:
+            model_tgt = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1 - state_t1_denoised_current)**2, axis=2) / (2*variance_env[:, np.newaxis]))
         else:
             model_tgt = density_state_t1_current[:, :, 0]
 
@@ -652,7 +652,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
         source_dataset.source_distributions_cv = source_dataset.source_distributions
         source_distributions = source_dataset.source_distributions
 
-    mis_denominator = np.squeeze(np.asarray(np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, :]/n, source_distributions), axis=1)))
+    mis_denominator = np.squeeze(np.asarray(np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, :]/n, source_distributions), axis=2)))
 
     weights = policy_tgt * model_tgt / mis_denominator
     weights[np.isnan(weights)] = 0
@@ -870,7 +870,7 @@ def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance
     feats = algorithm_configuration.features(state_t, source_dataset.mask_weights)
 
     if algorithm_configuration.unknown_src:
-        if algorithm_configuration.gaussian_transition:
+        if env_param.gaussian_transition:
             state_t1_denoised = algorithm_configuration.source_estimator.stepDenoised(state_t, clipped_actions, source_dataset.policy_per_model)
         else:
             density_state_t1 = algorithm_configuration.source_estimator.density(state_t, clipped_actions, state_t1, source_dataset.policy_per_model)
@@ -882,12 +882,12 @@ def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance
     clipped_actions = np.repeat(clipped_actions[:, :, np.newaxis], combination_src_parameters_env.shape[0], axis=2) # action t
 
     if not algorithm_configuration.unknown_src:
-        if algorithm_configuration.gaussian_transition:
+        if env_param.gaussian_transition:
             state_t1_denoised = env_param.env.stepDenoised(combination_src_parameters_env, state_t, clipped_actions)
         else:
             density_state_t1 = env_param.env.density(combination_src_parameters_env, state_t, clipped_actions, state_t1)
 
-    if algorithm_configuration.gaussian_transition:
+    if env_param.gaussian_transition:
         variance_env = env_param_src[:, -1] # variance of the model transition
         src_distributions_model = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((np.power((state_t1 - state_t1_denoised), 2)), axis=2) / (2*variance_env[:, np.newaxis, np.newaxis]))
     else:
@@ -1248,6 +1248,13 @@ def learnPolicy(env_param, simulation_param, source_dataset, estimator, off_poli
                 print("Collecting {0} episodes...".format(batch_size))
                 start = time.time()
             addEpisodesToSourceDataset(env_param, simulation_param, source_dataset, param, batch_size, discount_factor_timestep, algorithm_configuration.adaptive, features=features, n_def_estimation=0)
+            if off_policy == 0:
+                trajectories_length = source_dataset.source_param[:, -1]
+                state_t = source_dataset.source_task[:, :, 0:env_param.state_space_size]
+
+                mask = trajectories_length[:, np.newaxis] < np.repeat(np.arange(0, state_t.shape[1])[np.newaxis, :], repeats=state_t.shape[0], axis=0)
+                source_dataset.mask_weights = mask
+
             if verbose:
                 print("Done collecting episodes ({0}s)".format(time.time()-start))
 

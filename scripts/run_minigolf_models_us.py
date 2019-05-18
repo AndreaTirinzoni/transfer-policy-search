@@ -7,11 +7,11 @@ import numpy as np
 import datetime
 import pickle
 import os
-import learningAlgorithm_noGaussianTransitions as la
-import sourceTaskCreation as stc
-import simulationClasses as sc
+import learning_algorithm_no_gaussian_transitions as la
+import source_task_creation as stc
+import simulation_classes as sc
 from model_estimation_rkhs import ModelEstimatorRKHS
-from discreteModelEstimation import Models
+from discrete_model_estimation import Models
 from source_estimator import SourceEstimator
 import gym
 from features import polynomial
@@ -26,8 +26,9 @@ def main():
     state_space_size = 1
     env_param_space_size = 4
     episode_length = 20
+    gaussian_transition = True
 
-    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length)
+    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length, gaussian_transition)
 
     mean_initial_param = np.random.normal(np.ones(param_space_size) * 0.2, 0.01)
     variance_initial_param = 0

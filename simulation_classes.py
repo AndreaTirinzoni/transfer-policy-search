@@ -1,13 +1,13 @@
 class EnvParam:
 
-    def __init__(self, env, param_space_size, state_space_size, env_param_space_size, episode_length, gaussian_transitions):
+    def __init__(self, env, param_space_size, state_space_size, env_param_space_size, episode_length, gaussian_transition):
 
         self.env = env
         self.param_space_size = param_space_size
         self.state_space_size = state_space_size
         self.env_param_space_size = env_param_space_size
         self.episode_length = episode_length
-        self.gussian_transitions = gaussian_transitions
+        self.gaussian_transition = gaussian_transition
 
 
 class SimulationParam:

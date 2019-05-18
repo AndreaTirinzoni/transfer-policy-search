@@ -2,12 +2,12 @@ import sys
 sys.path.append("../")
 
 import argparse
-from joblib import Parallel,delayed
+from joblib import Parallel, delayed
 import numpy as np
 import datetime
 import pickle
 import os
-import learning_algorithm_unknown_src as la
+import learning_algorithm_together as la
 import source_task_creation as stc
 import simulation_classes as sc
 from model_estimation_rkhs import ModelEstimatorRKHS
@@ -25,8 +25,9 @@ def main(id):
     state_space_size = 4
     env_param_space_size = 3
     episode_length = 200
+    gaussian_transition = True
 
-    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length)
+    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length, gaussian_transition)
 
     mean_initial_param = np.random.normal(np.zeros(param_space_size), 0.01)
     variance_initial_param = 0
@@ -176,7 +177,7 @@ def run(id, seed):
 
 # Command line arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("--iterations", default=50, type=int)
+parser.add_argument("--iterations", default=5, type=int)
 parser.add_argument("--learning_rate", default=1e-3, type=float)
 parser.add_argument("--gamma", default=0.99, type=float)
 parser.add_argument("--batch_size", default=10, type=int)

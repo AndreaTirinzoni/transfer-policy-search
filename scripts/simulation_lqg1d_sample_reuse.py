@@ -19,8 +19,9 @@ def main():
     state_space_size = 1
     env_param_space_size = 3
     episode_length = 20
+    gaussian_transitions = True
 
-    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length)
+    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length, gaussian_transitions)
 
     mean_initial_param = 0 * np.ones(param_space_size)
     variance_initial_param = 0
