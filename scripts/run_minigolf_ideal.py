@@ -1,15 +1,19 @@
 import sys
 import argparse
-from joblib import Parallel,delayed
+from joblib import Parallel, delayed
 import numpy as np
 import datetime
 import pickle
 import os
-import learning_algorithm_no_gaussian_transitions as la
+import learning_algorithm_together as la
 import source_task_creation as stc
 import simulation_classes as sc
+from model_estimation_rkhs import ModelEstimatorRKHS
+from discrete_model_estimation import Models
+from source_estimator import SourceEstimator
 import gym
 from features import polynomial
+
 
 sys.path.append("../")
 
@@ -123,13 +127,13 @@ def run(id, seed):
 
 # Command line arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("--iterations", default=300, type=int)
+parser.add_argument("--iterations", default=30, type=int)
 parser.add_argument("--learning_rate", default=1e-2, type=float)
 parser.add_argument("--gamma", default=1.0, type=float)
 parser.add_argument("--batch_size", default=10, type=int)
 parser.add_argument("--ess_min", default=20, type=int)
 parser.add_argument("--n_min", default=5, type=int)
-parser.add_argument("--adaptive", default=False, action='store_true')
+parser.add_argument("--adaptive", default=True, action='store_false')
 parser.add_argument("--use_adam", default=False, action='store_true')
 parser.add_argument("--n_source_samples", default=10, type=int)
 parser.add_argument("--n_source_models", default=5, type=int)

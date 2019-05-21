@@ -1,6 +1,5 @@
 import math as m
 import numpy as np
-import algorithmPolicySearch as alg
 import random
 import re
 import simulation_classes as sc
@@ -45,6 +44,28 @@ class AlgorithmConfiguration:
         self.source_estimator = None
         self.unknown_src = None
 
+
+def adam(params, grad, t, m_t, v_t, alpha=0.01, beta_1=0.9, beta_2=0.999, eps=1e-8):
+    """
+    Applies a gradient step to the given parameters based on ADAM update rule
+    :param params: a numpy array of parameters
+    :param grad: the objective function gradient evaluated in params. This must have the same shape of params
+    :param t: the iteration number
+    :param m_t: first order momentum
+    :param v_t: second order momentum
+    :param alpha: base learning rate
+    :param beta_1: decay of first order momentum
+    :param beta_2: decay of second order momentum
+    :param eps: small constant
+    :return: The updated parameters, iteration number, first order momentum, and second order momentum
+    """
+
+    t += 1
+    m_t = beta_1 * m_t + (1 - beta_1) * grad
+    v_t = beta_2 * v_t + (1 - beta_2) * grad ** 2
+    m_t_hat = m_t / (1 - beta_1 ** t)
+    v_t_hat = v_t / (1 - beta_2 ** t)
+    return params - alpha * m_t_hat / (np.sqrt(v_t_hat) + eps), t, m_t, v_t, m_t_hat
 
 def createBatch(env, batch_size, episode_length, param, state_space_size, variance_action, features):
     """
@@ -325,7 +346,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
     if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
         density_state_t1_current = env_param.env.densityCurrent(state_t, clipped_actions, state_t1)
     else:
-        density_state_t1_current = algorithm_configuration.model_estimator.density(state_t, clipped_actions, state_t1) #TODO check
+        density_state_t1_current = algorithm_configuration.model_estimator.density(state_t, clipped_actions, state_t1)
 
     if (batch_size != 0 or algorithm_configuration.model_estimation == 1) and compute_ess == 0:
 
@@ -421,7 +442,6 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
     mis_denominator = np.squeeze(np.asarray(np.sum(np.multiply(source_dataset.episodes_per_config[np.newaxis, :]/n, source_distributions), axis=1)))
 
     weights = policy_tgt * model_tgt / mis_denominator
-    print(np.max(weights))
     weights[np.isnan(weights)] = 0
 
     return [weights, mis_denominator]
@@ -720,7 +740,7 @@ def updateParam(env_param, source_dataset, simulation_param, param, t, m_t, v_t,
 
     #Update the parameter
     if simulation_param.use_adam:
-        param, t, m_t, v_t, gradient = alg.adam(param, -gradient, t, m_t, v_t, alpha=simulation_param.learning_rate)
+        param, t, m_t, v_t, gradient = adam(param, -gradient, t, m_t, v_t, alpha=simulation_param.learning_rate)
     else:
         param = param + simulation_param.learning_rate * gradient
 

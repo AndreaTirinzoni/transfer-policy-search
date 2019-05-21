@@ -5,10 +5,15 @@ import numpy as np
 import datetime
 import pickle
 import os
-import learning_algorithm as la
+import learning_algorithm_together as la
 import source_task_creation as stc
 import simulation_classes as sc
+from model_estimation_rkhs import ModelEstimatorRKHS
+from discrete_model_estimation import Models
+from source_estimator import SourceEstimator
 import gym
+from features import polynomial
+
 
 sys.path.append("../")
 
@@ -22,9 +27,9 @@ def main():
     state_space_size = 1
     env_param_space_size = 3
     episode_length = 20
-    gaussian_transitions = True
+    gaussian_transition = True
 
-    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length, gaussian_transitions)
+    env_param = sc.EnvParam(env_tgt, param_space_size, state_space_size, env_param_space_size, episode_length, gaussian_transition)
 
     mean_initial_param = -0.1 * np.ones(param_space_size)
     variance_initial_param = 0
@@ -113,14 +118,14 @@ def run(id, seed):
 # Command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--iterations", default=100, type=int)
-parser.add_argument("--learning_rate", default=1e-2, type=float)
+parser.add_argument("--learning_rate", default=8e-6, type=float)
 parser.add_argument("--gamma", default=0.99, type=float)
 parser.add_argument("--batch_size", default=10, type=int)
 parser.add_argument("--ess_min", default=20, type=int)
 parser.add_argument("--n_min", default=5, type=int)
 parser.add_argument("--adaptive", default=False, action='store_true')
 parser.add_argument("--use_adam", default=False, action='store_true')
-parser.add_argument("--random_src", default=False, action='store_true')
+parser.add_argument("--random_src", default=True, action='store_false')
 parser.add_argument("--n_source_samples", default=10, type=int)
 parser.add_argument("--src_A", default=None, nargs="+", type=float)
 parser.add_argument("--src_B", default=None, nargs="+", type=float)

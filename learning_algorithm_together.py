@@ -186,7 +186,7 @@ def gradientAndRegression(algorithm_configuration, weights_source_target_update,
         # Fitting the regression for every t 0...T-1
             for t in range(control_variates.shape[1]):
                 #indices = trajectories_length >= t
-                gradient[i] += regressionFitting(gradient_estimation[:, t, i], control_variates[:, t, :, i], n_config_cv, algorithm_configuration.baseline) #always the same, only the MIS with CV changes format of the x_avg array
+                gradient[i] += regressionFitting(gradient_estimation[:, t, i], control_variates[:, t, :, i]) #always the same, only the MIS with CV changes format of the x_avg array
 
     else:
         # No per decision or there is an approximation for the time direction, I some over it
@@ -256,13 +256,14 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
     variance_action = simulation_param.variance_action
     variance_env = env_param_src[:, -1]
 
-    if not env_param.gaussian_transition:
+    if env_param.gaussian_transition:
         if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
             state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_action_t)
         else:
             state_t1_denoised_current = algorithm_configuration.model_estimator.transition(state_t, clipped_action_t)
 
-        state_t1_denoised = algorithm_configuration.model_estimator.stepDenoised(state_t, clipped_action_t, source_dataset.policy_per_model)
+        state_t1_denoised = source_dataset.next_states_unclipped_denoised[:source_dataset.initial_size, :, :]
+        state_t1_denoised = np.concatenate((state_t1_denoised, state_t1_denoised_current[source_dataset.initial_size:, :, :]), axis=0)
 
         model_tgt = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-(np.sum((state_t1 - state_t1_denoised_current)**2, axis=2)) / (2*variance_env[:, np.newaxis]))
         model_src = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-(np.sum((state_t1 - state_t1_denoised)**2, axis=2)) / (2*variance_env[:, np.newaxis]))
@@ -277,7 +278,7 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
 
         for i in range(source_dataset.initial_size):
             for t in range(env_param.episode_length):
-                density_state_t1[i, t] = env_param.env.getDensity(env_param_src[i, :], state_t[i, t, :], clipped_action_t[i, t], state_t1[i, t, :])
+                density_state_t1[i, t] = env_param.env.getDensity_old(env_param_src[i, :], state_t[i, t], clipped_action_t[i, t], state_t1[i, t]) #TODO remove for loop!
 
         if state_t.shape[0] - source_dataset.initial_size != 0:
             density_state_t1 = np.concatenate((density_state_t1, density_state_t1_current[source_dataset.initial_size:, :]), axis=0)
@@ -466,7 +467,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
         policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], feats), axis=2))**2)/(2*variance_action))
 
         if env_param.gaussian_transition:
-            model_tgt = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1[:, :, :, 0] - state_t1_denoised_current[:, :, :, 0])**2, axis=2) / (2*variance_env[:, np.newaxis]))
+            model_tgt = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1 - state_t1_denoised_current)**2, axis=2) / (2*variance_env[:, np.newaxis]))
         else:
             model_tgt = density_state_t1_current
 
@@ -637,7 +638,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
         if env_param.gaussian_transition:
             model_tgt = 1/np.sqrt((2*m.pi*variance_env[:, np.newaxis])**env_param.state_space_size) * np.exp(-np.sum((state_t1 - state_t1_denoised_current)**2, axis=2) / (2*variance_env[:, np.newaxis]))
         else:
-            model_tgt = density_state_t1_current[:, :, 0]
+            model_tgt = density_state_t1_current
 
         policy_tgt[source_dataset.mask_weights] = 1
         model_tgt[source_dataset.mask_weights] = 1

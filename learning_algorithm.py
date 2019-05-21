@@ -160,30 +160,9 @@ def onlyGradient(algorithm_configuration, weights_source_target_update, gradient
 
 
 def regressionFitting(y, x, n_config_cv, baseline_flag):
-    #n_config_cv = min(n_config_cv, 100)
-    # if baseline_flag == 1:
-    #     baseline = np.squeeze(np.asarray(x[:, -1]))[:, np.newaxis]
-    #     #x = np.concatenate([x, baseline], axis=1)
-    #     x = np.concatenate([x[:, 0:n_config_cv], baseline], axis=1)
-    # else:
-    #     x = x[:, 0:n_config_cv]
-
-    # train_size = int(np.ceil(x.shape[0]/4*3))
-    # train_index = random.sample(range(x.shape[0]), train_size)
-    # x_train = x[train_index]
-    # y_train = y[train_index]
-    # x_test = np.delete(x, train_index, axis=0)
-    # y_test = np.delete(y, train_index, axis=0)
-    # beta = np.squeeze(np.asarray(np.matmul(np.linalg.pinv(x_train[:, 1:]), y_train)))
-    # error = y_test - np.dot(x_test[:, 1:], beta)
 
     beta = np.squeeze(np.asarray(np.matmul(np.linalg.pinv(x), y)))
     error = y - np.dot(x, beta)
-
-    # x_avg = np.squeeze(np.asarray(np.mean(x, axis=0)))
-    # beta = np.matmul(np.linalg.inv(np.matmul((x[:, 1:]-x_avg[1:]).T, (x[:, 1:]-x_avg[1:]))), np.matmul((x[:, 1:]-x_avg[1:]).T, (y-y_avg)).T)
-    # I = np.identity(y.shape[0])
-    # error = np.squeeze(np.asarray(np.matmul(I - np.matmul(x[:, 1:], np.linalg.pinv(x[:, 1:])), y)))
 
     return np.mean(error)
 

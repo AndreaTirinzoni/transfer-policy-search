@@ -1,18 +1,26 @@
-from joblib import Parallel,delayed
+import sys
+import argparse
+from joblib import Parallel, delayed
 import numpy as np
 import datetime
 import pickle
 import os
-import learning_algorithm as la
+import learning_algorithm_together as la
 import source_task_creation as stc
 import simulation_classes as sc
+from model_estimation_rkhs import ModelEstimatorRKHS
+from discrete_model_estimation import Models
+from source_estimator import SourceEstimator
 import gym
+from features import polynomial
+
+
+sys.path.append("../")
 
 
 def main():
-    """
-    lqg1d sample reuse
-    """
+
+    # General env properties
     env_tgt = gym.make('LQG1D-v0')
     env_src = gym.make('LQG1D-v0')
     param_space_size = 1
