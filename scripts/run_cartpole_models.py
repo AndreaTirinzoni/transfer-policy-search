@@ -2,20 +2,21 @@ import sys
 sys.path.append("../")
 
 import argparse
-from joblib import Parallel,delayed
+from joblib import Parallel, delayed
 import numpy as np
 import datetime
 import pickle
 import os
-import learning_algorithm_together as la
+import learning_algorithm as la
 import source_task_creation as stc
 import simulation_classes as sc
 from model_estimation_rkhs import ModelEstimatorRKHS
+from source_estimator import SourceEstimator
 from discrete_model_estimation import Models
 import gym
 
 
-def main():
+def main(id):
 
     # General env properties
     env_tgt = gym.make('cartpolec-v0')
@@ -54,9 +55,9 @@ def main():
 
     policy_params = []
     env_params = []
-
-    for p in pis:
-        for e in envs:
+    num_policy = len(pis)
+    for e in envs:
+        for p in pis:
             policy_params.append(p)
             env_params.append(e)
 
@@ -100,10 +101,11 @@ def main():
         off_policy = 0
         discrete_estimation = 0
         model = None
+        env_src_models = None
 
         # Create a new dataset object
         source_dataset = sc.SourceDataset(*data, n_config_cv)
-
+        source_dataset.policy_per_model = num_policy
         if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"]:
             name = estimator
         else:
@@ -120,22 +122,35 @@ def main():
                 model_estimation = 1
                 discrete_estimation = 1
                 model = Models(possible_envs)
-            elif estimator.endswith("GP") or estimator.endswith("ES") or estimator.endswith("MI"):
+            elif estimator.endswith("GP") or estimator.endswith("ES") or estimator.endswith("MI") or estimator.endswith("NS"):
                 model_estimation = 1
                 model = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1, 1, 1, 1], sigma_env=env_tgt.sigma_env,
                                            sigma_pi=np.sqrt(variance_action), T=arguments.rkhs_horizon, R=arguments.rkhs_samples,
                                            lambda_=0.0, source_envs=source_envs, n_source=n_source,
                                            max_gp=arguments.max_gp_samples, state_dim=4, linear_kernel=False,
                                            balance_coeff=arguments.balance_coeff, alpha_gp=1e-5,
-                                           target_env=env_tgt if arguments.print_mse else None)
+                                           target_env=env_tgt if arguments.print_mse else None, id=id)
                 if estimator.endswith("GP"):
                     model.use_gp = True
                 elif estimator.endswith("MI"):
                     model.use_gp_generate_mixture = True
 
+                if estimator.endswith("NS"):
+                    n_models = int(source_dataset.episodes_per_config.shape[0]/source_dataset.policy_per_model)
+                    transition_models = []
+                    for i in range(n_models):
+                        model_estimator = ModelEstimatorRKHS(kernel_rho=1, kernel_lambda=[1, 1, 1, 1, 1], sigma_env=env_tgt.sigma_env,
+                                               sigma_pi=np.sqrt(variance_action), T=arguments.rkhs_horizon, R=arguments.rkhs_samples,
+                                               lambda_=0.0, source_envs=source_envs, n_source=n_source,
+                                               max_gp=arguments.max_gp_samples_src, state_dim=4, linear_kernel=False,
+                                               balance_coeff=arguments.balance_coeff, alpha_gp=1e-5,
+                                               target_env=env_tgt if arguments.print_mse else None, id=id)
+                        transition_models.append(model_estimator)
+                    env_src_models = SourceEstimator(source_dataset, transition_models)
         result = la.learnPolicy(env_param, simulation_param, source_dataset, name, off_policy=off_policy,
                                 model_estimation=model_estimation, dicrete_estimation=discrete_estimation,
-                                model_estimator=model, verbose=not arguments.quiet)
+                                model_estimator=model, verbose=not arguments.quiet, dump_model=arguments.dump_estimated_model,
+                                iteration_dump=arguments.iteration_dump, source_estimator=env_src_models if estimator.endswith("NS") else None)
 
         stats[estimator].append(result)
 
@@ -149,7 +164,7 @@ def run(id, seed):
 
     print("Starting run {0}".format(id))
 
-    results = main()
+    results = main(id)
 
     print("Done run {0}".format(id))
 
@@ -162,7 +177,7 @@ def run(id, seed):
 
 # Command line arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("--iterations", default=50, type=int)
+parser.add_argument("--iterations", default=5, type=int)
 parser.add_argument("--learning_rate", default=1e-3, type=float)
 parser.add_argument("--gamma", default=0.99, type=float)
 parser.add_argument("--batch_size", default=10, type=int)
@@ -171,20 +186,28 @@ parser.add_argument("--n_min", default=3, type=int)
 parser.add_argument("--adaptive", default=False, action='store_true')
 parser.add_argument("--use_adam", default=False, action='store_true')
 parser.add_argument("--n_source_samples", default=10, type=int)
-parser.add_argument("--n_source_models", default=5, type=int)
+parser.add_argument("--n_source_models", default=2, type=int)
 parser.add_argument("--max_gp_samples", default=250, type=int)
+parser.add_argument("--max_gp_samples_src", default=1000, type=int)
 parser.add_argument("--rkhs_samples", default=20, type=int)
 parser.add_argument("--rkhs_horizon", default=20, type=int)
+parser.add_argument("--dump_estimated_model", default=False, action='store_true')
+parser.add_argument("--source_task_unknown", default=False, action='store_true')
+parser.add_argument("--iteration_dump", default=5, type=int)
 parser.add_argument("--balance_coeff", default=False, action='store_true')
 parser.add_argument("--print_mse", default=False, action='store_true')
 parser.add_argument("--n_jobs", default=1, type=int)
-parser.add_argument("--n_runs", default=1, type=int)
+parser.add_argument("--n_runs", default=6, type=int)
 parser.add_argument("--quiet", default=False, action='store_true')
 
 # Read arguments
 arguments = parser.parse_args()
 
-estimators = ["PD-MIS-NS",
+estimators = ["GPOMDP",
+              "PD-MIS-NS",
+              "PD-MIS-SR",
+              "PD-MIS-ID",
+              "PD-MIS-ES",
               "PD-MIS-GP",
               "PD-MIS-DI"]
 

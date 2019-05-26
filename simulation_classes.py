@@ -30,7 +30,7 @@ class SimulationParam:
 
 class SourceDataset:
 
-    def __init__(self, source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, next_states_unclipped_denoised, n_config_cv):
+    def __init__(self, source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, next_states_unclipped_denoised, n_config_src):
 
         self.source_task = source_task
         self.source_param = source_param
@@ -38,7 +38,7 @@ class SourceDataset:
         self.next_states_unclipped = next_states_unclipped
         self.next_states_unclipped_denoised = next_states_unclipped_denoised
         self.clipped_actions = clipped_actions
-        self.n_config_cv = n_config_cv
+        self.n_config_src = n_config_src
         self.initial_size = source_task.shape[0]
         self.source_distributions = None
         self.mask_weights = None
