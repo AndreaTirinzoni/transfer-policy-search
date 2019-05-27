@@ -1,7 +1,8 @@
 class EnvParam:
-
+    """
+    Information about the environment
+    """
     def __init__(self, env, param_space_size, state_space_size, env_param_space_size, episode_length, gaussian_transition):
-
         self.env = env
         self.param_space_size = param_space_size
         self.state_space_size = state_space_size
@@ -11,9 +12,10 @@ class EnvParam:
 
 
 class SimulationParam:
-
+    """
+    Informations about the parameters used in the simulation
+    """
     def __init__(self, mean_initial_param, variance_initial_param, variance_action, batch_size, num_batch, discount_factor, runs, learning_rate, ess_min, adaptive, defensive_sample, use_adam=False):
-
         self.mean_initial_param = mean_initial_param
         self.variance_initial_param = variance_initial_param
         self.variance_action = variance_action
@@ -29,9 +31,20 @@ class SimulationParam:
 
 
 class SourceDataset:
-
+    """
+    Informations related to the episodes in the source dataset
+    """
     def __init__(self, source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, next_states_unclipped_denoised, n_config_src):
+        """
 
+        :param source_task:
+        :param source_param:
+        :param episodes_per_config:
+        :param next_states_unclipped:
+        :param clipped_actions:
+        :param next_states_unclipped_denoised:
+        :param n_config_src:
+        """
         self.source_task = source_task
         self.source_param = source_param
         self.episodes_per_config = episodes_per_config
