@@ -72,7 +72,7 @@ class Models:
         Retrive the necessary information from the data structure containing the episode information
         :param source_dataset: A data structure containing the episode information
         :param env_param: The parameter used for generating the episodes (policy and model parameters)
-        :return: The required informations
+        :return: The required information
         """
         param_policy_src = source_dataset.source_param[:, 1:1+env_param.param_space_size] # policy parameter of source
         state_t = source_dataset.source_task[:, :, 0:env_param.state_space_size] # state t

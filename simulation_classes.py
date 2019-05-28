@@ -35,16 +35,6 @@ class SourceDataset:
     Informations related to the episodes in the source dataset
     """
     def __init__(self, source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, next_states_unclipped_denoised, n_config_src):
-        """
-
-        :param source_task:
-        :param source_param:
-        :param episodes_per_config:
-        :param next_states_unclipped:
-        :param clipped_actions:
-        :param next_states_unclipped_denoised:
-        :param n_config_src:
-        """
         self.source_task = source_task
         self.source_param = source_param
         self.episodes_per_config = episodes_per_config

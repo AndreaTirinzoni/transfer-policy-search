@@ -7,15 +7,10 @@ from features import identity
 
 class BatchStats:
     """
-
+    Statistics stored for every batch
     """
 
     def __init__(self, num_batch, param_space_size):
-        """
-
-        :param num_batch:
-        :param param_space_size:
-        """
 
         self.total_rewards = np.zeros(num_batch)
         self.disc_rewards = np.zeros(num_batch)
@@ -31,10 +26,10 @@ class BatchStats:
 
 class AlgorithmConfiguration:
     """
-
+    The configuration of the algorithm (information mainly related to the estimator)
     """
 
-    def __init__(self, estimator, cv, pd, baseline, approximation, adaptive, computeWeights, computeGradientUpdate, computeEss):
+    def __init__(self, estimator, cv, pd, baseline, approximation, adaptive, compute_weights, compute_gradient_update, compute_ess):
         """
 
         :param estimator:
@@ -53,9 +48,9 @@ class AlgorithmConfiguration:
         self.baseline = baseline
         self.approximation = approximation
         self.adaptive = adaptive
-        self.computeWeights = computeWeights
-        self.computeEss = computeEss
-        self.computeGradientUpdate = computeGradientUpdate
+        self.computeWeights = compute_weights
+        self.computeEss = compute_ess
+        self.computeGradientUpdate = compute_gradient_update
         self.off_policy = None
         self.multid_approx = None
         self.dicrete_estimation = None
@@ -113,8 +108,6 @@ def createBatch(env, batch_size, episode_length, param, state_space_size, varian
             mean_action = np.sum(np.multiply(param, features(state)))
             action = np.random.normal(mean_action, m.sqrt(variance_action))
             next_state, reward, done, unclipped_state, clipped_action, next_state_denoised = env.step(action)
-            # Keep track of the transition
-            # env.render()
             batch[i_batch, t, 0:state_space_size] = state
             batch[i_batch, t, state_space_size] = clipped_action
             batch[i_batch, t, state_space_size+1] = reward
@@ -134,13 +127,13 @@ def createBatch(env, batch_size, episode_length, param, state_space_size, varian
 
 def computeGradientsSourceTargetTimestep(param, source_dataset, variance_action, env_param, features):
     """
-
-    :param param:
-    :param source_dataset:
-    :param variance_action:
-    :param env_param:
-    :param features:
-    :return:
+    Compute the gradient of the likelyhood ratio gradient estimator for every timestep and for every episode
+    :param param: Current policy parameter
+    :param source_dataset: A data structure containing the episode information
+    :param variance_action: Variance of the action
+    :param env_param: Object that contains all the information of the target environment
+    :param features: The function to apply at the state; it represents the features used for learning the optimal policy
+    :return: A matrix containing the computed gradient for every timestep and episode
     """
     state_t = source_dataset.source_task[:, :, 0:env_param.state_space_size] # state t
     action_t = source_dataset.source_task[:, :, env_param.state_space_size]
@@ -152,22 +145,23 @@ def computeGradientsSourceTargetTimestep(param, source_dataset, variance_action,
 
 def computeNdef(min_index, param, env_param, source_dataset, simulation_param, algorithm_configuration):
     """
-
-    :param min_index:
-    :param param:
-    :param env_param:
-    :param source_dataset:
-    :param simulation_param:
-    :param algorithm_configuration:
-    :return:
+    Function that estimated the number of episodes to collect adaptively from the target model
+    :param min_index: Index of the timestep which the estimated weights at that timestep in case of per decision estimator has the minimum ESS
+    :param param: Current policy parameter
+    :param env_param: Object that contains all the information of the target environment
+    :param source_dataset: A data structure containing the episode information
+    :param simulation_param: Parameters of the simulation
+    :param algorithm_configuration: Configuration of the estimator to use in the learning procedure
+    :return: The number of episodes to collect from the target environment
     """
+    # Compute the weights
     weights = algorithm_configuration.computeWeights(param, env_param, source_dataset, simulation_param, algorithm_configuration, simulation_param.defensive_sample, compute_n_def=1)[0]
 
     n = source_dataset.source_task.shape[0]
     if algorithm_configuration.pd == 1:
-        #indices = trajectories_length >= min_index
         weights = weights[:, min_index]
 
+    # Estimate the n_def from the weights
     variance_weights = 1/n * np.sum((weights-1)**2)
     w_1 = np.linalg.norm(weights, 1)
     w_2 = np.linalg.norm(weights, 2)
@@ -179,7 +173,6 @@ def computeNdef(min_index, param, env_param, source_dataset, simulation_param, a
 
     delta = 0.1
 
-    # TODO clip only for ideal models
     if variance_weights < n * delta * (np.mean(weights) - 1)**2:
         if not algorithm_configuration.model_estimation or algorithm_configuration.dicrete_estimation:
             num_episodes_target2 = simulation_param.ess_min - simulation_param.defensive_sample
@@ -188,33 +181,34 @@ def computeNdef(min_index, param, env_param, source_dataset, simulation_param, a
 
 # Compute gradients
 
-def onlyGradient(algorithm_configuration, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all, N):
-    """
 
-    :param algorithm_configuration:
-    :param weights_source_target_update:
-    :param gradient_off_policy_update:
-    :param discounted_rewards_all:
-    :param N:
+def onlyGradient(algorithm_configuration, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all, n):
+    """
+    Compute the gradient to update the policy parameter
+    :param algorithm_configuration: Configuration of the estimator to use in the learning procedure
+    :param weights_source_target_update: Weights related to the episodes
+    :param gradient_off_policy_update: Computed gradients (sum over the timesteps if not per decision estimator, otherwise cumulative sum)
+    :param discounted_rewards_all: Rewards times the discount factor power the associated timestep
+    :param n: Number of episodes
     :return:
     """
     if algorithm_configuration.pd == 0:
         if algorithm_configuration.self_normalised == 1:
             gradient = np.sum((np.squeeze(np.array(weights_source_target_update))[:, np.newaxis] * gradient_off_policy_update) * np.sum(discounted_rewards_all, axis=1)[:, np.newaxis], axis=0)
         else:
-            gradient = 1/N * np.sum((np.squeeze(np.array(weights_source_target_update))[:, np.newaxis] * gradient_off_policy_update) * np.sum(discounted_rewards_all, axis=1)[:, np.newaxis], axis=0)
+            gradient = 1/n * np.sum((np.squeeze(np.array(weights_source_target_update))[:, np.newaxis] * gradient_off_policy_update) * np.sum(discounted_rewards_all, axis=1)[:, np.newaxis], axis=0)
     else:
-        gradient = 1/N * np.sum(np.sum((np.squeeze(np.array(weights_source_target_update))[:, :, np.newaxis] * gradient_off_policy_update) * discounted_rewards_all[:, :, np.newaxis], axis=1), axis=0)
+        gradient = 1/n * np.sum(np.sum((np.squeeze(np.array(weights_source_target_update))[:, :, np.newaxis] * gradient_off_policy_update) * discounted_rewards_all[:, :, np.newaxis], axis=1), axis=0)
 
     return gradient
 
 
 def regressionFitting(y, x):
     """
-
-    :param y:
-    :param x:
-    :return:
+    Fit a regression
+    :param y: The estimated gradient
+    :param x: The control variates
+    :return: The mean of the error
     """
 
     beta = np.squeeze(np.asarray(np.matmul(np.linalg.pinv(x), y)))
@@ -225,15 +219,15 @@ def regressionFitting(y, x):
 
 def gradientAndRegression(algorithm_configuration, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all, control_variates, source_dataset, env_param):
     """
-
-    :param algorithm_configuration:
-    :param weights_source_target_update:
-    :param gradient_off_policy_update:
-    :param discounted_rewards_all:
-    :param control_variates:
-    :param source_dataset:
-    :param env_param:
-    :return:
+    Estimate the gradient and apply the regression using the control variates
+    :param algorithm_configuration: Configuration of the estimator to use in the learning procedure
+    :param weights_source_target_update: Weights related to the episodes
+    :param gradient_off_policy_update: Computed gradients (sum over the timesteps if not per decision estimator, otherwise cumulative sum)
+    :param discounted_rewards_all: Rewards times the discount factor power the associated timestep
+    :param control_variates: The computed control variates
+    :param source_dataset: A data structure containing the episode information
+    :param env_param: Object that contains all the information of the target environment
+    :return: The gradient used to update the current policy parameter
     """
     # Compute the gradient to fit according to the estimator properties
     if algorithm_configuration.pd == 1:
@@ -242,15 +236,14 @@ def gradientAndRegression(algorithm_configuration, weights_source_target_update,
     else:
         gradient_estimation = weights_source_target_update[:, np.newaxis] * gradient_off_policy_update * np.sum(discounted_rewards_all, axis=1)[:, np.newaxis]
 
-    #Fitting the regression
+    # Fitting the regression
     if algorithm_configuration.pd == 1 and algorithm_configuration.approximation == 0:
         # Per decision and no approximation, I fit a regression for every timestep and sum
         gradient = np.zeros(gradient_estimation.shape[2])
         trajectories_length = getEpisodesInfoFromSource(source_dataset, env_param)[-1]
         for i in range(gradient_estimation.shape[2]):
-        # Fitting the regression for every t 0...T-1
+            # Fitting the regression for every t 0...T-1
             for t in range(control_variates.shape[1]):
-                #indices = trajectories_length >= t
                 gradient[i] += regressionFitting(gradient_estimation[:, t, i], control_variates[:, t, :, i]) #always the same, only the MIS with CV changes format of the x_avg array
 
     else:
@@ -266,24 +259,25 @@ def gradientAndRegression(algorithm_configuration, weights_source_target_update,
     return gradient
 
 
-def gradientPolicySearch(algorithm_configuration, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all, N):
+def gradientPolicySearch(algorithm_configuration, weights_source_target_update, gradient_off_policy_update, discounted_rewards_all, n):
     """
-
-    :param algorithm_configuration:
-    :param weights_source_target_update:
-    :param gradient_off_policy_update:
-    :param discounted_rewards_all:
-    :param N:
+    Compute the gradient in case of on policy learning (GPOMDP, REINFORCE, REINFORCE with baseline)
+    :param algorithm_configuration: Configuration of the estimator to use in the learning procedure
+    :param weights_source_target_update: Weights related to the episodes
+    :param gradient_off_policy_update: Computed gradients (sum over the timesteps if not per decision estimator, otherwise cumulative sum)
+    :param discounted_rewards_all: Rewards times the discount factor power the associated timestep
+    :param n: number of episodes
     :return:
     """
     if algorithm_configuration.pd == 0:
-        n = weights_source_target_update[weights_source_target_update == 1].shape[0]
+        # REINFORCE
         baseline = 0
         if algorithm_configuration.baseline == 1:
             baseline = np.sum(np.multiply((weights_source_target_update[:, np.newaxis] * gradient_off_policy_update)**2, (weights_source_target_update * np.sum(discounted_rewards_all, axis=1))[:, np.newaxis]), axis=0) / np.sum((weights_source_target_update[:, np.newaxis] * gradient_off_policy_update)**2, axis=0)
         gradient = 1/n * np.sum((np.squeeze(np.array(weights_source_target_update))[:, np.newaxis] * gradient_off_policy_update) * (np.sum(discounted_rewards_all, axis=1)[:, np.newaxis]-baseline), axis=0)
 
     else:
+        # GPOMDP
         n = weights_source_target_update[weights_source_target_update == 1].shape[0] / weights_source_target_update.shape[1]
         baseline = 0
         if algorithm_configuration.baseline == 1:
@@ -298,10 +292,10 @@ def gradientPolicySearch(algorithm_configuration, weights_source_target_update, 
 
 def getEpisodesInfoFromSource(source_dataset, env_param):
     """
-
-    :param source_dataset:
-    :param env_param:
-    :return:
+    Retrive the main information from the source dataset
+    :param source_dataset: A data structure containing the episode information
+    :param env_param: Object that contains all the information of the target environment
+    :return: The information related to the source dataset
     """
     param_policy_src = source_dataset.source_param[:, 1:1+env_param.param_space_size] # policy parameter of source
     state_t = source_dataset.source_task[:, :, 0:env_param.state_space_size] # state t
@@ -316,16 +310,16 @@ def getEpisodesInfoFromSource(source_dataset, env_param):
 
 def weightsPolicySearch(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, batch_size, compute_n_def=0, compute_ess=0):
     """
-
-    :param policy_param:
-    :param env_param:
-    :param source_dataset:
-    :param simulation_param:
-    :param algorithm_configuration:
-    :param batch_size:
-    :param compute_n_def:
-    :param compute_ess:
-    :return:
+    Compute the weights in case of policy search algorithms
+    :param policy_param: Current policy parameter
+    :param env_param: Object that contains all the information of the target environment
+    :param source_dataset: A data structure containing the episode information
+    :param simulation_param: Parameters of the simulation
+    :param algorithm_configuration: Configuration of the estimator to use in the learning procedure
+    :param batch_size: The size of the batch
+    :param compute_n_def: Flag that represents whether the weights are computed to estimate the n_def
+    :param compute_ess: Flag that represents whether the weights are computed to estimate the ESS
+    :return: The estimated weights
     """
     old_trajectories = source_dataset.source_task.shape[0]-simulation_param.batch_size
 
@@ -341,16 +335,16 @@ def weightsPolicySearch(policy_param, env_param, source_dataset, simulation_para
 
 def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, batch_size, compute_n_def=0, compute_ess=0):
     """
-
-    :param policy_param:
-    :param env_param:
-    :param source_dataset:
-    :param simulation_param:
-    :param algorithm_configuration:
-    :param batch_size:
-    :param compute_n_def:
-    :param compute_ess:
-    :return:
+    Compute the weights in case of plain importance sampling, both per decision and not
+    :param policy_param: Current policy parameter
+    :param env_param: Object that contains all the information of the target environment
+    :param source_dataset: A data structure containing the episode information
+    :param simulation_param: Parameters of the simulation
+    :param algorithm_configuration: Configuration of the estimator to use in the learning procedure
+    :param batch_size: The size of the batch
+    :param compute_n_def: Flag that represents whether the weights are computed to estimate the n_def
+    :param compute_ess: Flag that represents whether the weights are computed to estimate the ESS
+    :return: The estimated weights
     """
     [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src, clipped_action_t, trajectories_length] = getEpisodesInfoFromSource(source_dataset, env_param)
     variance_action = simulation_param.variance_action
@@ -452,16 +446,16 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
 
 def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, batch_size, compute_n_def=0, compute_ess=0):
     """
-
-    :param policy_param:
-    :param env_param:
-    :param source_dataset:
-    :param simulation_param:
-    :param algorithm_configuration:
-    :param batch_size:
-    :param compute_n_def:
-    :param compute_ess:
-    :return:
+    Compute the weights in case of multiple importance sampling scheme
+    :param policy_param: Current policy parameter
+    :param env_param: Object that contains all the information of the target environment
+    :param source_dataset: A data structure containing the episode information
+    :param simulation_param: Parameters of the simulation
+    :param algorithm_configuration: Configuration of the estimator to use in the learning procedure
+    :param batch_size: The size of the batch
+    :param compute_n_def: Flag that represents whether the weights are computed to estimate the n_def
+    :param compute_ess: Flag that represents whether the weights are computed to estimate the ESS
+    :return: The estimated weights
     """
     [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src, clipped_actions, trajectories_length] = getEpisodesInfoFromSource(source_dataset, env_param)
     variance_action = simulation_param.variance_action
@@ -475,15 +469,18 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
     evaluated_trajectories = source_dataset.source_distributions.shape[0]
 
     if batch_size != 0:
+        # Update the mask
         mask_new_trajectories = trajectories_length[evaluated_trajectories:, np.newaxis] < np.repeat(np.arange(0, state_t.shape[1])[np.newaxis, :], repeats=state_t.shape[0]-evaluated_trajectories, axis=0)
         source_dataset.mask_weights = np.concatenate((source_dataset.mask_weights, mask_new_trajectories), axis=0)
 
     if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
+        # Estimate the next state/density using the known transition model
         if env_param.gaussian_transition:
             state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_actions)
         else:
             density_state_t1_current = env_param.env.densityCurrent(state_t, clipped_actions, state_t1)
     else:
+        # Estimate the next state/density using the estimated transition model
         if env_param.gaussian_transition:
             state_t1_denoised_current = algorithm_configuration.model_estimator.transition(state_t, clipped_actions)
         else:
@@ -491,13 +488,14 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
 
     feats = algorithm_configuration.features(state_t, source_dataset.mask_weights)
 
-    combination_src_parameters = param_policy_src[param_indices_policy, :]#policy parameter of source not repeated
-    combination_src_parameters_env = env_param_src[param_indices_env, :]#policy parameter of source not repeated
-    variance_env = env_param_src[:, -1] # variance of the model transition
+    combination_src_parameters = param_policy_src[param_indices_policy, :]  # policy parameter of source not repeated
+    combination_src_parameters_env = env_param_src[param_indices_env, :]  # environment parameter of source not repeated
+    variance_env = env_param_src[:, -1]  # variance of the model transition
 
     if (batch_size != 0 or algorithm_configuration.model_estimation == 1) and compute_ess == 0:
 
         if algorithm_configuration.unknown_src:
+            # Compute the next state/density using the estimated transition models
             if env_param.gaussian_transition:
                 state_t1_denoised_src_env = algorithm_configuration.source_estimator.stepDenoised(state_t, clipped_actions, source_dataset.policy_per_model)
             else:
@@ -510,6 +508,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
         clipped_actions = np.repeat(clipped_actions[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # clipped action t
 
         if not algorithm_configuration.unknown_src:
+            # Compute the next state/density using the known transition models
             if env_param.gaussian_transition:
                 state_t1_denoised_src_env = env_param.env.stepDenoised(combination_src_parameters_env, state_t[:, :, :, 0:n_configuration_src], clipped_actions[:, :, 0:n_configuration_src])
             else:
@@ -525,7 +524,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
         if batch_size != 0:
 
             if algorithm_configuration.model_estimation == 1:
-                # I compute the qj of the sources
+                # Compute the q_j of the sources
                 policy_src_new_traj_src = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :n_configuration_src] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :n_configuration_src], feats[evaluated_trajectories:, :, :, :n_configuration_src]), axis=2))**2)/(2*variance_action))[:, :, :n_configuration_src]
 
                 if env_param.gaussian_transition:
@@ -534,7 +533,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
                     model_src_new_traj_src = density_state_t1[evaluated_trajectories:, :, :n_configuration_src]
 
             else:
-                # I compute the qj of all the previous configurations
+                # Compute the q_j of all the previous configurations
                 if compute_n_def == 1 or algorithm_configuration.adaptive == "No":
                     policy_src_new_traj_src = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :-1] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :-1], feats[evaluated_trajectories:, :, :, :-1]), axis=2))**2)/(2*variance_action))
 
@@ -555,10 +554,11 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
             policy_src_new_traj_src = np.prod(policy_src_new_traj_src, axis=1)
             model_src_new_traj_src = np.prod(model_src_new_traj_src, axis=1)
 
+            # Concatenate the q_j of the source with the ones of the target
             source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, (policy_src_new_traj_src * model_src_new_traj_src)), axis=0)
 
         if algorithm_configuration.model_estimation == 1 or compute_n_def == 1 or algorithm_configuration.adaptive == "No":
-
+            # Compute the q_j of the new configuration
             if algorithm_configuration.model_estimation == 1:
                 policy_src_new_param = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, source_dataset.n_config_src:] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, source_dataset.n_config_src:], feats[:, :, :, source_dataset.n_config_src:]), axis=2))**2)/(2*variance_action))
 
@@ -601,7 +601,7 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
         model_tgt = np.prod(model_tgt, axis=1)
 
     else:
-
+        # Estimate the weights without updating the q_j of the source and the target
         policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], feats), axis=2))**2)/(2*variance_action))
 
         if env_param.gaussian_transition:
@@ -632,16 +632,16 @@ def computeMultipleImportanceWeightsSourceTarget(policy_param, env_param, source
 
 def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_param, source_dataset, simulation_param, algorithm_configuration, batch_size, compute_n_def=0, compute_ess=0):
     """
-
-    :param policy_param:
-    :param env_param:
-    :param source_dataset:
-    :param simulation_param:
-    :param algorithm_configuration:
-    :param batch_size:
-    :param compute_n_def:
-    :param compute_ess:
-    :return:
+    Compute the weights in case of per decision estimator and multiple importance sampling scheme
+    :param policy_param: Current policy parameter
+    :param env_param: Object that contains all the information of the target environment
+    :param source_dataset: A data structure containing the episode information
+    :param simulation_param: Parameters of the simulation
+    :param algorithm_configuration: Configuration of the estimator to use in the learning procedure
+    :param batch_size: The size of the batch
+    :param compute_n_def: Flag that represents whether the weights are computed to estimate the n_def
+    :param compute_ess: Flag that represents whether the weights are computed to estimate the ESS
+    :return: The estimated weights
     """
     [param_policy_src, state_t, state_t1, unclipped_action_t, env_param_src, clipped_actions, trajectories_length] = getEpisodesInfoFromSource(source_dataset, env_param)
     variance_action = simulation_param.variance_action
@@ -655,15 +655,18 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
     evaluated_trajectories = source_dataset.source_distributions.shape[0]
 
     if batch_size != 0:
+        # Update the mask
         mask_new_trajectories = trajectories_length[evaluated_trajectories:, np.newaxis] < np.repeat(np.arange(0, state_t.shape[1])[np.newaxis, :], repeats=state_t.shape[0]-evaluated_trajectories, axis=0)
         source_dataset.mask_weights = np.concatenate((source_dataset.mask_weights, mask_new_trajectories), axis=0)
 
     if algorithm_configuration.dicrete_estimation == 1 or algorithm_configuration.model_estimation == 0:
+        # Estimate the next state/density using the known transition model
         if env_param.gaussian_transition:
             state_t1_denoised_current = env_param.env.stepDenoisedCurrent(state_t, clipped_actions)
         else:
             density_state_t1_current = env_param.env.densityCurrent(state_t, clipped_actions, state_t1)
     else:
+        # Estimate the next state/density using the estimated transition model
         if env_param.gaussian_transition:
             state_t1_denoised_current = algorithm_configuration.model_estimator.transition(state_t, clipped_actions)
         else:
@@ -678,6 +681,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
     if (batch_size != 0 or algorithm_configuration.model_estimation == 1) and compute_ess == 0:
 
         if algorithm_configuration.unknown_src:
+            # Compute the next state/density using the estimated transition models
             if env_param.gaussian_transition:
                 state_t1_denoised_src_env = algorithm_configuration.source_estimator.stepDenoised(state_t, clipped_actions, source_dataset.policy_per_model)
             else:
@@ -690,6 +694,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
         clipped_actions = np.repeat(clipped_actions[:, :, np.newaxis], combination_src_parameters.shape[0], axis=2) # clipped action t
 
         if not algorithm_configuration.unknown_src:
+            # Compute the next state/density using the known transition models
             if env_param.gaussian_transition:
                 state_t1_denoised_src_env = env_param.env.stepDenoised(combination_src_parameters_env, state_t[:, :, :, 0:n_configuration_src], clipped_actions[:, :, 0:n_configuration_src])
             else:
@@ -705,7 +710,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
         if batch_size != 0:
 
             if algorithm_configuration.model_estimation == 1:
-                # I compute the qj of the sources
+                # Compute the q_j of the sources
                 policy_src_new_traj_src = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :n_configuration_src] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :n_configuration_src], feats[evaluated_trajectories:, :, :, :n_configuration_src]), axis=2))**2)/(2*variance_action))[:, :, :n_configuration_src]
 
                 if env_param.gaussian_transition:
@@ -714,7 +719,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
                     model_src_new_traj_src = density_state_t1[evaluated_trajectories:, :, :n_configuration_src]
 
             else:
-                # I compute the qj of all the previous configurations
+                # Compute the qj of all the previous configurations
                 if compute_n_def == 1 or algorithm_configuration.adaptive == "No":
                     policy_src_new_traj_src = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[evaluated_trajectories:, :, :-1] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, :-1], feats[evaluated_trajectories:, :, :, :-1]), axis=2))**2)/(2*variance_action))
 
@@ -735,10 +740,11 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
             policy_src_new_traj_src = np.cumprod(policy_src_new_traj_src, axis=1)
             model_src_new_traj_src = np.cumprod(model_src_new_traj_src, axis=1)
 
+            # Concatenate the q_j of the source with the ones of the target
             source_dataset.source_distributions = np.concatenate((source_dataset.source_distributions, (policy_src_new_traj_src * model_src_new_traj_src)), axis=0)
 
         if algorithm_configuration.model_estimation == 1 or compute_n_def == 1 or algorithm_configuration.adaptive == "No":
-
+            # Compute the q_j of the new configuration
             if algorithm_configuration.model_estimation == 1:
                 policy_src_new_param = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t[:, :, source_dataset.n_config_src:] - np.sum(np.multiply((combination_src_parameters.T)[np.newaxis, np.newaxis, :, source_dataset.n_config_src:], feats[:, :, :, source_dataset.n_config_src:]), axis=2))**2)/(2*variance_action))
 
@@ -781,7 +787,7 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
         model_tgt = np.cumprod(model_tgt, axis=1)
 
     else:
-
+        # Estimate the weights without updating the q_j of the source and the target
         policy_tgt = 1/m.sqrt(2*m.pi*variance_action) * np.exp(-((unclipped_action_t - np.sum(np.multiply(policy_param[np.newaxis, np.newaxis, :], feats), axis=2))**2)/(2*variance_action))
 
         if env_param.gaussian_transition:
@@ -812,13 +818,13 @@ def computeMultipleImportanceWeightsSourceTargetPerDecision(policy_param, env_pa
 
 def computeCv(weights, source_dataset, mis_denominator, policy_gradients, algorithm_configuration):
     """
-
-    :param weights:
-    :param source_dataset:
-    :param mis_denominator:
-    :param policy_gradients:
-    :param algorithm_configuration:
-    :return:
+    Compute the Control Variates
+    :param weights: The estimated weights
+    :param source_dataset: A data structure containing the episode information
+    :param mis_denominator: The denominator of the MIS estimator evaluated in all the episodes
+    :param policy_gradients: Computed gradients (sum over the timesteps if not per decision estimator, otherwise cumulative sum)
+    :param algorithm_configuration: Configuration of the estimator to use in the learning procedure
+    :return: A matrix containing the Control Variates
     """
     if algorithm_configuration.pd == 0:
         control_variate = np.asarray((source_dataset.source_distributions_cv / mis_denominator[:, np.newaxis]) - np.ones(source_dataset.source_distributions_cv.shape))
@@ -1084,12 +1090,7 @@ def computeMultipleImportanceWeightsSourceDistributions(source_dataset, variance
 
 
 def importanceSampling(estimator, adaptive):
-    """
 
-    :param estimator:
-    :param adaptive:
-    :return:
-    """
     cv = 0
     pd = 0
     baseline = 0
@@ -1104,12 +1105,7 @@ def importanceSampling(estimator, adaptive):
 
 
 def pdImportanceSampling(estimator, adaptive):
-    """
 
-    :param estimator:
-    :param adaptive:
-    :return:
-    """
     cv = 0
     pd = 1
     baseline = 0
@@ -1124,12 +1120,7 @@ def pdImportanceSampling(estimator, adaptive):
 
 
 def multipleImportanceSampling(estimator, adaptive):
-    """
 
-    :param estimator:
-    :param adaptive:
-    :return:
-    """
     cv = 0
     pd = 0
     baseline = 0
@@ -1144,12 +1135,7 @@ def multipleImportanceSampling(estimator, adaptive):
 
 
 def multipleImportanceSamplingCv(estimator, adaptive):
-    """
 
-    :param estimator:
-    :param adaptive:
-    :return:
-    """
     cv = 1
     pd = 0
     baseline = 0
@@ -1164,12 +1150,7 @@ def multipleImportanceSamplingCv(estimator, adaptive):
 
 
 def multipleImportanceSamplingCvBaseline(estimator, adaptive):
-    """
 
-    :param estimator:
-    :param adaptive:
-    :return:
-    """
     cv = 1
     pd = 0
     baseline = 1
@@ -1184,12 +1165,7 @@ def multipleImportanceSamplingCvBaseline(estimator, adaptive):
 
 
 def pdMultipleImportanceSampling(estimator, adaptive):
-    """
 
-    :param estimator:
-    :param adaptive:
-    :return:
-    """
     cv = 0
     pd = 1
     baseline = 0
@@ -1204,12 +1180,7 @@ def pdMultipleImportanceSampling(estimator, adaptive):
 
 
 def pdMultipleImportanceSamplingCv(estimator, adaptive):
-    """
 
-    :param estimator:
-    :param adaptive:
-    :return:
-    """
     cv = 1
     pd = 1
     baseline = 0
@@ -1224,12 +1195,7 @@ def pdMultipleImportanceSamplingCv(estimator, adaptive):
 
 
 def pdMultipleImportanceSamplingCvBaselineApprox(estimator, adaptive):
-    """
 
-    :param estimator:
-    :param adaptive:
-    :return:
-    """
     cv = 1
     pd = 1
     baseline = 1
@@ -1244,12 +1210,7 @@ def pdMultipleImportanceSamplingCvBaselineApprox(estimator, adaptive):
 
 
 def pdMultipleImportanceSamplingCvBaseline(estimator, adaptive):
-    """
 
-    :param estimator:
-    :param adaptive:
-    :return:
-    """
     cv = 1
     pd = 1
     baseline = 1
@@ -1264,12 +1225,7 @@ def pdMultipleImportanceSamplingCvBaseline(estimator, adaptive):
 
 
 def reinforce(estimator, adaptive):
-    """
 
-    :param estimator:
-    :param adaptive:
-    :return:
-    """
     cv = 0
     pd = 0
     baseline = 0
@@ -1285,12 +1241,7 @@ def reinforce(estimator, adaptive):
 
 
 def reinforceBaseline(estimator, adaptive):
-    """
 
-    :param estimator:
-    :param adaptive:
-    :return:
-    """
     cv = 0
     pd = 0
     baseline = 1
@@ -1306,12 +1257,7 @@ def reinforceBaseline(estimator, adaptive):
 
 
 def gpomdp(estimator, adaptive):
-    """
 
-    :param estimator:
-    :param adaptive:
-    :return:
-    """
     cv = 0
     pd = 1
     baseline = 1
@@ -1327,12 +1273,6 @@ def gpomdp(estimator, adaptive):
 
 
 def switch_estimator(estimator, adaptive):
-    """
-
-    :param estimator:
-    :param adaptive:
-    :return:
-    """
 
     if estimator == "IS":
         algorithm_configuration = importanceSampling(estimator, adaptive)
