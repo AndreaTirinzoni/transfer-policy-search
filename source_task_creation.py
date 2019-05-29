@@ -197,7 +197,7 @@ def sourceTaskCreationSpec(env, episode_length, batch_size, discount_factor, var
     return source_task, source_param, episodes_per_configuration.astype(int), next_states_unclipped, actions_clipped, next_states_unclipped_denoised
 
 
-def sourceTaskCreationMixture(env, episode_length, batch_size, discount_factor, variance_action, policy_params, episodes_per_config, n_config_cv, param_space_size, state_space_size, env_param_space_size, features=identity):
+def sourceTaskCreationMixture(env, episode_length, batch_size, discount_factor, variance_action, policy_params, episodes_per_config, n_config_src, param_space_size, state_space_size, env_param_space_size, features=identity):
     """
     Creates a source dataset
     :param env: OpenAI environment
@@ -207,7 +207,7 @@ def sourceTaskCreationMixture(env, episode_length, batch_size, discount_factor, 
     :param variance_action: the variance of the action's distribution
     :param policy_params: policy parameters
     :param episodes_per_config: number of episodes for every policy-environment configuration
-    :param n_config_cv: number of source configurations
+    :param n_config_src: number of source configurations
     :param param_space_size: size of the policy parameters space
     :param state_space_size: size of the environment parameters space
     :param env_param_space_size: size of the environment parameters
@@ -228,7 +228,7 @@ def sourceTaskCreationMixture(env, episode_length, batch_size, discount_factor, 
     next_states_unclipped = np.zeros((length_source_task, episode_length, state_space_size))
     next_states_unclipped_denoised = np.zeros((length_source_task, episode_length, state_space_size))
     actions_clipped = np.zeros((length_source_task, episode_length))
-    alpha_j_tr = episodes_per_config[n_config_cv:] / np.sum(episodes_per_config)
+    alpha_j_tr = episodes_per_config[n_config_src:] / np.sum(episodes_per_config)
     alpha_tr = np.sum(alpha_j_tr)
     probabilities = alpha_j_tr / alpha_tr
 

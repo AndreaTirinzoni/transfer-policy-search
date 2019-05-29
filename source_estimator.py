@@ -20,8 +20,8 @@ class SourceEstimator:
             source_param = source_dataset.source_param[t:t+episodes_per_model, :]
             next_states_unclipped = source_dataset.next_states_unclipped[t:t+episodes_per_model, :, :]
             next_states_unclipped_denoised = source_dataset.next_states_unclipped_denoised[t:t+episodes_per_model, :, :]
-            n_config_cv = source_dataset.n_config_cv
-            source_dataset_current_model = sc.SourceDataset(source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, next_states_unclipped_denoised, n_config_cv)
+            n_config_src = source_dataset.n_config_src
+            source_dataset_current_model = sc.SourceDataset(source_task, source_param, episodes_per_config, next_states_unclipped, clipped_actions, next_states_unclipped_denoised, n_config_src)
             self.transition_models[i].update_model(source_dataset_current_model, source_task=True)
             t += episodes_per_model
             j += source_dataset.policy_per_model

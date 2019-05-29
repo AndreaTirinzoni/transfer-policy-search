@@ -237,7 +237,7 @@ class Models:
 
         return loss_function
 
-    def chooseTransitionModel(self, env_params, param_policy, simulation_param, source_parameters, episodes_per_config, n_config_cv, initial_size, dataset_model_estimation, features=identity):
+    def chooseTransitionModel(self, env_params, param_policy, simulation_param, source_parameters, episodes_per_config, n_config_src, initial_size, dataset_model_estimation, features=identity):
         """
         This function selects the transition model according to the episodes seen so far
         :param env_params: Object that contains all the informations of the target environment
@@ -245,14 +245,14 @@ class Models:
         :param simulation_param: Parameters of the simulation
         :param source_parameters: Environment and policy parameters used to generate the source tasks
         :param episodes_per_config: Number of episodes for every policy-model configuration
-        :param n_config_cv: Number of source task configurations
+        :param n_config_src: Number of source task configurations
         :param initial_size: Initial size of the source dataset at the beginning of the learning procedure
         :param dataset_model_estimation: Episodes information used to estimate the transition model
         :param features: The function to apply at the state; it represents the features used for learning the optimal policy
         :return: The environment that minimized the loss function
         """
         self.computeModelsProbability(dataset_model_estimation, env_params, param_policy, simulation_param, features)
-        loss_function = self.computeLossFunction(env_params, param_policy, simulation_param, source_parameters, episodes_per_config, n_config_cv, initial_size, features)
+        loss_function = self.computeLossFunction(env_params, param_policy, simulation_param, source_parameters, episodes_per_config, n_config_src, initial_size, features)
         min_index = np.argmin(loss_function)
         env = self.proposal_env[min_index]
 
