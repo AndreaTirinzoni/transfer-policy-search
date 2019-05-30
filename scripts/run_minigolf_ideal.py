@@ -9,8 +9,6 @@ import learning_algorithm as la
 import source_task_creation as stc
 import simulation_classes as sc
 from model_estimation_rkhs import ModelEstimatorRKHS  # problemi nel rimuovere questa riga
-from discrete_model_estimation import Models  # problemi nel rimuovere questa riga
-from source_estimator import SourceEstimator  # problemi nel rimuovere questa riga
 import gym
 from features import polynomial
 
@@ -59,9 +57,9 @@ def main():
 
     policy_params = []
     env_params = []
-
-    for p in pis:
-        for e in envs:
+    num_policy = len(pis)
+    for e in envs:
+        for p in pis:
             policy_params.append(p)
             env_params.append(e)
 
@@ -84,6 +82,7 @@ def main():
 
         # Create a new dataset object
         source_dataset = sc.SourceDataset(*data, n_config_cv)
+        source_dataset.policy_per_model = num_policy
 
         off_policy = 0 if estimator in ["GPOMDP", "REINFORCE", "REINFORCE-BASELINE"] else 1
 
@@ -96,6 +95,7 @@ def main():
                                                  param_space_size, state_space_size, env_param_space_size, features=feats,
                                                  env_target=env_tgt)
             source_dataset = sc.SourceDataset(*data_sr, 1)
+            source_dataset.policy_per_model = num_policy
             name = estimator[:-3]
 
         result = la.learnPolicy(env_param, simulation_param, source_dataset, name, off_policy=off_policy,

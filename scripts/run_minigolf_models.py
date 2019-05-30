@@ -80,7 +80,7 @@ def main():
                                       features=feats, env_target=env_tgt)
 
     # Envs for discrete model estimation
-    possible_env_params = envs  # TODO possible envs are the source envs
+    possible_env_params = envs  # possible envs are the source envs
 
     possible_envs = []
     for param in np.array(possible_env_params):
@@ -202,8 +202,7 @@ parser.add_argument("--quiet", default=False, action='store_true')
 arguments = parser.parse_args()
 
 estimators = ["GPOMDP",
-              "MIS-CV-BASELINE-SR",
-              "MIS-CV-BASELINE-GP",
+              "MIS-CV-BASELINE-NS",
               "MIS-CV-BASELINE-DI",
               "MIS-CV-BASELINE-ID",
               "MIS-CV-BASELINE-ES"]

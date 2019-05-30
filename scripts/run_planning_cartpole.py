@@ -3,11 +3,11 @@ import numpy as np
 import datetime
 import pickle
 import os
-import learningAlgorithm as la
-import simulationClasses as sc
+import learning_algorithm as la
+import simulation_classes as sc
 import gym
-import sourceTaskCreation as stc
-from envs.planning_env import Planning_env
+import source_task_creation as stc
+from envs.planning_env import PlanningEnv
 from features import identity
 
 
@@ -17,9 +17,9 @@ def main(transition_model):
     """
     env_tgt = gym.make('cartpolec-v0')
 
-    variance_env = 0#env_tgt.getEnvParam()[-1]
+    variance_env = 0
 
-    env_planning = Planning_env(transition_model, env_tgt, np.sqrt(variance_env))
+    env_planning = PlanningEnv(transition_model, env_tgt, np.sqrt(variance_env))
     param_space_size = 4
     state_space_size = 4
     env_param_space_size = 3

@@ -295,12 +295,12 @@ class ModelEstimatorRKHS:
 
             N = dataset.source_param.shape[0]
             alpha_0 = dataset.episodes_per_config[-1] / N
-            alpha_tgt = dataset.episodes_per_config[dataset.n_config_cv:] / N
+            alpha_tgt = dataset.episodes_per_config[dataset.n_config_src:] / N
             alpha_src = self.n_source / N
 
             target_param = dataset.source_param[-1, 1:1+self.param_dim]
 
-            param_indices = np.concatenate(([0], np.cumsum(dataset.episodes_per_config[:-1])))[dataset.n_config_cv:]
+            param_indices = np.concatenate(([0], np.cumsum(dataset.episodes_per_config[:-1])))[dataset.n_config_src:]
             policy_params = dataset.source_param[param_indices, 1:1+self.param_dim]
 
             if self.use_gp_generate_mixture:

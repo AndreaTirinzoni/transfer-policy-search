@@ -352,9 +352,9 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
             # If the source transition models are unknown
             state_t1_denoised = np.zeros((source_dataset.initial_size, state_t.shape[1], state_t.shape[2]))
             conf_index = 0
-            for i in range(source_dataset.n_config_src):
+            for i in range(int(source_dataset.n_config_src/source_dataset.policy_per_model)):
                 # Compute the next state without noise on the transition function for every episode for the model that generated the episode
-                episodes_current_configuration = source_dataset.episodes_per_config[i]
+                episodes_current_configuration = source_dataset.episodes_per_config[i] * source_dataset.policy_per_model
                 state_t1_denoised[conf_index:conf_index+episodes_current_configuration, :, :] = algorithm_configuration.source_estimator.stepDenoisedSingle(state_t[conf_index:conf_index+episodes_current_configuration, :, :], clipped_action_t[conf_index:conf_index+episodes_current_configuration, :], i)
                 conf_index += episodes_current_configuration
 
@@ -382,12 +382,12 @@ def computeImportanceWeightsSourceTarget(policy_param, env_param, source_dataset
         combination_src_parameters_env = env_param_src[param_indices_env, :]  # policy parameter of source not repeated
 
         conf_index = 0
-        for i in range(source_dataset.n_config_src):
+        for i in range(int(source_dataset.n_config_src/source_dataset.policy_per_model)):
             # Compute the pdf without noise on the transition function for every episode for the model that generated the episode
-            episodes_current_configuration = source_dataset.episodes_per_config[i]
+            episodes_current_configuration = source_dataset.episodes_per_config[i] * source_dataset.policy_per_model
             combination_src_parameters_env_current = combination_src_parameters_env[i, :][np.newaxis, :]
             if algorithm_configuration.unknown_src:
-                density_state_t1[conf_index:conf_index+episodes_current_configuration] = algorithm_configuration.source_estimator.density(state_t[conf_index: conf_index+episodes_current_configuration, :], clipped_action_t[conf_index: conf_index+episodes_current_configuration, :], state_t1[conf_index: conf_index+episodes_current_configuration, :], source_dataset.policy_per_model)
+                density_state_t1[conf_index:conf_index+episodes_current_configuration] = algorithm_configuration.source_estimator.singleDensity(state_t[conf_index: conf_index+episodes_current_configuration, :, :, 0], clipped_action_t[conf_index: conf_index+episodes_current_configuration, :, 0], state_t1[conf_index: conf_index+episodes_current_configuration, :, 0], i)
             else:
                 density_state_t1[conf_index:conf_index+episodes_current_configuration] = env_param.env.density(combination_src_parameters_env_current, state_t[conf_index: conf_index+episodes_current_configuration, :], clipped_action_t[conf_index: conf_index+episodes_current_configuration, :], state_t1[conf_index: conf_index+episodes_current_configuration, :])[:, :, 0]
             conf_index += episodes_current_configuration

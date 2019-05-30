@@ -44,7 +44,7 @@ class SourceEstimator:
 
     def stepDenoisedSingle(self, state, action, index):
         """
-        A single transition of a certain source model without the noise
+        A single transition of the estimated source model without the noise
         :param state: A matrix representing the states of the episodes in all the time steps
         :param action: A matrix representing the actions of the episodes in all the time steps
         :param index: The index of the source model to consider
@@ -72,7 +72,7 @@ class SourceEstimator:
             t += policy_per_model
         return density_funct
 
-    def singleDensity(self, state, action, state_t1, policy_per_model):
+    def singleDensity(self, state, action, state_t1, index):
         """
         Function that estimates the probability density function for the transition model that generated the episode
         :param state: A matrix representing the states of the episodes in all the time steps
@@ -81,9 +81,6 @@ class SourceEstimator:
         :param policy_per_model: Number of policies for every model in the state and actions
         :return: The probability density function of the transition
         """
-        density_funct = np.zeros((state.shape[0], state.shape[1]))
-        t = 0
-        for i in range(self.n_models):
-            density_funct[t:t+policy_per_model, :] = self.transition_models[i].density(state[t:t+policy_per_model, :, :], action[t:t+policy_per_model, :, :], state_t1[t:t+policy_per_model, :, :])
-            t += policy_per_model
+        transition_model = self.transition_models[index]
+        density_funct = transition_model.density(state, action, state_t1)
         return density_funct

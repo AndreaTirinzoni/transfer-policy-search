@@ -205,7 +205,6 @@ arguments = parser.parse_args()
 
 estimators = ["GPOMDP",
               "PD-MIS-NS",
-              "PD-MIS-SR",
               "PD-MIS-ID",
               "PD-MIS-ES",
               "PD-MIS-GP",

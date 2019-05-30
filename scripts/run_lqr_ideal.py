@@ -9,8 +9,6 @@ import learning_algorithm as la
 import source_task_creation as stc
 import simulation_classes as sc
 from model_estimation_rkhs import ModelEstimatorRKHS
-from discrete_model_estimation import Models
-from source_estimator import SourceEstimator
 import gym
 
 
@@ -51,8 +49,8 @@ def main():
     policy_params = []
     env_params = []
 
-    for p in pis:
-        for e in envs:
+    for e in envs:
+        for p in pis:
             policy_params.append(p)
             env_params.append(e)
 

@@ -9,18 +9,13 @@ import learning_algorithm as la
 import source_task_creation as stc
 import simulation_classes as sc
 from model_estimation_rkhs import ModelEstimatorRKHS
-from discrete_model_estimation import Models
-from source_estimator import SourceEstimator
 import gym
-from features import polynomial
-
-
-sys.path.append("../")
 
 
 def main():
-
-    # General env properties
+    """
+    lqg1d sample reuse
+    """
     env_tgt = gym.make('LQG1D-v0')
     env_src = gym.make('LQG1D-v0')
     param_space_size = 1
@@ -142,7 +137,7 @@ def run(id, seed):
 
 
 # Number of jobs
-n_jobs = 20
+n_jobs = 1
 
 # Number of runs
 n_runs = 40
