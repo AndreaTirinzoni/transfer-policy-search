@@ -13,6 +13,7 @@ import simulation_classes as sc
 from model_estimation_rkhs import ModelEstimatorRKHS
 from discrete_model_estimation import Models
 import gym
+import envs
 
 
 def main():

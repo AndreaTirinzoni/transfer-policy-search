@@ -8,8 +8,8 @@ import os
 import learning_algorithm as la
 import source_task_creation as stc
 import simulation_classes as sc
-from model_estimation_rkhs import ModelEstimatorRKHS
 import gym
+import envs
 
 
 def main():

@@ -9,6 +9,7 @@ import gym
 import source_task_creation as stc
 from envs.planning_env import PlanningEnv
 from features import identity
+import envs
 
 
 def main(transition_model):

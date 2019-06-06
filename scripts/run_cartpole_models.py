@@ -14,6 +14,7 @@ from model_estimation_rkhs import ModelEstimatorRKHS
 from source_estimator import SourceEstimator
 from discrete_model_estimation import Models
 import gym
+import envs
 
 
 def main(id):

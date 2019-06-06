@@ -15,6 +15,7 @@ from discrete_model_estimation import Models
 from source_estimator import SourceEstimator
 import gym
 from features import polynomial
+import envs
 
 
 def main():
